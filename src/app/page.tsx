@@ -6,6 +6,7 @@ import Contact from "@/components/Contact";
 import LogosCarousel from "@/components/LogosCarousel";
 import {CurveDivider} from "@/components/CurveDivider";
 import ContactForm from "@/components/ContactForm";
+import Faq from "@/components/Faq";
 
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
       <CurveDivider/>
       <LogosCarousel/>
       <Contact />
+      <Faq/>
       <ContactForm/>
       
       

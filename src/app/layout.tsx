@@ -7,6 +7,7 @@ import "./globals.css";
 // 1. Importe seus componentes aqui (ajuste o caminho se necessário)
 import Header from "@/components/layout/Header"; 
 import Footer from "@/components/layout/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 
 import PreLoader from "@/components/PreLoader";
 
@@ -34,7 +35,7 @@ export default function RootLayout({
 
         {/* 3. O conteúdo da página atual (Home, Termos, etc) */}
         {children}
-
+        <ScrollToTop/>
         {/* 4. O Footer no final de tudo */}
         <Footer />
       </body>
