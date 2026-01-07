@@ -1,64 +1,104 @@
 'use client';
-import { useState } from 'react';
-import { Menu, X, Sun, MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Menu, X, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Efeito para mudar o estilo do header ao rolar a página
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="fixed w-full z-50 transition-all duration-300 bg-transparent hover:bg-black/20 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <header 
+      className={`fixed w-full z-50 transition-all duration-500 ${
+        scrolled 
+          ? 'top-4 px-4 md:px-8' 
+          : 'top-0 px-0'
+      }`}
+    >
+      <div 
+        className={`max-w-7xl mx-auto transition-all duration-500 ${
+          scrolled 
+            ? 'bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-3 px-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]' 
+            : 'bg-transparent py-6 px-6'
+        } flex items-center justify-between`}
+      >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          {/* Logo da Solara */}
-          <div className="relative w-35 h-22 md:w-46 md:h-22">
+        <Link href="/" className="flex items-center gap-3 group shrink-0">
+          <div className="relative w-32 h-12 md:w-40 md:h-14 transition-transform duration-300 group-hover:scale-105">
             <Image
-              src="/Solara.svg" // Caminho direto para a pasta public
+              src="/Solara.svg"
               alt="Logo Solara"
               fill
               className="object-contain"
+              priority
             />
           </div>
+        </Link>
 
-         </Link>
         {/* Desktop Menu */}
-        <nav className="hidden md:flex items-center gap-8 text-white font-semibold">
-          <Link href="#inicio" className="hover:text-yellow-400 transition">Início</Link>
-          <Link href="#usinas" className="hover:text-yellow-400 transition">Usinas</Link>
-          <Link href="#sobre" className="hover:text-yellow-400 transition">Sobre</Link>
+        <nav className="hidden md:flex items-center gap-2">
+          {['Início', 'Nossas Usinas', 'Sobre','Simulador de Economia'].map((item) => (
+            <Link 
+              key={item}
+              href={`#${item.toLowerCase()}`} 
+              className="px-5 py-2 text-sm text-white/80 hover:text-yellow-400 hover:bg-white/5 rounded-full transition-all duration-300 uppercase tracking-widest"
+            >
+              {item}
+              
+            </Link>
+          ))}
+
+          <div className="w-[1px] h-6 bg-white/10 mx-4" /> {/* Separador elegante */}
 
           {/* Botão Fale Conosco Desktop */}
           <Link
             href="#contato"
-            className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-2.5 rounded-full flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+            className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-2.5 rounded-full flex items-center gap-2 transition-all font-black text-xs uppercase tracking-tighter shadow-[0_0_15px_rgba(234,179,8,0.3)] active:scale-95"
           >
-            <MessageSquare size={18} />
+            <MessageSquare size={19} fill="black" />
             Fale Conosco
           </Link>
         </nav>
 
         {/* Mobile Toggle */}
-        <button className="md:hidden text-white" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={32} /> : <Menu size={25} />}
+        <button 
+          className="md:hidden p-2 text-white bg-white/5 rounded-full border border-white/10" 
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {/* Mobile Menu Overlay */}
       {isOpen && (
-        <div className="absolute top-20 left-0 w-full bg-slate-900/95 backdrop-blur-xl border-t border-white/10 flex flex-col p-8 gap-6 text-white md:hidden animate-in fade-in slide-in-from-top-4">
-          <Link href="#inicio" className="text-xl" onClick={() => setIsOpen(false)}>Início</Link>
-          <Link href="#usinas" className="text-xl" onClick={() => setIsOpen(false)}>Usinas</Link>
-          <Link href="#sobre" className="text-xl" onClick={() => setIsOpen(false)}>Sobre</Link>
+        <div className="absolute top-24 left-4 right-4 bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 flex flex-col gap-6 text-white md:hidden animate-in fade-in zoom-in-95 duration-300 shadow-2xl">
+          {['Início', 'Nossas Usinas', 'Sobre','Simulador de Economia'].map((item) => (
+            <Link 
+              key={item}
+              href={`#${item.toLowerCase()}`} 
+              className="text-2xl font-black uppercase tracking-tighter border-b border-white/5 pb-2"
+              onClick={() => setIsOpen(false)}
+            >
+              {item}
+            </Link>
+          ))}
 
-          {/* Botão Fale Conosco Mobile */}
           <Link
             href="#contato"
             onClick={() => setIsOpen(false)}
-            className="bg-yellow-500 text-black p-4 rounded-2xl font-bold flex items-center justify-center gap-3"
+            className="bg-yellow-500 text-black p-5 rounded-2xl font-black uppercase tracking-tighter flex items-center justify-center gap-3 shadow-lg"
           >
-            <MessageSquare size={20} />
+            <MessageSquare size={20} fill="black" />
             Fale Conosco
           </Link>
         </div>

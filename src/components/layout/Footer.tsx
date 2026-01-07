@@ -96,11 +96,11 @@ export default function Footer() {
 
         {/* Rodapé Inferior */}
         <div className="pt-8 border-t border-white/5 flex flex-col md:row justify-between items-center gap-6 text-sm text-slate-500">
-          <p>© {currentYear} Solara Energia - Todos os direitos reservados.</p>
-          <div className="flex gap-8">
-            <Link href="#" className="hover:text-white">Termos de Uso</Link>
-            <Link href="#" className="hover:text-white">Privacidade</Link>
-          </div>
+        <p>© {currentYear} Solara Energia - Todos os direitos reservados.</p>
+        <div className="flex gap-8">
+        <Link href="/termos-de-uso" className="hover:text-white transition-colors">Termos de Uso</Link>
+        <Link href="/privacidade" className="hover:text-white transition-colors">Privacidade</Link>
+        </div>
         </div>
       </div>
     </footer>

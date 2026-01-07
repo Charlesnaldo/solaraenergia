@@ -1,71 +1,82 @@
 'use client';
-import Image from 'next/image';
-// 1. Importe a sua imagem aqui (ajuste o nome do arquivo se necessário)
-import fotoHero from '@/assents/hero.png'; 
+import { motion } from 'framer-motion';
+import { ArrowRight, Zap } from 'lucide-react';
 
 export default function Hero() {
   return (
-    <section className="relative h-screen min-h-[700px] flex items-center justify-center overflow-hidden">
-      
-      {/* Container da Imagem com Zoom e Camada Amarela */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        
-        {/* 2. Substituímos a div com style por uma div que contém o componente Image */}
-        <div className="absolute inset-0 animate-zoom-slow">
-          <Image
-            src={fotoHero}
-            alt="Fundo Solara"
-            fill
-            priority
-            className="object-cover"
-          />
-        </div>
-
-        {/* Camada Amarela (Overlay) - Mantida conforme seu código */}
-        <div className="absolute inset-0 bg-yellow-200/40 mix-blend-multiply" />
-
-        {/* Gradiente extra - Mantido conforme seu código */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+    <section className="relative min-h-screen flex items-center justify-center bg-slate-950 overflow-hidden pt-20">
+      {/* Background Decorativo */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-yellow-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Conteúdo Central - Mantido exatamente como o seu */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center text-white">
-        <div className="mb-8 flex justify-center">
-          <span className="px-4 py-1.5 rounded-full border border-solara-yellow/50 bg-solara-yellow/10 text-solara-yellow text-sm font-bold uppercase tracking-widest backdrop-blur-sm">
-            Energia Inteligente
+      <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+
+        {/* Badge Superior */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full mb-10"
+        >
+          <Zap size={14} className="text-yellow-500 fill-yellow-500" />
+          <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
+            A Revolução Energética chegou
           </span>
-        </div>
+        </motion.div>
 
-        <h1 className="text-6xl md:text-8xl font-black mb-8 tracking-tighter leading-[0.9]">
-          O SOL TRABALHA <br />
-          <span className="text-solara-yellow drop-shadow-2xl">PARA VOCÊ</span>
-        </h1>
+        {/* Título Principal */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[1.1] tracking-[-0.04em] mb-8"
+        >
+          Energia inteligente <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-500">
+            para o seu futuro.
+          </span>
+        </motion.h1>
 
-        <p className="text-lg md:text-2xl text-gray-200 max-w-3xl mx-auto mb-12 font-light leading-relaxed">
-          Usinas solares de alta performance que transformam luz em
-          liberdade financeira para sua empresa ou residência.
-        </p>
+        {/* Subtítulo */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="max-w-2xl mx-auto text-sm md:text-base text-slate-400 leading-relaxed tracking-wide mb-12 px-4"
+        >
+          Reduza seus custos em até 95% e transforme sua empresa em uma potência sustentável com a tecnologia fotovoltaica da Solara.
+        </motion.p>
 
-        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-          <button className="group relative bg-solara-yellow text-solara-dark px-12 py-5 rounded-full font-black text-xl hover:scale-105 transition-all shadow-[0_0_20px_rgba(251,191,36,0.4)]">
-            QUERO ECONOMIZAR AGORA
+        {/* Botões */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-5"
+        >
+          <button className="group bg-yellow-500 hover:bg-yellow-400 text-black px-10 py-4 rounded-full font-black text-xs uppercase tracking-widest transition-all flex items-center gap-3 shadow-[0_20px_40px_-15px_rgba(234,179,8,0.3)] active:scale-95">
+            Solicitar Orçamento
+            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
           </button>
 
-          <button className="group flex items-center gap-3 text-white font-bold text-lg hover:text-solara-yellow transition-colors">
-            <span className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center group-hover:border-solara-yellow transition-colors">
-              ▶
-            </span>
-            Ver nossas usinas 
+          <button className="px-10 py-4 rounded-full font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all active:scale-95">
+            Ver Projetos
           </button>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Indicador de scroll */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 animate-bounce">
-        <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center p-1">
-          <div className="w-1 h-2 bg-white rounded-full" />
-        </div>
-      </div>
+      {/* Scroll Indicator Corrigido */}
+      <motion.div
+        animate={{ y: [0, 10, 0] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        // Adicionamos 'hidden' (esconde por padrão) e 'md:flex' (mostra em telas médias/grandes)
+        className="hidden md:flex absolute bottom-10 left-1/2 -translate-x-1/2 flex-col items-center gap-2"
+      >
+        <span className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-bold">Scroll</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-yellow-500 to-transparent" />
+      </motion.div>
     </section>
   );
 }
