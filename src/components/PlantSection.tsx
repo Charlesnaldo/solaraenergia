@@ -14,10 +14,10 @@ export default function PlantSection() {
         {/* Cabeçalho de Seção - Agora em Branco/Cinza para contraste */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-6">
           <div className="max-w-xl">
-            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-yellow-500/80 block mb-4">
+            <span className="text-[10px] font-bold uppercase tracking-normal text-yellow-500/80 block mb-4">
               Portfólio de Ativos
             </span>
-            <h2 className="text-3xl md:text-5xl font-black text-white leading-tight uppercase tracking-tighter">
+            <h2 className="text-3xl md:text-5xl font-black text-white leading-tight uppercase tracking-normal">
               Nossas <span className="text-yellow-500">Usinas</span> <br />
               Tecnologia em escala.
             </h2>
@@ -48,7 +48,7 @@ export default function PlantSection() {
                 
                 {/* Status Badge - Floating */}
                 <div className="absolute top-6 left-6">
-                  <span className="bg-yellow-500 text-black text-[10px] font-black uppercase tracking-[0.1em] px-4 py-1.5 rounded-full shadow-xl">
+                  <span className="bg-yellow-500 text-black text-[10px] font-black uppercase tracking-normal px-4 py-1.5 rounded-full shadow-xl">
                     {plant.status}
                   </span>
                 </div>
@@ -58,10 +58,10 @@ export default function PlantSection() {
               <div className="p-8">
                 <div className="flex justify-between items-start mb-8">
                   <div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">
+                    <h3 className="text-xl font-black text-white uppercase tracking-normal mb-1">
                       {plant.title}
                     </h3>
-                    <p className="text-slate-500 text-xs flex items-center gap-1.5 font-bold uppercase tracking-widest">
+                    <p className="text-slate-500 text-xs flex items-center gap-1.5 font-bold uppercase tracking-normalt">
                       <MapPin size={12} className="text-yellow-500" />
                       {plant.location}
                     </p>
@@ -74,18 +74,18 @@ export default function PlantSection() {
                 {/* Specs Grid com Design de Painel */}
                 <div className="grid grid-cols-2 gap-0 border-t border-white/5">
                   <div className="py-6 pr-4 border-r border-white/5">
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-black tracking-widest mb-2">
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-black tracking-normal mb-2">
                       <Zap size={12} className="text-yellow-500" />
                       Potência
                     </div>
-                    <p className="text-white font-black text-2xl tracking-tighter">{plant.capacity}</p>
+                    <p className="text-white font-black text-2xl tracking-normal">{plant.capacity}</p>
                   </div>
                   <div className="py-6 pl-8">
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-black tracking-widest mb-2">
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-black tracking-normal mb-2">
                       <Layers size={12} className="text-yellow-500" />
                       Painéis
                     </div>
-                    <p className="text-white font-black text-2xl tracking-tighter">{plant.panels}</p>
+                    <p className="text-white font-black text-2xl tracking-normal">{plant.panels}</p>
                   </div>
                 </div>
               </div>

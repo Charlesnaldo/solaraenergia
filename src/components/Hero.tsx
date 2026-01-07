@@ -1,6 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { ArrowRight, Zap } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Hero() {
   return (
@@ -61,9 +62,11 @@ export default function Hero() {
             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
           </button>
 
-          <button className="px-10 py-4 rounded-full font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all active:scale-95">
-            Ver Projetos
-          </button>
+          <Link href="/#usinas">
+            <button className="px-10 py-4 rounded-full font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all active:scale-95">
+              Nossas Usinas
+            </button>
+          </Link>
         </motion.div>
       </div>
 

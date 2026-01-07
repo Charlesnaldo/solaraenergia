@@ -7,8 +7,8 @@ import Button from '@/components/Button';
 
 // 1. Mapeamento de IDs para evitar problemas com caracteres especiais
 const menuItems = [
-  { name: 'Início', href: '#inicio' },
-  { name: 'Nossas Usinas', href: '#usinas' },
+  { name: 'Início', href: '/#inicio' },
+  { name: 'Nossas Usinas', href: '/#usinas' },
   { name: 'Sobre Nós', href: '/sobre' },
   { name: 'Simulador de Economia', href: '/simulador-economia' },
 ];
