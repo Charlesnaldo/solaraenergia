@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={inter.className}>
         
         {/* 🔥 PreLoader global */}
-        <PreLoader />
+        {/* <PreLoader /> */}
         
         {/* 2. O Header fixo no topo */}
         <Header />

@@ -33,9 +33,9 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[1.1] tracking-[-0.04em] mb-8"
         >
-          Energia inteligente <br className="hidden md:block" />
+          Enquanto você paga caro, <br className="hidden md:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-500">
-            para o seu futuro.
+            o sol entra grátis na sua casa todos os dias.
           </span>
         </motion.h1>
 

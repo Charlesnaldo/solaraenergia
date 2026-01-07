@@ -5,11 +5,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
 
+// 1. Mapeamento de IDs para evitar problemas com caracteres especiais
+const menuItems = [
+  { name: 'Início', href: '#inicio' },
+  { name: 'Nossas Usinas', href: '#usinas' },
+  { name: 'Sobre Nós', href: '/sobre' },
+  { name: 'Simulador de Economia', href: '/simulador-economia' },
+];
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Efeito para mudar o estilo do header ao rolar a página
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -46,32 +53,30 @@ export default function Header() {
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex items-center gap-2">
-          {['Início', 'Nossas Usinas', 'Sobre Nós', 'Simulador de Economia'].map((item) => (
+          {menuItems.map((item) => (
             <Link
-              key={item}
-              href={`#${item.toLowerCase()}`}
+              key={item.name}
+              href={item.href}
               className="px-5 py-2 text-sm text-white/80 hover:text-yellow-400 hover:bg-white/5 rounded-full transition-all duration-300 uppercase tracking-widest"
             >
-              {item}
-
+              {item.name}
             </Link>
           ))}
 
-          <div className="w-[1px] h-6 bg-white/10 mx-4" /> {/* Separador elegante */}
+          <div className="w-[1px] h-6 bg-white/10 mx-4" />
 
-          {/* Botão Fale Conosco Desktop */}
-          <Button variant="neon"
+          <Button 
+            variant="neon"
             label="Fale Conosco"
             href="#contato"
             icon={MessageSquare}
-            onClick={() => setIsOpen(false)}
             className="ml-4"
           />
         </nav>
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden p-2 text-white bg-white/5 rounded-full border border-white/10"
+          className="md:hidden p-2 text-white bg-white/5 rounded-full border border-white/10 transition-colors hover:bg-white/10"
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -80,24 +85,25 @@ export default function Header() {
 
       {/* Mobile Menu Overlay */}
       {isOpen && (
-        <div className="absolute top-24 left-4 right-4 bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 flex flex-col gap-6 text-white md:hidden animate-in fade-in zoom-in-95 duration-300 shadow-2xl">
-          {['Início', 'Nossas Usinas', 'Sobre Nós', 'Simulador de Economia'].map((item) => (
+        <div className="absolute top-24 left-4 right-4 bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 flex flex-col gap-6 text-white md:hidden animate-in fade-in zoom-in-95 duration-300 shadow-2xl z-[60]">
+          {menuItems.map((item) => (
             <Link
-              key={item}
-              href={`#${item.toLowerCase()}`}
-              className="text-1xl tracking-widest border-b border-white/5 pb-2 tracking-wider"
-              onClick={() => setIsOpen(false)}
+              key={item.name}
+              href={item.href}
+              className="text-lg tracking-widest border-b border-white/5 pb-2 transition-colors hover:text-yellow-500"
+              onClick={() => setIsOpen(false)} // Fecha o menu ao clicar
             >
-              {item}
+              {item.name}
             </Link>
           ))}
 
-          <Button variant="neon"
+          <Button 
+            variant="neon"
             label="Fale Conosco"
             href="#contato"
             icon={MessageSquare}
             onClick={() => setIsOpen(false)}
-            className="ml-4"
+            className="w-full justify-center"
           />
         </div>
       )}

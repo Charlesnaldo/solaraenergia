@@ -6,9 +6,9 @@ import { Lightbulb, Award, TrendingUp, MapPin } from 'lucide-react';
 // Dados da história para facilitar a leitura e organização
 const storyMilestones = [
   {
-    year: "2010",
+    year: "2021",
     title: "O Sonho de uma Energia Melhor",
-    description: "Criado nas terras áridas do Ceará, João, um jovem com poucas posses, mas uma visão grandiosa, observava o sol inclemente não como um problema, mas como a maior solução. Seu primeiro 'escritório' foi a varanda de casa, e seu capital inicial, a força de sua própria crença.",
+    description: "Criado nas terras áridas do Ceará, Alan Douglas, um jovem com poucas posses, mas uma visão grandiosa, observava o sol inclemente não como um problema, mas como a maior solução. Seu primeiro 'escritório' foi a varanda de casa, e seu capital inicial, a força de sua própria crença.",
     icon: <Lightbulb size={24} className="text-yellow-500" />,
     image: "/images/joao-jovem.webp" // Substitua pela imagem de um jovem empreendedor sonhador
   },
