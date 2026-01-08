@@ -3,8 +3,11 @@
 [![Next.js](https://img.shields.io/badge/Next.js-000-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer-motion&logoColor=white)](https://framer.com/motion/)
+[![Live Demo](https://img.shields.io/badge/LIVE_DEMO-☀️-yellow?style=for-the-badge)](https://www.solaraenergia.com.br)
 
-> Interface de alta performance desenvolvida para a **Solara Energy**, focada em conversão e experiência do usuário (UX) minimalista.
+
+
+> Interface de alta performance desenvolvida para a **Solara Energia**, focada em conversão e experiência do usuário (UX) minimalista.
 
 ---
 
