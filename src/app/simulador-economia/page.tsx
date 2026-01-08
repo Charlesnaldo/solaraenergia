@@ -1,214 +1,160 @@
 'use client';
 import React, { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { Calculator, Send, Zap, CheckCircle2, MessageSquare, FileUp, User, MapPin, Phone } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Zap, CheckCircle2, MessageSquare, FileUp, User, MapPin, Phone, ArrowLeft } from 'lucide-react';
 import Confetti from 'react-confetti';
 import { useWindowSize } from 'react-use';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SimuladorPage() {
   const { width, height } = useWindowSize();
-  
-  // Estados dos Campos
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState({
     nome: '',
     telefone: '',
     cidade: '',
     valorConta: ''
   });
-  
+
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [isEnviado, setIsEnviado] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Lógica de cálculo
   const mensal = Number(formData.valorConta) * 0.90;
   const total25Anos = mensal * 12 * 25;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setArquivo(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const processarSimulacao = (e: React.FormEvent) => {
     e.preventDefault();
     setShowConfetti(true);
     setIsEnviado(true);
-    setTimeout(() => setShowConfetti(false), 5000);
   };
 
   const enviarWhatsApp = () => {
-    const numero = "5585999999999"; // Seu número da Solara
-    const temArquivo = arquivo ? "Sim (Cliente possui a fatura)" : "Não anexado";
-
-    const msg = `*NOVA SIMULAÇÃO SOLARA*%0A%0A` +
-      `• *Nome:* ${formData.nome}%0A` +
-      `• *Telefone:* ${formData.telefone}%0A` +
-      `• *Cidade:* ${formData.cidade}%0A` +
-      `• *Conta Mensal:* R$ ${formData.valorConta}%0A` +
-      `• *Economia Estimada:* R$ ${mensal.toFixed(2)}/mês%0A` +
-      `• *Acumulado 25 anos:* R$ ${total25Anos.toFixed(2)}%0A` +
-      `• *Fatura Anexada:* ${temArquivo}%0A%0A` +
-      `Olá! Acabei de simular no site e gostaria de um orçamento detalhado.`;
-
-    window.open(`https://wa.me/${numero}?text=${msg}`, '_blank');
+    const meuNumero = "5585999999999";
+    const msg = `*SIMULAÇÃO SOLARA*%0A*Nome:* ${formData.nome}%0A*WhatsApp:* ${formData.telefone}%0A*Cidade:* ${formData.cidade}%0A*Economia:* R$ ${mensal.toFixed(2)}/mês`;
+    window.open(`https://wa.me/${meuNumero}?text=${msg}`, '_blank');
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 py-20">
-      {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={400} colors={['#EAB308', '#000', '#fff']} />}
+    // Adicionado overflow-y-auto para permitir scroll em celulares pequenos
+    <main className="relative min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 md:p-6 overflow-y-auto">
 
-      <div className="max-w-3xl w-full">
-        <Link href="/" className="text-slate-500 hover:text-yellow-500 mb-8 inline-block transition-colors text-[10px] tracking-[0.3em]">
-          ← VOLTAR PARA A HOME
+      <div className="absolute inset-0 z-0 h-[100vh] w-full overflow-hidden">
+        <motion.div
+          animate={{
+            scale: [1, 1.15, 1], // Aumenta 15% e volta ao original
+          }}
+          transition={{
+            duration: 20, // Tempo de um ciclo completo (20 segundos para ser bem suave)
+            repeat: Infinity, // Loop infinito
+            ease: "linear", // Movimento constante
+          }}
+          className="relative w-full h-full"
+        >
+          <Image
+            src="/usinas/beberibe.webp"
+            alt="Background"
+            fill
+            priority
+            className="object-cover opacity-50"
+          />
+        </motion.div>
+
+        {/* Máscara Azul e Degradê (Mantidos para manter a identidade visual) */}
+        <div className="absolute inset-0 bg-blue-900/40 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/0 via-slate-950/50 to-slate-950" />
+      </div>
+
+      {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={width < 768 ? 200 : 500} />}
+
+      <div className="relative mt-15 z-10 w-full max-w-2xl my-8">
+        <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-yellow-500 mb-4 md:mb-6 text-[10px] font-bold uppercase tracking-widest transition-colors">
+          <ArrowLeft size={12} /> Voltar
         </Link>
 
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-3xl font-black uppercase tracking-tighter">
-            SIMULADOR <span className="text-yellow-500 text-glow">SOLARA</span>
-          </h1>
-        </div>
-
-        <div className="bg-white/5 border border-white/10 p-8 md:p-12 rounded-[2.5rem] backdrop-blur-xl shadow-2xl">
-          {!isEnviado ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              
-              {/* NOME E TELEFONE */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500 flex items-center gap-2">
-                    <User size={12}/> Nome Completo
-                  </label>
-                  <input
-                    type="text"
-                    name="nome"
-                    required
-                    value={formData.nome}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm font-medium outline-none focus:border-yellow-500 transition-all"
-                    placeholder="Ex: Ronaldo Charles"
-                  />
+        {/* Ajuste de Padding: p-6 no mobile e p-10 no desktop */}
+        <div className="bg-slate-900/80 border border-white/10 p-6 md:p-10 rounded-[1.5rem] md:rounded-[2rem] backdrop-blur-2xl shadow-2xl">
+          <AnimatePresence mode="wait">
+            {!isEnviado ? (
+              <motion.form
+                key="f1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onSubmit={processarSimulacao} className="space-y-4 md:space-y-5"
+              >
+                <div className="text-center space-y-1">
+                  <h1 className="text-xl md:text-2xl font-black uppercase tracking-normal">Simulador <span className="text-yellow-500">Solara</span></h1>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest">Preencha para ver sua economia</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500 flex items-center gap-2">
-                    <Phone size={12}/> WhatsApp
-                  </label>
-                  <input
-                    type="tel"
-                    name="telefone"
-                    required
-                    value={formData.telefone}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm font-medium outline-none focus:border-yellow-500 transition-all"
-                    placeholder="(85) 99999-9999"
-                  />
-                </div>
-              </div>
 
-              {/* CIDADE E VALOR CONTA */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500 flex items-center gap-2">
-                    <MapPin size={12}/> Sua Cidade
-                  </label>
-                  <input
-                    type="text"
-                    name="cidade"
-                    required
-                    value={formData.cidade}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm font-medium outline-none focus:border-yellow-500 transition-all"
-                    placeholder="Ex: Fortaleza"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] uppercase font-bold text-yellow-500 ml-1">Nome</label>
+                    <input name="nome" placeholder="Seu nome" required onChange={handleInputChange} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 text-sm focus:border-yellow-500 outline-none transition-all" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] uppercase font-bold text-yellow-500 ml-1">WhatsApp</label>
+                    <input name="telefone" placeholder="(00) 00000-0000" required onChange={handleInputChange} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 text-sm focus:border-yellow-500 outline-none transition-all" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500 flex items-center gap-2">
-                    <Zap size={12}/> Valor da Conta (R$)
-                  </label>
-                  <input
-                    type="number"
-                    name="valorConta"
-                    required
-                    value={formData.valorConta}
-                    onChange={handleInputChange}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm font-black outline-none focus:border-yellow-500 transition-all text-yellow-500"
-                    placeholder="0,00"
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] uppercase font-bold text-yellow-500 ml-1">Cidade</label>
+                    <input name="cidade" placeholder="Sua cidade" required onChange={handleInputChange} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 text-sm focus:border-yellow-500 outline-none transition-all" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] uppercase font-bold text-yellow-500 ml-1">Valor da Fatura</label>
+                    <input name="valorConta" type="number" placeholder="R$ 0,00" required onChange={handleInputChange} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 text-sm text-yellow-500 font-bold focus:border-yellow-500 outline-none transition-all" />
+                  </div>
                 </div>
-              </div>
 
-              {/* CAMPO: UPLOAD DE ARQUIVO */}
-              <div className="space-y-4 pt-4">
-                <label className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Anexar Fatura (Opcional)</label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`group relative h-28 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${
-                    arquivo ? 'border-yellow-500 bg-yellow-500/5' : 'border-white/10 hover:border-white/20 hover:bg-white/5'
-                  }`}
-                >
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*,.pdf" />
-
-                  {arquivo ? (
-                    <div className="flex flex-col items-center gap-1">
-                      <CheckCircle2 className="text-yellow-500" size={20} />
-                      <span className="text-xs font-bold text-white">{arquivo.name}</span>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setArquivo(null); }} className="text-[9px] uppercase font-black text-red-400">Remover</button>
-                    </div>
-                  ) : (
-                    <>
-                      <FileUp className="text-slate-500 mb-1" size={24} />
-                      <span className="text-slate-400 text-xs font-medium">PDF ou Imagem da conta</span>
-                    </>
-                  )}
+                <div onClick={() => fileInputRef.current?.click()} className="h-16 md:h-20 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/5 transition-all">
+                  <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => setArquivo(e.target.files?.[0] || null)} />
+                  <span className="text-[10px] md:text-xs text-slate-400 flex items-center gap-2 px-4 text-center">
+                    <FileUp size={14} /> {arquivo ? <span className="text-yellow-500 truncate max-w-[150px]">{arquivo.name}</span> : 'Anexar Fatura (Opcional)'}
+                  </span>
                 </div>
-              </div>
 
-              <button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-5 rounded-2xl uppercase tracking-widest flex items-center justify-center gap-3 transition-transform active:scale-95 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
-                SIMULAR AGORA <Calculator size={20} />
-              </button>
-            </form>
-          ) : (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-8 py-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-500 rounded-full">
-                <CheckCircle2 size={32} className="text-black" />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
-                  <p className="text-slate-400 text-[9px] font-black uppercase mb-1">Economia Mensal</p>
-                  <p className="text-2xl font-black text-yellow-500 text-glow">R$ {mensal.toLocaleString('pt-BR')}</p>
-                </div>
-                <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
-                  <p className="text-slate-400 text-[9px] font-black uppercase mb-1">Total em 25 Anos</p>
-                  <p className="text-2xl font-black text-white">R$ {total25Anos.toLocaleString('pt-BR')}</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-slate-400 text-sm italic">Parabéns {formData.nome.split(' ')[0]}! Sua economia está garantida.</p>
-                <button
-                  onClick={enviarWhatsApp}
-                  className="w-full bg-green-600 hover:bg-green-500 text-white font-black py-5 rounded-2xl uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-[0_10px_30px_rgba(22,163,74,0.3)]"
-                >
-                  ENVIAR NO WHATSAPP <MessageSquare size={20} />
+                <button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 rounded-xl uppercase text-xs md:text-sm tracking-widest transition-transform active:scale-95 shadow-lg shadow-yellow-500/10">
+                  Calcular Agora
                 </button>
+              </motion.form>
+            ) : (
+              <motion.div key="f2" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6 py-2">
+                <div className="bg-yellow-500 w-12 h-12 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-yellow-500/20">
+                  <CheckCircle2 className="text-black" size={24} />
+                </div>
 
-                <button
-                  onClick={() => setIsEnviado(false)}
-                  className="text-slate-400 hover:text-yellow-500 text-sm uppercase font-black tracking-widest transition-colors flex items-center justify-center gap-2 mx-auto mt-6"
-                >
-                  ← Refazer o cálculo
-                </button>
-              </div>
-            </motion.div>
-          )}
+                <h2 className="text-lg md:text-xl font-black uppercase italic">Economia Garantida!</h2>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                    <p className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Economia Mensal</p>
+                    <p className="text-2xl font-bold text-yellow-500">R$ {mensal.toLocaleString('pt-BR')}</p>
+                  </div>
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                    <p className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Total em 25 anos</p>
+                    <p className="text-2xl font-bold text-white">R$ {total25Anos.toLocaleString('pt-BR')}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <button onClick={enviarWhatsApp} className="w-full bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black uppercase text-xs md:text-sm tracking-widest flex items-center justify-center gap-2 shadow-xl animate-pulse">
+                    Receber no WhatsApp <MessageSquare size={18} />
+                  </button>
+
+                  <button onClick={() => setIsEnviado(false)} className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest pt-2 flex items-center justify-center gap-1 mx-auto transition-colors">
+                    ← Refazer cálculo
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </main>

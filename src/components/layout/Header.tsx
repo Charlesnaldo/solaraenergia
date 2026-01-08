@@ -68,7 +68,7 @@ export default function Header() {
           <Button 
             variant="neon"
             label="Fale Conosco"
-            href="#contato"
+            href="/#contato"
             icon={MessageSquare}
             className="ml-4"
           />
