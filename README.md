@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ☀️ Solara Energy — Simulador de Economia Premium
 
-## Getting Started
+[![Next.js](https://img.shields.io/badge/Next.js-000-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer-motion&logoColor=white)](https://framer.com/motion/)
 
-First, run the development server:
+> Interface de alta performance desenvolvida para a **Solara Energy**, focada em conversão e experiência do usuário (UX) minimalista.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Sobre o Projeto
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Este projeto consiste em um simulador de economia de energia solar inteligente e responsivo. Ele guia o usuário desde a entrada de dados até a conclusão da economia estimada, com integração direta para atendimento via WhatsApp.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Principais Funcionalidades:
+* **Simulador Inteligente:** Cálculos dinâmicos de economia mensal e acumulada em 25 anos.
+* **UI/UX Premium:** Design minimalista com efeitos de *Glassmorphism*, máscaras azuis profundas e animações orgânicas.
+* **Fundo Dinâmico (Ken Burns):** Background da usina Beberibe com movimento suave de zoom (indo e vindo).
+* **Mobile-First:** Interface totalmente adaptada para dispositivos móveis com foco na facilidade de toque.
+* **Carrossel de Parceiros:** Seção de credibilidade com logos em escala de cinza e movimento infinito.
+* **Integração WhatsApp:** Envio automático dos dados da simulação para o consultor responsável.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Tecnologias Utilizadas
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+O projeto foi construído com o que há de mais moderno no ecossistema Web:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* **Framework:** [Next.js 14/15 (App Router)](https://nextjs.org/)
+* **Estilização:** [Tailwind CSS](https://tailwindcss.com/)
+* **Animações:** [Framer Motion](https://framer.com/motion/)
+* **Ícones:** [Lucide React](https://lucide.dev/)
+* **Efeitos:** `react-confetti` e `react-use` para responsividade de viewport.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎨 Estrutura de Design
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+A identidade visual segue o conceito de **Luxo Silencioso**:
+* **Tipografia:** Mix entre *Font Black* para impacto e *Extralight/Serif* para sofisticação.
+* **Cores:** Predomínio de `Slate-950` (Fundo), `Yellow-500` (Destaque/Energia) e `White` (Clareza).
+* **Espaçamento:** Uso estratégico de espaço negativo para reduzir a carga cognitiva.
+
+---
+
+## 👨‍💻 Desenvolvedor Responsável
+
+Este projeto foi planejado e executado por:
+
+**Ronaldo Charles** *Fullstack Developer*
+
+> "Comprometido em transformar códigos complexos em experiências simples e rentáveis."
+
+---
+
+## ⚙️ Como Executar
+
+1.  **Instale as dependências:**
+    ```bash
+    npm install
+    ```
+
+2.  **Rode o servidor de desenvolvimento:**
+    ```bash
+    npm run dev
+    ```
+
+3.  **Configuração de Imagens:** Certifique-se de que a imagem `beberibe.webp` está em `/public/usinas/`.
+
+---
+
+<p align="center">
+  Desenvolvido com ☕ e ✨ por Ronaldo Charles.
+</p>

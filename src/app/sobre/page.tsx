@@ -10,28 +10,28 @@ const storyMilestones = [
     title: "O Sonho de uma Energia Melhor",
     description: "Criado nas terras áridas do Ceará, Alan Douglas, um jovem com poucas posses, mas uma visão grandiosa, observava o sol inclemente não como um problema, mas como a maior solução. Seu primeiro 'escritório' foi a varanda de casa, e seu capital inicial, a força de sua própria crença.",
     icon: <Lightbulb size={24} className="text-yellow-500" />,
-    image: "/usinas/croata.webp" // Substitua pela imagem de um jovem empreendedor sonhador
+    image: "/usinas/croata.webp" 
   },
   {
     year: "2015",
     title: "Primeiros Painéis, Primeiras Vitórias",
     description: "Com muita pesquisa e o apoio da família, João instalou seus primeiros painéis em pequenos comércios locais. Cada instalação era uma prova de conceito, uma semente plantada. A economia na conta de luz dos vizinhos e amigos era a maior propaganda.",
     icon: <Award size={24} className="text-yellow-500" />,
-    image: "/usinas/croata.webp" // Substitua pela imagem de pequenas instalações
+    image: "/usinas/croata.webp" 
   },
   {
     year: "2020",
     title: "A Virada: Solara Nasce e Cresce",
     description: "O boca a boca transformou a pequena iniciativa em um negócio sério. 'Solara' foi o nome escolhido, refletindo a paixão pelo sol e a energia. A empresa começou a projetar usinas maiores, com uma equipe pequena, mas altamente engajada, sempre com a liderança visionária de João.",
     icon: <TrendingUp size={24} className="text-yellow-500" />,
-    image: "/usinas/beberibe.webp" // Substitua pela imagem da equipe Solara ou usina média
+    image: "/usinas/beberibe.webp" 
   },
   {
     year: "Hoje",
     title: "Dominando o Ceará: Expansão Sustentável",
     description: "Hoje, a Solara é sinônimo de energia fotovoltaica no Ceará. Com uma rede robusta de usinas em expansão, João e sua equipe estão não apenas iluminando casas e empresas, mas construindo um futuro mais verde e econômico para todo o estado, mantendo a chama do empreendedorismo acesa.",
     icon: <MapPin size={24} className="text-yellow-500" />,
-    image: "/usinas/croata2.webp" // Substitua pela imagem de uma grande usina Solara ou do Ceará
+    image: "/usinas/croata2.webp" 
   }
 ];
 
