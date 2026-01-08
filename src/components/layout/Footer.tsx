@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { Sun, Instagram, Linkedin, Facebook, Mail, MapPin, Phone, ArrowRight } from 'lucide-react';
+import { Instagram, Linkedin, Facebook, Mail, MapPin, Phone, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 
 export default function Footer() {
@@ -9,24 +9,27 @@ export default function Footer() {
   return (
     <footer className="bg-slate-950 text-slate-300 pt-20 pb-10 border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6">
-        
+
         {/* Grid Principal */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          
-          {/* Coluna 1: Sobre */}
-         <div className="space-y-6">
 
-  <Link href="/" className="inline-block group">
-    {/* Substituído: sai o <span> entra a div com a Image */}
-    <div className="relative w-39 h-30 md:w-30 md:h-10">
-      <Image 
-        src="/Solara.svg" // Nome do arquivo atualizado para Solara.svg conforme seu código
-        alt="Logo Solara"
-        fill
-        className="object-contain brightness-0 invert transition-all group-hover:brightness-100 group-hover:invert-0" 
-      />
-    </div>
-  </Link>
+          {/* Coluna 1: Sobre */}
+          <div className="space-y-6">
+
+            {/* Logo do footer */}
+
+            <Link href="/" className="inline-block group">
+              <div className="relative w-39 h-30 md:w-30 md:h-10">
+                <Image
+                  src="/Solara.svg"
+                  alt="Logo Solara"
+                  fill
+                  className="object-contain brightness-0 invert transition-all group-hover:brightness-100 group-hover:invert-0"
+                />
+              </div>
+            </Link>
+
+
             <p className="text-slate-400 leading-relaxed">
               Liderando a transição energética com tecnologia de ponta e economia real para sua empresa ou residência.
             </p>
@@ -43,7 +46,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Coluna 2: Navegação */}
+          {/* Navegação */}
           <div>
             <h4 className="text-white font-bold text-lg mb-6">Navegação</h4>
             <ul className="space-y-4">
@@ -58,7 +61,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Coluna 3: Contato */}
+          {/* Contato */}
           <div>
             <h4 className="text-white font-bold text-lg mb-6">Contato</h4>
             <ul className="space-y-4">
@@ -77,14 +80,14 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Coluna 4: Newsletter */}
+          {/* Newsletter */}
           <div>
             <h4 className="text-white font-bold text-lg mb-6">Novidades</h4>
             <p className="text-slate-400 mb-4">Receba conteúdos sobre energia solar e economia.</p>
             <form className="space-y-3">
-              <input 
-                type="email" 
-                placeholder="Seu melhor e-mail" 
+              <input
+                type="email"
+                placeholder="Seu melhor e-mail"
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-yellow-500 transition-colors"
               />
               <button className="w-full bg-yellow-500 text-black font-bold py-3 rounded-xl hover:bg-yellow-400 transition-all active:scale-95">
@@ -95,12 +98,12 @@ export default function Footer() {
         </div>
 
         {/* Rodapé Inferior */}
-        <div className="pt-8 border-t border-white/5 flex flex-col md:row justify-between items-center gap-6 text-sm text-slate-500">
-        <p>© {currentYear} Solara Energia - Todos os direitos reservados.</p>
-        <div className="flex gap-8">
-        <Link href="/termos-de-uso" className="hover:text-white transition-colors">Termos de Uso</Link>
-        <Link href="/privacidade" className="hover:text-white transition-colors">Privacidade</Link>
-        </div>
+        <div className="pt-6 border-t border-white/5 flex flex-col md:row justify-between items-center gap-6 text-sm text-slate-500">
+          <p>© {currentYear} Solara Energia - Todos os direitos reservados.</p>
+          <div className="flex gap-8">
+            <Link href="/termos-de-uso" className="hover:text-white transition-colors">Termos de Uso</Link>
+            <Link href="/privacidade" className="hover:text-white transition-colors">Privacidade</Link>
+          </div>
         </div>
       </div>
     </footer>
