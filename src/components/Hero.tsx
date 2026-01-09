@@ -2,84 +2,95 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image'; // Importar o componente Image do Next.js
 
 export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-slate-950 overflow-hidden pt-20">
-      {/* Background Decorativo */}
+      
+      {/* IMAGEM DE FUNDO FIXA (SOLARA) */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-yellow-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px]" />
+        <Image 
+          src="/usinas/solar-hero.png" // Caminho para sua imagem AVIF/WebP na pasta public/images
+          alt="Painéis solares ao nascer do sol"
+          fill
+          className="object-cover object-center opacity-40" // Opacidade para o texto se destacar
+          priority // Carrega com alta prioridade para o Hero
+          quality={85} // Ajuste a qualidade se necessário
+        />
+        {/* Gradiente escuro para garantir contraste do texto */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-850 via-slate-850/70 to-transparent" />
       </div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
 
         {/* Badge Superior */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full mb-10"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full mb-10 backdrop-blur-sm"
         >
           <Zap size={14} className="text-yellow-500 fill-yellow-500" />
-          <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] text-slate-400">
-            A Revolução Energética chegou
+          <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] text-slate-300">
+            A Revolução Energética
           </span>
         </motion.div>
 
         {/* Título Principal */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-[1.1] tracking-[-0.04em] mb-8"
+          className="text-2xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-8"
         >
           Enquanto você paga caro, <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-500">
+          <span className="text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600 drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]">
             o sol entra grátis na sua casa todos os dias.
           </span>
         </motion.h1>
 
         {/* Subtítulo */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="max-w-2xl mx-auto text-sm md:text-base text-slate-400 leading-relaxed tracking-wide mb-12 px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 0.5 }}
+          className="max-w-2xl mx-auto text-sm md:text-lg text-slate-400 leading-relaxed mb-12"
         >
-          Reduza seus custos em até 95% e transforme sua empresa em uma potência sustentável com a tecnologia fotovoltaica da Solara.
+          Reduza seus custos em até 95% e transforme sua empresa com a inteligência fotovoltaica da Solara.
         </motion.p>
 
-        {/* Botões */}
+        {/* Botões Otimizados */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-5"
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-6"
         >
-          <button className="group bg-yellow-500 hover:bg-yellow-400 text-black px-10 py-4 rounded-full font-black text-xs uppercase tracking-widest transition-all flex items-center gap-3 shadow-[0_20px_40px_-15px_rgba(234,179,8,0.3)] active:scale-95">
-            Solicitar Orçamento
-            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          <button className="group relative bg-yellow-500 hover:bg-yellow-400 text-black px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all overflow-hidden active:scale-95 shadow-xl shadow-yellow-500/20">
+            <span className="relative z-10 flex items-center gap-3">
+              Solicitar Orçamento <ArrowRight size={18} />
+            </span>
           </button>
 
           <Link href="/#usinas">
-            <button className="px-10 py-4 rounded-full font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all active:scale-95">
-              Nossas Usinas
+            <button className="px-12 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all mb-15">
+              Conhecer Usinas
             </button>
           </Link>
         </motion.div>
       </div>
 
-      {/* Scroll Indicator Corrigido */}
-      <motion.div
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        // Adicionamos 'hidden' (esconde por padrão) e 'md:flex' (mostra em telas médias/grandes)
-        className="hidden md:flex absolute bottom-10 left-1/2 -translate-x-1/2 flex-col items-center gap-2"
-      >
-        <span className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-bold">Scroll</span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-yellow-500 to-transparent" />
-      </motion.div>
+      {/* Indicador de Scroll Minimalista */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
+        <div className="w-px h-16 bg-gradient-to-b from-yellow-500/50 to-transparent relative">
+          <motion.div 
+            animate={{ top: ["0%", "100%", "0%"] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-1/2 -translate-x-1/2 w-1 h-1 bg-yellow-400 rounded-full shadow-[0_0_10px_#eab308]"
+          />
+        </div>
+      </div>
     </section>
   );
 }

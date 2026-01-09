@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-
+import { Inter, Poppins } from "next/font/google"; // Importe a Poppins aqui
 import "./globals.css";
-
-
-// 1. Importe seus componentes aqui (ajuste o caminho se necessário)
 import Header from "@/components/layout/Header"; 
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
-
 import PreLoader from "@/components/PreLoader";
 
+// Fonte padrão do site
 const inter = Inter({ subsets: ["latin"] });
+
+// Configuração da Poppins para uso específico
+const poppins = Poppins({ 
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-poppins", // Define a variável para o Tailwind
+});
 
 export const metadata: Metadata = {
   title: "Solara | Energia Solar Limpa",
@@ -25,18 +28,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-br" className="scroll-smooth">
-      <body className={inter.className}>
-        
-        {/* 🔥 PreLoader global */}
-        {/* <PreLoader /> */}
-        
-        {/* 2. O Header fixo no topo */}
+      {/* Adicionamos a variável da Poppins aqui no body */}
+      <body className={`${inter.className} ${poppins.variable} antialiased`}>
+        <PreLoader />     
         <Header />
-
-        {/* 3. O conteúdo da página atual (Home, Termos, etc) */}
-        {children}
-        <ScrollToTop/>
-        {/* 4. O Footer no final de tudo */}
+        <main>{children}</main>
+        <ScrollToTop/>        
         <Footer />
       </body>
     </html>

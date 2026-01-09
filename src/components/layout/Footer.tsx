@@ -21,7 +21,7 @@ export default function Footer() {
             <Link href="/" className="inline-block group">
               <div className="relative w-39 h-30 md:w-30 md:h-10">
                 <Image
-                  src="/Solara.svg"
+                  src="/Solara2.svg"
                   alt="Logo Solara"
                   fill
                   className="object-contain brightness-0 invert transition-all group-hover:brightness-100 group-hover:invert-0"

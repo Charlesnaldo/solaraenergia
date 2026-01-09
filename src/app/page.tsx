@@ -14,12 +14,19 @@ export default function Home() {
     <main className="min-h-screen">
       
       <Hero />
-      <Benefits />      
-      <PlantSection />
+
       <CurveDivider/>
+      
+      <Benefits />
+           
+      <PlantSection />
+      
       <LogosCarousel/>
+      
       <Contact />
+      
       <Faq/>
+
       <ContactForm/>
       
       

@@ -1,17 +1,43 @@
-// src/components/CurveDivider.tsx
+'use client';
+import { motion } from 'framer-motion';
+
 export function CurveDivider() {
+  
+  const words = [
+    "Energia Renovável",
+    "Sustentabilidade",
+    "Autossuficiência",
+    "Rentabilidade",
+    "Independência",
+    "Performance"
+  ];
+
   return (
-    /* A div pai precisa ter a cor da seção de BAIXO (branco). 
-       O SVG terá a cor da seção de CIMA (preto/slate-950).
-    */
-    <div className="relative w-full overflow-hidden leading-[0] bg-white -mt-1">
-      <svg 
-        viewBox="0 0 1200 120" 
-        preserveAspectRatio="none" 
-        className="relative block w-full h-[60px] fill-[#05070a]" // Cor exata do fundo das usinas
+    <div className="py-8 bg-slate-950 overflow-hidden flex whitespace-nowrap border-y border-white/5">
+      <motion.div 
+        animate={{ x: [0, -1500] }} 
+        transition={{ 
+          repeat: Infinity, 
+          duration: 40, 
+          ease: "linear" 
+        }} 
+        className="flex gap-12 items-center"
       >
-        <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,35.26,69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"></path>
-      </svg>
+        
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="flex items-center gap-12">
+            {words.map((word, index) => (
+              <div key={index} className="flex items-center gap-12">
+                <span className="text-white/30 text-[10px] font-bold uppercase tracking-[0.6em]">
+                  {word}
+                </span>
+                
+                <div className="w-1 h-1 bg-yellow-500 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.6)]" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </motion.div>
     </div>
   );
 }
