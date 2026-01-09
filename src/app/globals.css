@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+
+
 @layer utilities {
   @keyframes zoom-loop {
     0% { transform: scale(1); }
@@ -17,3 +19,4 @@
   --primary: #0a2e5f;
   --secundary:#ffae33;
 }
+

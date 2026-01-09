@@ -4,18 +4,18 @@ import { Menu, X, MessageSquare, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
-import LoginModal from '@/components/LoginModal'; // Certifique-se de que o caminho está correto
+import LoginModal from '@/components/LoginModal'; // 1. Importação do Modal
 
 const menuItems = [
   { name: 'Início', href: '/#inicio' },
   { name: 'Nossas Usinas', href: '/#usinas' },
   { name: 'Sobre Nós', href: '/sobre' },
-  { name: 'Simulador de Economia', href: '/simulador-economia' },
+  { name: 'Simulador', href: '/simulador-economia' },
 ];
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false); // Estado do Pop-up
+  const [isLoginOpen, setIsLoginOpen] = useState(false); // 2. Estado para o Modal
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -59,11 +59,11 @@ export default function Header() {
               icon={MessageSquare}
             />
 
-            {/* LOGIN POP-UP TRIGGER */}
+            {/* LOGIN - AGORA COMO BOTÃO PARA ABRIR MODAL */}
             <div className="flex items-center border-l border-white/10 pl-6 ml-4 mr-6">
               <button
-                onClick={() => setIsLoginOpen(true)}
-                className="group flex items-center gap-2.5 text-white/70 hover:text-yellow-400 transition-all duration-300 tracking-widest text-sm font-medium"
+                onClick={() => setIsLoginOpen(true)} // 3. Abre o modal
+                className="group flex items-center gap-2.5 text-white/70 hover:text-yellow-400 transition-all duration-300 tracking-widest text-sm font-medium cursor-pointer"
               >
                 <div className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 group-hover:border-yellow-500/40 group-hover:bg-yellow-500/10 transition-all">
                   <LogIn size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -89,10 +89,10 @@ export default function Header() {
             ))}
 
             <button 
-              onClick={() => { setIsOpen(false); setIsLoginOpen(true); }}
-              className="flex items-center justify-center gap-3 py-4 text-yellow-500 font-bold tracking-widest border border-yellow-500/20 rounded-2xl bg-yellow-500/5 text-sm uppercase"
+              onClick={() => { setIsOpen(false); setIsLoginOpen(true); }} // Fecha menu e abre modal
+              className="flex items-center justify-center gap-3 py-4 text-yellow-500 font-bold tracking-widest border border-yellow-500/20 rounded-2xl bg-yellow-500/5"
             >
-              <LogIn size={17} />  Login
+              <LogIn size={12} /> Acessar Login
             </button>
 
             <Button variant="neon" label="Fale Conosco" href="#contato" icon={MessageSquare} onClick={() => setIsOpen(false)} className="w-full justify-center" />
@@ -100,8 +100,11 @@ export default function Header() {
         )}
       </header>
 
-      {/* MODAL DE LOGIN */}
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      {/* COMPONENTE DO MODAL */}
+      <LoginModal 
+        isOpen={isLoginOpen} 
+        onClose={() => setIsLoginOpen(false)} 
+      />
     </>
   );
 }

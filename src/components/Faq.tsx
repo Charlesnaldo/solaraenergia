@@ -3,22 +3,23 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react'; 
 
+// Mova para fora para evitar recriação em cada render
 const faqs = [
   {
-    question: "Quanto tempo leva a instalação?",
-    answer: "Após a aprovação do projeto junto à concessionária, nossa equipe realiza a instalação física em média de 2 a 3 dias para sistemas residenciais."
+    question: "Preciso fazer algum investimento ou obra?",
+    answer: "Nenhum. A Solara fornece energia limpa diretamente através da rede da concessionária. Você não precisa comprar painéis nem realizar obras no seu estabelecimento."
   },
   {
-    question: "Quais são as formas de pagamento?",
-    answer: "Trabalhamos com financiamento bancário em até 120 meses (com carência de até 90 dias), cartão de crédito, boleto ou consórcio solar."
+    question: "Como a economia aparece na minha conta?",
+    answer: "Você continuará recebendo sua conta da concessionária, mas com o desconto aplicado referente aos créditos de energia limpa injetados pela Solara."
   },
   {
-    question: "O sistema precisa de internet?",
-    answer: "Sim, para que você possa acompanhar a geração de energia em tempo real pelo aplicativo no seu celular de qualquer lugar do mundo."
+    question: "Existe fidelidade no contrato?",
+    answer: "Nossa parceria é baseada na eficiência. Oferecemos modelos flexíveis que permitem que sua empresa tenha liberdade, sem as amarras dos contratos tradicionais."
   },
-   {
-    question: "O sistema precisa de internet?",
-    answer: "Sim, para que você possa acompanhar a geração de energia em tempo real pelo aplicativo no seu celular de qualquer lugar do mundo."
+  {
+    question: "Quais empresas podem aderir?",
+    answer: "Qualquer empresa conectada em baixa ou média tensão (Grupo B ou A) que deseje reduzir custos fixos sem imobilizar capital."
   }
 ];
 
@@ -26,54 +27,67 @@ export default function Faq() {
   const [activeId, setActiveId] = useState<number | null>(null);
 
   return (
-    <section className="py-24 bg[#e9e9e9] px-6"> {/* Fundo cinza moderno */}
-      <div className="max-w-4xl mx-auto">
-        
-        <div className="flex flex-col md:flex-row gap-12 items-start">
+    // O ID "faq" aqui é o que o Footer vai buscar no navLinks
+    <section id="faq" className="py-32 bg-[#020617] relative overflow-hidden">
+      
+      {/* Efeito de iluminação para combinar com o Footer e Benefícios */}
+      <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/[0.03] rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
+        <div className="flex flex-col lg:flex-row gap-16 items-start">
           
-          {/* Lado Esquerdo: Título e Badge */}
-          <div className="md:w-1/3">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase tracking-widest mb-4">
-              Suporte Solara
-            </span>
-            <h2 className="font-title text-4xl md:text-5xl text-black leading-none">
-              Dúvidas <br /> 
-              <span className="text-slate-500 italic">Comuns</span>
-            </h2>
-            <p className="font-sans text-slate-400 text-sm mt-6 leading-relaxed">
-              Tudo o que você precisa saber para começar a gerar sua própria energia limpa.
-            </p>
+          {/* Lado Esquerdo: Título com a tipografia Solara */}
+          <div className="lg:w-2/5 lg:sticky lg:top-32">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="inline-block px-4 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-black uppercase tracking-[0.3em] mb-6">
+                Dúvidas Técnicas
+              </span>
+              <h2 className="text-4xl md:text-6xl font-black text-white leading-[0.9] uppercase tracking-tighter">
+                Perguntas <br /> 
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-100">Frequentes</span>
+              </h2>
+              <p className="text-slate-400 text-base mt-8 leading-relaxed max-w-sm border-l border-yellow-500/30 pl-6">
+                Tudo o que você precisa saber para digitalizar sua conta de luz e economizar.
+              </p>
+            </motion.div>
           </div>
 
           {/* Lado Direito: Accordion */}
-          <div className="md:w-2/3 w-full space-y-3">
+          <div className="lg:w-3/5 w-full space-y-4">
             {faqs.map((faq, index) => (
-              <div 
+              <motion.div 
                 key={index}
-                className="group overflow-hidden rounded-2xl transition-all duration-300"
-                style={{ backgroundColor: activeId === index ? '#1e293b' : '#0f172a' }} // Cinza escuro vs Cinza médio
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className={`group rounded-[2rem] border transition-all duration-500 ${
+                  activeId === index 
+                  ? 'bg-white/[0.04] border-yellow-500/30 shadow-2xl' 
+                  : 'bg-white/[0.01] border-white/5 hover:border-white/10'
+                }`}
               >
                 <button
                   onClick={() => setActiveId(activeId === index ? null : index)}
-                  className="w-full flex items-center justify-between p-6 text-left"
+                  className="w-full flex items-center justify-between p-7 text-left outline-none"
                 >
-                  <span className={`font-sans text-base font-semibold transition-colors duration-300 ${
+                  <span className={`text-base md:text-lg font-bold tracking-tight transition-colors duration-300 ${
                     activeId === index ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
                   }`}>
                     {faq.question}
                   </span>
                   
-                  <motion.div
-                    animate={{ 
-                      rotate: activeId === index ? 45 : 0,
-                      backgroundColor: activeId === index ? '#EAB308' : 'rgba(255,255,255,0.05)'
-                    }}
-                    className={`p-2 rounded-full transition-colors ${
-                      activeId === index ? 'text-black' : 'text-slate-500'
-                    }`}
-                  >
-                    <Plus size={18} strokeWidth={3} />
-                  </motion.div>
+                  <div className={`shrink-0 ml-4 p-2 rounded-full transition-all duration-500 ${
+                    activeId === index 
+                    ? 'bg-yellow-500 text-black rotate-45' 
+                    : 'bg-white/5 text-slate-500 rotate-0'
+                  }`}>
+                    <Plus size={18} />
+                  </div>
                 </button>
 
                 <AnimatePresence>
@@ -82,16 +96,17 @@ export default function Faq() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <div className="px-6 pb-6 text-slate-400 font-sans text-sm leading-relaxed">
-                        <div className="h-[1px] w-full bg-white/5 mb-4" /> {/* Divisória sutil */}
-                        {faq.answer}
+                      <div className="px-7 pb-8">
+                        <p className="text-slate-400 text-sm md:text-base leading-relaxed">
+                          {faq.answer}
+                        </p>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </motion.div>
             ))}
           </div>
 

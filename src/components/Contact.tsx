@@ -1,98 +1,158 @@
 'use client';
 import { motion } from 'framer-motion';
-import { MessageSquare, ArrowRight, Sparkles } from 'lucide-react';
+import { MessageSquare, ArrowRight, Sparkles, ShieldCheck, CheckCircle2, Zap } from 'lucide-react';
+import Image from 'next/image';
 
-export default function Contact() {
+export default function ContactUnified() {
   const whatsappNumber = "5511999999999"; 
-  const message = encodeURIComponent("Olá! Gostaria de saber mais sobre as usinas da Solara e como posso reduzir minha conta de luz.");
+  const message = encodeURIComponent("Olá! Gostaria de uma análise de viabilidade para minha empresa através da Solara.");
 
   return (
-    <section id="contato" className="relative py-32 bg-slate-950 overflow-hidden">
-      {/* Background Decorativo - Glow sutil para atrair o olhar ao centro */}
+    <section id="contato" className="relative py-24 md:py-32 bg-[#020617] overflow-hidden">
+      
+      {/* --- FUNDO IDENTICO AO BENEFICIOS --- */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-yellow-500/10 rounded-full blur-[120px]" />
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(234,179,8,0.08),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(234,179,8,0.08),transparent_50%)]" />
         
-        {/* Badge de Call to Action */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-full mb-8"
+          initial={{ scale: 1.1, opacity: 0 }}
+          whileInView={{ scale: 1, opacity: 0.15 }}
+          transition={{ duration: 2 }}
+          className="absolute inset-0 grayscale brightness-50"
         >
-          <Sparkles size={14} className="text-yellow-500" />
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
-            Consultoria Gratuita
-          </span>
+          <Image 
+            src="/usinas/torre.png" 
+            alt="Fundo Transmissão Solara"
+            fill
+            className="object-cover"
+            priority
+          />
         </motion.div>
 
-        {/* Título Principal - Seguindo o padrão tracking-tighter */}
-        <motion.h2 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.1 }}
-          className="text-4xl md:text-6xl font-black text-white leading-[1.1] uppercase tracking-tighter mb-8"
-        >
-          Pronto para <span className="text-yellow-500">transformar</span> <br />
-          sua energia?
-        </motion.h2>
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020617] via-transparent to-[#020617]" />
+      </div>
 
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="text-slate-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed mb-12"
-        >
-          Nossos especialistas estão prontos para desenhar um projeto de viabilidade exclusivo para sua empresa ou residência. Redução de custos com tecnologia de elite.
-        </motion.p>
-        
-        {/* Card de Ação Glassmorphism */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-          className="relative bg-white/[0.02] backdrop-blur-md border border-white/10 p-10 md:p-16 rounded-[3rem] shadow-2xl overflow-hidden group"
-        >
-          {/* Efeito de brilho interno no card */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
-          <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter mb-8">
-            Inicie seu projeto agora
-          </h3>
+          {/* LADO ESQUERDO: Argumentos de Venda */}
+          <div className="space-y-10">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <ShieldCheck size={16} className="text-yellow-500" />
+                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-yellow-500/80">
+                  Gestão Energética B2B
+                </span>
+              </div>
+              <h2 className="text-5xl md:text-7xl font-black text-white leading-[0.9] uppercase tracking-tighter">
+                Reduza seus <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 italic">Custos Fixos.</span>
+              </h2>
+              <p className="text-slate-400 text-lg leading-relaxed mt-8 max-w-md border-l-2 border-yellow-500/30 pl-6">
+                Ative sua assinatura de energia limpa e economize mensalmente <span className="text-white font-bold text-shadow-sm">sem precisar de obras ou investimentos.</span>
+              </p>
+            </motion.div>
 
-          <a 
-            href={`https://wa.me/${whatsappNumber}?text=${message}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black py-5 px-12 rounded-2xl text-sm md:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-[0_20px_50px_-15px_rgba(234,179,8,0.4)]"
-          >
-            <MessageSquare size={20} fill="black" />
-            Falar com Especialista
-            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-          </a>
-
-          <div className="mt-10 flex flex-col md:flex-row items-center justify-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                Consultores Online
-              </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {["Zero investimento", "Sem obras físicas", "Economia em contrato", "Energia 100% Verde"].map((text, i) => (
+                <div key={i} className="flex items-center gap-3 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm">
+                  <CheckCircle2 size={16} className="text-yellow-500" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">{text}</span>
+                </div>
+              ))}
             </div>
-            <div className="hidden md:block w-px h-4 bg-white/10" />
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">
-              Resposta média: 10 minutos
-            </p>
-          </div>
-        </motion.div>
-      </div>
 
-      {/* Detalhe Final de Transição para o Rodapé */}
-      <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            {/* Atalho rápido para WhatsApp */}
+            <div className="pt-4">
+              <a 
+                href={`https://wa.me/${whatsappNumber}?text=${message}`}
+                className="inline-flex items-center gap-3 text-yellow-500 font-bold uppercase text-[11px] tracking-widest hover:text-white transition-colors"
+              >
+                <MessageSquare size={18} />
+                Ou fale com um consultor via WhatsApp
+                <ArrowRight size={14} />
+              </a>
+            </div>
+          </div>
+
+          {/* LADO DIREITO: Formulário Terminal */}
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative"
+          >
+            <div className="absolute -inset-1 bg-yellow-500/10 rounded-[3rem] blur-2xl" />
+            
+            <div className="relative bg-[#0a0f1e]/80 backdrop-blur-3xl border border-white/10 p-8 md:p-12 rounded-[3rem] shadow-2xl">
+              <div className="mb-8">
+                <h3 className="text-xl font-black text-white uppercase tracking-tighter">Solicitar Análise de Viabilidade</h3>
+                <p className="text-slate-500 text-xs mt-2 uppercase tracking-widest">Respostas em até 24 horas úteis</p>
+              </div>
+
+              <form className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-2">Razão Social ou CNPJ</label>
+                  <input 
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm outline-none focus:border-yellow-500 focus:bg-white/10 transition-all placeholder:text-slate-700"
+                    placeholder="Identificação da empresa"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-2">WhatsApp Responsável</label>
+                    <input 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm outline-none focus:border-yellow-500 focus:bg-white/10 transition-all placeholder:text-slate-700"
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-2">Média de Consumo (R$)</label>
+                    <select className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm outline-none focus:border-yellow-500 transition-all appearance-none cursor-pointer">
+                      <option className="bg-slate-900">Até R$ 5.000</option>
+                      <option className="bg-slate-900">R$ 5.000 a R$ 20.000</option>
+                      <option className="bg-slate-900">Acima de R$ 20.000</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 ml-2">Mensagem (Opcional)</label>
+                  <textarea 
+                    rows={2}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white text-sm outline-none focus:border-yellow-500 focus:bg-white/10 transition-all resize-none placeholder:text-slate-700"
+                    placeholder="Diga-nos como podemos ajudar"
+                  ></textarea>
+                </div>
+
+                <button className="w-full group bg-yellow-500 hover:bg-yellow-400 text-black font-black py-6 rounded-2xl uppercase text-[11px] tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(234,179,8,0.3)] active:scale-95">
+                  <Zap size={16} fill="black" />
+                  Ativar Meu Desconto
+                  <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+                </button>
+
+                <div className="flex items-center justify-center gap-3 pt-4">
+                  <div className="flex -space-x-2">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="w-6 h-6 rounded-full border-2 border-[#0a0f1e] bg-slate-800" />
+                    ))}
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">+150 empresas economizando hoje</span>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+
+        </div>
+      </div>
     </section>
   );
 }

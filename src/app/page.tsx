@@ -5,7 +5,6 @@ import PlantSection from "@/components/PlantSection";
 import Contact from "@/components/Contact";
 import LogosCarousel from "@/components/LogosCarousel";
 import {CurveDivider} from "@/components/CurveDivider";
-import ContactForm from "@/components/ContactForm";
 import Faq from "@/components/Faq";
 
 
@@ -16,19 +15,18 @@ export default function Home() {
       <Hero />
 
       <CurveDivider/>
-      
+
       <Benefits />
            
       <PlantSection />
       
       <LogosCarousel/>
+
+      <Faq/>
       
       <Contact />
       
-      <Faq/>
-
-      <ContactForm/>
-      
+                 
       
     </main>
   );

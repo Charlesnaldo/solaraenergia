@@ -2,16 +2,30 @@
 import { motion } from 'framer-motion';
 import { MapPin, Zap, Layers, ArrowUpRight } from 'lucide-react';
 import { PLANTS } from "@/constants/plants";
+import Image from 'next/image'; // Importar o componente Image
 
 export default function PlantSection() {
   return (
-    <section id="usinas" className="pt-18 pb-25 bg-slate-950 relative overflow-hidden">
-      {/* Detalhe de luz de fundo para não ficar um preto "morto" */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(234,179,8,0.05),transparent_70%)]" />
+    <section id="usinas" className="pt-20 pb-28 bg-slate-950 relative overflow-hidden">
+
+      {/* Fundo de Pontos Sem Erro de CSS */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle fill='%23ffffff' cx='1' cy='1' r='1'/%3E%3C/svg%3E")`,
+            maskImage: 'radial-gradient(circle at center, white, transparent 80%)',
+            WebkitMaskImage: 'radial-gradient(circle at center, white, transparent 80%)'
+          }}
+        />
+
+        {/* Luz Radial Amarela Central */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/10 rounded-full blur-[120px]" />
+      </div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        
-        {/* Cabeçalho de Seção - Agora em Branco/Cinza para contraste */}
+
+        {/* Cabeçalho de Seção */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-6">
           <div className="max-w-xl">
             <span className="text-[10px] font-bold uppercase tracking-normal text-yellow-500/80 block mb-4">
@@ -30,7 +44,7 @@ export default function PlantSection() {
         {/* Grid de Usinas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {PLANTS.map((plant, index) => (
-            <motion.div 
+            <motion.div
               key={plant.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -38,14 +52,16 @@ export default function PlantSection() {
               transition={{ delay: index * 0.1 }}
               className="group bg-white/[0.03] backdrop-blur-sm rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-yellow-500/30 transition-all duration-700"
             >
-              {/* Imagem */}
+              {/* Imagem com Next.js Image Component */}
               <div className="relative h-64 overflow-hidden">
-                <img 
-                  src={plant.image} 
-                  alt={plant.title} 
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[30%] group-hover:grayscale-0"
+                <Image
+                  src={plant.image}
+                  alt={plant.title}
+                  fill
+                  className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[30%] group-hover:grayscale-0"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Otimização de tamanho
                 />
-                
+
                 {/* Status Badge - Floating */}
                 <div className="absolute top-6 left-6">
                   <span className="bg-yellow-500 text-black text-[10px] font-black uppercase tracking-normal px-4 py-1.5 rounded-full shadow-xl">
@@ -61,7 +77,7 @@ export default function PlantSection() {
                     <h3 className="text-xl font-black text-white uppercase tracking-normal mb-1">
                       {plant.title}
                     </h3>
-                    <p className="text-slate-500 text-xs flex items-center gap-1.5 font-bold uppercase tracking-normalt">
+                    <p className="text-slate-500 text-xs flex items-center gap-1.5 font-bold uppercase tracking-normal">
                       <MapPin size={12} className="text-yellow-500" />
                       {plant.location}
                     </p>
@@ -93,7 +109,6 @@ export default function PlantSection() {
           ))}
         </div>
       </div>
-      
     </section>
   );
 }

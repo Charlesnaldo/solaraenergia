@@ -65,7 +65,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-6"
+          className="flex flex-col sm:flex-row items-center justify-center mb-15 gap-6"
         >
           <button className="group relative bg-yellow-500 hover:bg-yellow-400 text-black px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all overflow-hidden active:scale-95 shadow-xl shadow-yellow-500/20">
             <span className="relative z-10 flex items-center gap-3">
@@ -74,7 +74,7 @@ export default function Hero() {
           </button>
 
           <Link href="/#usinas">
-            <button className="px-12 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all mb-15">
+            <button className="px-12 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all ">
               Conhecer Usinas
             </button>
           </Link>
