@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next"; // Importe Viewport aqui
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header"; 
@@ -19,11 +19,27 @@ const poppins = Poppins({
   display: 'swap',
 });
 
+// 1. ADICIONE ESTA CONSTANTE PARA A COR DO IPHONE
+export const viewport: Viewport = {
+  themeColor: "#000814", 
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1, 
+};
+
 export const metadata: Metadata = {
   title: "Solara | Energia Solar Limpa",
   description: "Economize até 95% na sua conta de energia com nossas usinas solares.",
   keywords: ["energia solar", "solara", "economia de energia", "sustentabilidade"],
+  // 2. ADICIONE ISSO PARA MELHORAR A EXPERIÊNCIA NO IOS
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Solara Energia",
+  },
 };
+
+
 
 export default function RootLayout({
   children,
@@ -33,7 +49,6 @@ export default function RootLayout({
   return (
     <html lang="pt-br" className="scroll-smooth">
       <body className={`${inter.className} ${poppins.variable} antialiased bg-slate-950 text-white`}>
-        {/* O Provider carrega o motor de animação de forma assíncrona */}
         <MotionProvider>
           <PreLoader />     
           <Header />

@@ -53,7 +53,7 @@ export default function SimuladorPage() {
           className="relative w-full h-full"
         >
           <Image
-            src="/usinas/beberibe.webp"
+            src="/usinas/beberibe.avif"
             alt="Background"
             fill
             priority

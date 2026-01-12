@@ -24,7 +24,7 @@ export default function ContactUnified() {
           className="absolute inset-0 grayscale brightness-50"
         >
           <Image 
-            src="/usinas/torre.png" 
+            src="/usinas/torre.avif" 
             alt="Fundo Transmissão Solara"
             fill
             className="object-cover"

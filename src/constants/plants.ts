@@ -7,7 +7,7 @@ export const PLANTS = [
     capacity: "2.5 MWp",
     panels: "4.500 placas",
     status: "Operacional",
-    image: "/usinas/croata2.webp"
+    image: "/usinas/croata2.avif"
   },
   {
     id: 2,
@@ -16,7 +16,7 @@ export const PLANTS = [
     capacity: "25.0 MWp",
     panels: "9.200 placas",
     status: "em Expansão",
-    image: "/usinas/croata.webp"
+    image: "/usinas/croata.avif"
   },
   {
     id: 3,
@@ -25,6 +25,6 @@ export const PLANTS = [
     capacity: "1.8 MWp",
     panels: "3.100 placas",
     status: "Operacional",
-    image: "/usinas/beberibe.webp"
+    image: "/usinas/beberibe.avif"
   }
 ];

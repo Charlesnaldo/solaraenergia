@@ -9,28 +9,28 @@ const storyMilestones = [
     title: "O Problema de um Amigo",
     description: "Tudo começou quando Alan Douglas decidiu ajudar um amigo empresário que pagava muito caro na conta de energia. Ao resolver esse desafio, Alan enxergou o poder da energia solar para transformar negócios e decidiu que essa seria sua nova missão.",
     icon: <Lightbulb size={24} className="text-yellow-500" />,
-    image: "/usinas/croata.webp" 
+    image: "/usinas/croata.avif" 
   },
   {
     year: "2021",
     title: "A Grande Decisão",
     description: "Acreditando totalmente no projeto, Alan abriu mão de outro negócio consolidado para investir tudo o que tinha em suas próprias usinas. Foi o nascimento da primeira unidade, fruto de coragem e investimento próprio.",
     icon: <Award size={24} className="text-yellow-500" />,
-    image: "/usinas/croata.webp" 
+    image: "/usinas/croata.avif" 
   },
   {
     year: "2023",
     title: "Expansão e Foco",
     description: "O modelo de negócio se provou eficiente. Com foco total na operação e na economia dos clientes, a Solara começou a escalar, consolidando-se como uma referência em inteligência energética no estado.",
     icon: <TrendingUp size={24} className="text-yellow-500" />,
-    image: "/usinas/beberibe.webp" 
+    image: "/usinas/beberibe.avif" 
   },
   {
     year: "2025",
     title: "Três Usinas Próprias",
     description: "Hoje, a Solara celebra a marca de 3 usinas em plena operação e mais duas em pleno desenvolvimento. O que começou com uma ajuda a um amigo tornou-se uma estrutura robusta que gera economia real e sustentabilidade para dezenas de empresas.",
     icon: <MapPin size={24} className="text-yellow-500" />,
-    image: "/usinas/croata2.webp" 
+    image: "/usinas/croata2.avif" 
   }
 ];
 
@@ -101,7 +101,7 @@ export default function AboutUs() {
         {/* Linha do Tempo */}
         <div className="relative">
           {/* Linha Vertical Central Estilizada */}
-          <div className="absolute left-1/2 -translate-x-1/2 h-full w-px bg-gradient-to-b from-transparent via-white/10 to-transparent hidden lg:block" />
+          <div className="absolute left-1/2 -translate-x-1/2 h-full w-px bg-gradient-to-b from-transparent via-white/60 to-transparent hidden lg:block" />
 
           {storyMilestones.map((milestone, index) => (
             <m.div

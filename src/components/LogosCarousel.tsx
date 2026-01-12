@@ -4,12 +4,12 @@ import { m } from 'framer-motion';
 import Image from 'next/image';
 
 const logos = [
-  { src: '/logos/logorickpan.png', alt: 'Cliente rickpan', scale: 'scale-150' },
-  { src: '/logos/logo-comercial-freire.png', alt: 'Cliente comercial freire' },
-  { src: '/logos/logo-comercial-freire.png', alt: 'Economia Farma' },
-  { src: '/logos/logo-comercial-freire.png', alt: 'Cliente 4' },
-  { src: '/logos/logo-comercial-freire.png', alt: 'Cliente 5' },
-  { src: '/logos/logo-comercial-freire.png', alt: 'Cliente 2' },
+  { src: '/logos/logorickpan.avif', alt: 'Cliente rickpan', scale: 'scale-150' },
+  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente comercial freire' },
+  { src: '/logos/logo-comercial-freire.avif', alt: 'Economia Farma' },
+  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente 4' },
+  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente 5' },
+  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente 2' },
 ];
 
 export default function CompactLogos() {
@@ -21,7 +21,7 @@ export default function CompactLogos() {
         <div className="flex-shrink-0 relative w-full md:w-auto">
           <div className="flex items-center justify-center md:justify-start gap-3">
             <div className="w-1 h-8 bg-yellow-500 rounded-full" />
-            <p className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 leading-tight">
+            <p className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-slate-400 leading-tight">
               Junte-se <br className="hidden md:block" />
               <span className="text-white ml-1 md:ml-0">
                 Aos que Confiam na Solara

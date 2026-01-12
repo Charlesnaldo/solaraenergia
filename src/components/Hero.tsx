@@ -12,7 +12,7 @@ export default function Hero() {
       {/* IMAGEM DE FUNDO FIXA */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/usinas/solar-hero.png" 
+          src="/usinas/solar-hero.avif" 
           alt="Painéis solares ao nascer do sol"
           fill
           className="object-cover object-center opacity-40"

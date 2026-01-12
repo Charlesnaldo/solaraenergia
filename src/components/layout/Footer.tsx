@@ -18,10 +18,15 @@ const legalLinks = [
   { label: 'Cookies', href: '/cookies' },
 ];
 
+const socialLinks = [
+  { Icon: Instagram, href: '#', label: 'Siga-nos no Instagram' },
+  { Icon: Linkedin, href: '#', label: 'Conecte-se no Linkedin' },
+  { Icon: Facebook, href: '#', label: 'Curta nossa página no Facebook' },
+];
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
-  // Função centralizada para scroll ao topo
   const scrollToTop = (e: React.MouseEvent) => {
     if (window.location.pathname === '/') {
       e.preventDefault();
@@ -29,14 +34,11 @@ export default function Footer() {
     }
   };
 
-  // Função para scroll suave nos links de âncora
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    // Se o link for "Home" ou o ID for #home, usamos o scrollToTop
     if (href === '#home' || href === '/') {
       scrollToTop(e);
       return;
     }
-
     if (href.startsWith('#')) {
       e.preventDefault();
       const targetId = href.replace('#', '');
@@ -54,44 +56,50 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
           
-          {/* COLUNA 1: LOGO */}
+          {/* COLUNA 1: LOGO E REDES */}
           <div className="space-y-6">
             <Link 
               href="/" 
+              aria-label="Solara Energia - Voltar ao topo"
               className="inline-block"
-              onClick={scrollToTop} // Agora a logo usa a função centralizada
+              onClick={scrollToTop}
             >
               <Image 
                 src="/Solara2.svg" 
-                alt="Solara Energia" 
+                alt="Logo Solara Energia" 
                 width={160} 
                 height={48} 
                 className="h-12 w-auto object-contain"
                 priority
               />
             </Link>
-            <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
+            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
               Transformando o consumo de energia empresarial através de inteligência e sustentabilidade.
             </p>
             <div className="flex gap-4">
-              {[Instagram, Linkedin, Facebook].map((Icon, i) => (
-                <Link key={i} href="#" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-yellow-500 transition-all">
+              {socialLinks.map(({ Icon, href, label }, i) => (
+                <Link 
+                  key={i} 
+                  href={href} 
+                  aria-label={label}
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-yellow-500 transition-all"
+                >
                   <Icon size={18} />
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* COLUNA 2: NAVEGAÇÃO - CORRIGIDA */}
+          {/* COLUNA 2: NAVEGAÇÃO */}
           <div>
-            <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500/80">Navegação</h4>
+            <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500">Navegação</h4>
             <ul className="space-y-4">
               {navLinks.map((link) => (
                 <li key={link.label}>
                   <Link 
                     href={link.href} 
-                    onClick={(e) => handleScroll(e, link.href)} // handleScroll agora trata o #home
-                    className="text-slate-500 text-sm hover:text-white transition-colors"
+                    onClick={(e) => handleScroll(e, link.href)}
+                    className="text-slate-400 text-sm hover:text-white transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -102,43 +110,43 @@ export default function Footer() {
 
           {/* COLUNA 3: CONTATO */}
           <div>
-            <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500/80">Contato</h4>
+            <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500">Contato</h4>
             <div className="space-y-6">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 text-slate-400">
                 <Phone size={16} className="text-yellow-500" />
-                <span className="text-slate-400 text-sm">(11) 99999-9999</span>
+                <span className="text-sm">(85) 99999-9999</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 text-slate-400">
                 <Mail size={16} className="text-yellow-500" />
-                <span className="text-slate-400 text-sm">comercial@solara.com.br</span>
+                <span className="text-sm">comercial@solara.com.br</span>
               </div>
             </div>
           </div>
 
-          {/* COLUNA 4: MATRIZ */}
+          {/* COLUNA 4: MATRIZ CEARÁ */}
           <div>
-            <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500/80">Matriz</h4>
+            <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500">Matriz</h4>
             <div className="flex gap-3">
               <MapPin size={16} className="text-yellow-500 shrink-0" />
-              <p className="text-slate-500 text-sm leading-relaxed">
-                Av. Paulista, 1000<br />Bela Vista - São Paulo / SP
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Fortaleza, Ceará<br />Nordeste - Brasil
               </p>
             </div>
           </div>
         </div>
 
-        {/* BARRA FINAL */}
+        {/* BARRA FINAL - CONTRASTE MELHORADO */}
         <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
           <div className="space-y-2">
-            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               © {currentYear} SOLARA ENERGIA LTDA.
             </p>
-            <p className="text-[9px] font-bold text-slate-700 uppercase tracking-widest">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
               CNPJ: 00.000.000/0001-00
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+          <div className="flex flex-wrap justify-center gap-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
             {legalLinks.map((link) => (
               <Link key={link.label} href={link.href} className="hover:text-yellow-500 transition-colors">
                 {link.label}
