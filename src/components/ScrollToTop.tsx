@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// 1. Trocamos motion por m (AnimatePresence permanece igual)
+import { m, AnimatePresence } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Lógica para mostrar o botão apenas após rolar 400px
   useEffect(() => {
     const toggleVisibility = () => {
       if (window.scrollY > 400) {
@@ -30,7 +30,8 @@ export default function ScrollToTop() {
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.button
+        // 2. Trocado para m.button
+        <m.button
           initial={{ opacity: 0, scale: 0.5, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.5, y: 20 }}
@@ -44,13 +45,13 @@ export default function ScrollToTop() {
         >
           <ArrowUp size={24} strokeWidth={3} />
           
-          {/* Efeito de brilho pulsante atrás do botão */}
-          <motion.div 
+          {/* 3. Trocado para m.div (Efeito de brilho pulsante) */}
+          <m.div 
             animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0, 0.3] }}
             transition={{ repeat: Infinity, duration: 2 }}
             className="absolute inset-0 bg-yellow-500 rounded-full -z-10"
           />
-        </motion.button>
+        </m.button>
       )}
     </AnimatePresence>
   );

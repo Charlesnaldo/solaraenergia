@@ -1,5 +1,6 @@
 'use client';
-import { motion } from 'framer-motion';
+// 1. Alterado de motion para m
+import { m } from 'framer-motion';
 import { MessageSquare, ArrowRight, Sparkles, ShieldCheck, CheckCircle2, Zap } from 'lucide-react';
 import Image from 'next/image';
 
@@ -10,13 +11,15 @@ export default function ContactUnified() {
   return (
     <section id="contato" className="relative py-24 md:py-32 bg-[#020617] overflow-hidden">
       
-      {/* --- FUNDO IDENTICO AO BENEFICIOS --- */}
+      {/* --- FUNDO OTIMIZADO --- */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(234,179,8,0.08),transparent_50%),radial-gradient(circle_at_80%_70%,rgba(234,179,8,0.08),transparent_50%)]" />
         
-        <motion.div 
+        {/* 2. Trocado para m.div */}
+        <m.div 
           initial={{ scale: 1.1, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 0.15 }}
+          viewport={{ once: true }}
           transition={{ duration: 2 }}
           className="absolute inset-0 grayscale brightness-50"
         >
@@ -25,9 +28,10 @@ export default function ContactUnified() {
             alt="Fundo Transmissão Solara"
             fill
             className="object-cover"
-            priority
+            sizes="100vw"
+            quality={60} // Qualidade reduzida para imagem de fundo (melhora o carregamento)
           />
-        </motion.div>
+        </m.div>
 
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
@@ -38,9 +42,10 @@ export default function ContactUnified() {
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
-          {/* LADO ESQUERDO: Argumentos de Venda */}
+          {/* LADO ESQUERDO */}
           <div className="space-y-10">
-            <motion.div
+            {/* 3. Trocado para m.div */}
+            <m.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -56,9 +61,9 @@ export default function ContactUnified() {
                 <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 italic">Custos Fixos.</span>
               </h2>
               <p className="text-slate-400 text-lg leading-relaxed mt-8 max-w-md border-l-2 border-yellow-500/30 pl-6">
-                Ative sua assinatura de energia limpa e economize mensalmente <span className="text-white font-bold text-shadow-sm">sem precisar de obras ou investimentos.</span>
+                Ative sua assinatura de energia limpa e economize mensalmente <span className="text-white font-bold">sem precisar de obras ou investimentos.</span>
               </p>
-            </motion.div>
+            </m.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {["Zero investimento", "Sem obras físicas", "Economia em contrato", "Energia 100% Verde"].map((text, i) => (
@@ -69,7 +74,6 @@ export default function ContactUnified() {
               ))}
             </div>
 
-            {/* Atalho rápido para WhatsApp */}
             <div className="pt-4">
               <a 
                 href={`https://wa.me/${whatsappNumber}?text=${message}`}
@@ -83,7 +87,8 @@ export default function ContactUnified() {
           </div>
 
           {/* LADO DIREITO: Formulário Terminal */}
-          <motion.div 
+          {/* 4. Trocado para m.div */}
+          <m.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -138,18 +143,9 @@ export default function ContactUnified() {
                   Ativar Meu Desconto
                   <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                 </button>
-
-                <div className="flex items-center justify-center gap-3 pt-4">
-                  <div className="flex -space-x-2">
-                    {[1,2,3].map(i => (
-                      <div key={i} className="w-6 h-6 rounded-full border-2 border-[#0a0f1e] bg-slate-800" />
-                    ))}
-                  </div>
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">+150 empresas economizando hoje</span>
-                </div>
               </form>
             </div>
-          </motion.div>
+          </m.div>
 
         </div>
       </div>

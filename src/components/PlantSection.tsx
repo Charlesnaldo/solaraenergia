@@ -1,14 +1,15 @@
 'use client';
-import { motion } from 'framer-motion';
+// 1. Trocamos motion por m
+import { m } from 'framer-motion';
 import { MapPin, Zap, Layers, ArrowUpRight } from 'lucide-react';
 import { PLANTS } from "@/constants/plants";
-import Image from 'next/image'; // Importar o componente Image
+import Image from 'next/image';
 
 export default function PlantSection() {
   return (
     <section id="usinas" className="pt-20 pb-28 bg-slate-950 relative overflow-hidden">
 
-      {/* Fundo de Pontos Sem Erro de CSS */}
+      {/* Fundo de Pontos */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div
           className="absolute inset-0 opacity-20"
@@ -18,8 +19,6 @@ export default function PlantSection() {
             WebkitMaskImage: 'radial-gradient(circle at center, white, transparent 80%)'
           }}
         />
-
-        {/* Luz Radial Amarela Central */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/10 rounded-full blur-[120px]" />
       </div>
 
@@ -44,11 +43,12 @@ export default function PlantSection() {
         {/* Grid de Usinas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {PLANTS.map((plant, index) => (
-            <motion.div
+            /* 2. Trocado para m.div */
+            <m.div
               key={plant.id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-50px" }} // Ativa um pouco antes de entrar totalmente na tela
               transition={{ delay: index * 0.1 }}
               className="group bg-white/[0.03] backdrop-blur-sm rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-yellow-500/30 transition-all duration-700"
             >
@@ -59,10 +59,10 @@ export default function PlantSection() {
                   alt={plant.title}
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[30%] group-hover:grayscale-0"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Otimização de tamanho
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  // Removido o priority aqui, pois as usinas costumam ficar abaixo da dobra (Below the fold)
                 />
 
-                {/* Status Badge - Floating */}
                 <div className="absolute top-6 left-6">
                   <span className="bg-yellow-500 text-black text-[10px] font-black uppercase tracking-normal px-4 py-1.5 rounded-full shadow-xl">
                     {plant.status}
@@ -70,7 +70,7 @@ export default function PlantSection() {
                 </div>
               </div>
 
-              {/* Conteúdo - Dark Mode */}
+              {/* Conteúdo */}
               <div className="p-8">
                 <div className="flex justify-between items-start mb-8">
                   <div>
@@ -87,7 +87,7 @@ export default function PlantSection() {
                   </div>
                 </div>
 
-                {/* Specs Grid com Design de Painel */}
+                {/* Specs Grid */}
                 <div className="grid grid-cols-2 gap-0 border-t border-white/5">
                   <div className="py-6 pr-4 border-r border-white/5">
                     <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase font-black tracking-normal mb-2">
@@ -105,7 +105,7 @@ export default function PlantSection() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           ))}
         </div>
       </div>

@@ -1,5 +1,6 @@
 'use client';
-import { motion } from 'framer-motion';
+// 1. Alterado de motion para m
+import { m } from 'framer-motion';
 
 export function CurveDivider() {
   
@@ -14,7 +15,8 @@ export function CurveDivider() {
 
   return (
     <div className="py-8 bg-slate-950 overflow-hidden flex whitespace-nowrap border-y border-white/5">
-      <motion.div 
+      {/* 2. Trocado para m.div */}
+      <m.div 
         animate={{ x: [0, -1500] }} 
         transition={{ 
           repeat: Infinity, 
@@ -37,7 +39,7 @@ export function CurveDivider() {
             ))}
           </div>
         ))}
-      </motion.div>
+      </m.div>
     </div>
   );
 }

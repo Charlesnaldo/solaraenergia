@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 
-// 1. Definição dos Links de Navegação (Âncoras do Menu)
 const navLinks = [
   { label: 'Home', href: '#home' },
   { label: 'Como Funciona', href: '#faq' },
@@ -13,9 +12,8 @@ const navLinks = [
   { label: 'Contato', href: '#contato' },
 ];
 
-// 2. Definição dos Links Jurídicos
 const legalLinks = [
-  { label: 'Termos de Uso', href: '/termos' },
+  { label: 'Termos de Uso', href: '/termos-de-uso' },
   { label: 'Políticas de Privacidade', href: '/privacidade' },
   { label: 'Cookies', href: '/cookies' },
 ];
@@ -23,17 +21,46 @@ const legalLinks = [
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
+  // Função centralizada para scroll ao topo
+  const scrollToTop = (e: React.MouseEvent) => {
+    if (window.location.pathname === '/') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Função para scroll suave nos links de âncora
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    // Se o link for "Home" ou o ID for #home, usamos o scrollToTop
+    if (href === '#home' || href === '/') {
+      scrollToTop(e);
+      return;
+    }
+
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.replace('#', '');
+      const elem = document.getElementById(targetId);
+      if (elem) {
+        elem.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
     <footer className="relative bg-[#000814] pt-24 pb-12 overflow-hidden border-t border-white/5">
-      {/* Detalhe de luz superior */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
       
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
           
-          {/* COLUNA 1: LOGO E REDES SOCIAIS */}
+          {/* COLUNA 1: LOGO */}
           <div className="space-y-6">
-            <Link href="/" className="inline-block">
+            <Link 
+              href="/" 
+              className="inline-block"
+              onClick={scrollToTop} // Agora a logo usa a função centralizada
+            >
               <Image 
                 src="/Solara2.svg" 
                 alt="Solara Energia" 
@@ -55,13 +82,17 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* COLUNA 2: NAVEGAÇÃO (Usando a Variável) */}
+          {/* COLUNA 2: NAVEGAÇÃO - CORRIGIDA */}
           <div>
             <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500/80">Navegação</h4>
             <ul className="space-y-4">
               {navLinks.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-slate-500 text-sm hover:text-white transition-colors">
+                  <Link 
+                    href={link.href} 
+                    onClick={(e) => handleScroll(e, link.href)} // handleScroll agora trata o #home
+                    className="text-slate-500 text-sm hover:text-white transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -94,16 +125,15 @@ export default function Footer() {
               </p>
             </div>
           </div>
-
         </div>
 
-        {/* BARRA FINAL (Usando a Variável Legal) */}
+        {/* BARRA FINAL */}
         <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
           <div className="space-y-2">
             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
               © {currentYear} SOLARA ENERGIA LTDA.
             </p>
-            <p className="text-[9px] font-bold text-slate-700 uppercase tracking-widest text-center md:text-left">
+            <p className="text-[9px] font-bold text-slate-700 uppercase tracking-widest">
               CNPJ: 00.000.000/0001-00
             </p>
           </div>

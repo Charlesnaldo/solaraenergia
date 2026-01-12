@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// 1. Trocamos motion por m (AnimatePresence continua igual)
+import { m, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react'; 
 
-// Mova para fora para evitar recriação em cada render
 const faqs = [
   {
     question: "Preciso fazer algum investimento ou obra?",
@@ -27,18 +27,16 @@ export default function Faq() {
   const [activeId, setActiveId] = useState<number | null>(null);
 
   return (
-    // O ID "faq" aqui é o que o Footer vai buscar no navLinks
     <section id="faq" className="py-32 bg-[#020617] relative overflow-hidden">
       
-      {/* Efeito de iluminação para combinar com o Footer e Benefícios */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[600px] h-[600px] bg-yellow-500/[0.03] rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-6 relative z-10">
         <div className="flex flex-col lg:flex-row gap-16 items-start">
           
-          {/* Lado Esquerdo: Título com a tipografia Solara */}
           <div className="lg:w-2/5 lg:sticky lg:top-32">
-            <motion.div
+            {/* 2. Trocado para m.div */}
+            <m.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -53,13 +51,13 @@ export default function Faq() {
               <p className="text-slate-400 text-base mt-8 leading-relaxed max-w-sm border-l border-yellow-500/30 pl-6">
                 Tudo o que você precisa saber para digitalizar sua conta de luz e economizar.
               </p>
-            </motion.div>
+            </m.div>
           </div>
 
-          {/* Lado Direito: Accordion */}
           <div className="lg:w-3/5 w-full space-y-4">
             {faqs.map((faq, index) => (
-              <motion.div 
+              /* 3. Trocado para m.div */
+              <m.div 
                 key={index}
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -92,7 +90,8 @@ export default function Faq() {
 
                 <AnimatePresence>
                   {activeId === index && (
-                    <motion.div
+                    /* 4. Trocado para m.div */
+                    <m.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
@@ -103,10 +102,10 @@ export default function Faq() {
                           {faq.answer}
                         </p>
                       </div>
-                    </motion.div>
+                    </m.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </m.div>
             ))}
           </div>
 
