@@ -75,12 +75,14 @@ export default function SimuladorPage() {
       )}
 
       <div className="relative z-10 w-full max-w-2xl my-auto py-10">
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-yellow-500 mb-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all group"
-        >
-          <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Voltar ao Início
-        </Link>
+  {/* Adicionei 'pt-6' para mobile e removi no desktop se necessário */}
+  <Link 
+    href="/" 
+    aria-label="Voltar para a página inicial"
+    className="inline-flex items-center gap-2 text-slate-200 hover:text-yellow-500 mb-6 mt-4 md:mt-0 text-[10px] font-black uppercase tracking-[0.2em] transition-all group pt-4 md:pt-0"
+  >
+    <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Voltar ao Início
+  </Link>
 
         <div className="bg-slate-900/90 border border-white/10 p-6 md:p-10 rounded-[2rem] backdrop-blur-3xl shadow-2xl overflow-hidden">
           <AnimatePresence mode="wait">

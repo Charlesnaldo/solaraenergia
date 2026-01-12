@@ -138,10 +138,10 @@ export default function Footer() {
         {/* BARRA FINAL - CONTRASTE MELHORADO */}
         <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
           <div className="space-y-2">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               © {currentYear} SOLARA ENERGIA LTDA.
             </p>
-            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
               CNPJ: 00.000.000/0001-00
             </p>
           </div>

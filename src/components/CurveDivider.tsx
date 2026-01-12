@@ -30,7 +30,7 @@ export function CurveDivider() {
           <div key={i} className="flex items-center gap-12">
             {words.map((word, index) => (
               <div key={index} className="flex items-center gap-12">
-                <span className="text-white/30 text-[10px] font-bold uppercase tracking-[0.6em]">
+                <span className="text-white/50 text-[10px] font-bold uppercase tracking-[0.6em]">
                   {word}
                 </span>
                 
