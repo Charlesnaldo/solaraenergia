@@ -5,13 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/Button';
 import LoginModal from '@/components/LoginModal';
-
-const menuItems = [
-  { name: 'Início', href: '/#inicio' },
-  { name: 'Nossas Usinas', href: '/#usinas' },
-  { name: 'Sobre Nós', href: '/sobre' },
-  { name: 'Simulador', href: '/simulador-economia' },
-];
+import { HEADER_MENU_ITEMS } from "@/constants";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,17 +25,17 @@ export default function Header() {
           ? 'bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-3 px-8 shadow-2xl'
           : 'bg-transparent py-6 px-6'} flex items-center justify-between`}>
 
-          {/* Logo - Adicionado aria-label para SEO */}
+          {/* Logo */}
           <Link href="/" aria-label="Solara Energia - Voltar para início" className="flex items-center gap-3 group shrink-0">
             <div className="relative w-32 h-12 md:w-40 md:h-14 transition-transform duration-300 group-hover:scale-105">
               <Image src="/Solara2.svg" alt="Logo Solara Energia" fill className="object-contain" priority />
             </div>
           </Link>
 
-          {/* Desktop Menu */}
+          {/* Desktop Menu - Usando HEADER_MENU_ITEMS */}
           <nav className="hidden md:flex items-center">
             <div className="flex items-center gap-2">
-              {menuItems.map((item) => (
+              {HEADER_MENU_ITEMS.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -59,7 +53,7 @@ export default function Header() {
               icon={MessageSquare}
             />
 
-            {/* LOGIN - Adicionado aria-label */}
+            {/* LOGIN */}
             <div className="flex items-center border-l border-white/10 pl-6 ml-4 mr-6">
               <button
                 onClick={() => setIsLoginOpen(true)}
@@ -74,7 +68,7 @@ export default function Header() {
             </div>
           </nav>
 
-          {/* Mobile Toggle - CORREÇÃO LIGHTHOUSE: Adicionado aria-label */}
+          {/* Mobile Toggle */}
           <button 
             className="md:hidden p-2 text-white bg-white/5 rounded-full border border-white/10" 
             onClick={() => setIsOpen(!isOpen)}
@@ -85,10 +79,10 @@ export default function Header() {
           </button>
         </div>
 
-        {/* Mobile Menu Overlay */}
+        {/* Mobile Menu Overlay - Usando HEADER_MENU_ITEMS */}
         {isOpen && (
           <div className="absolute top-24 left-4 right-4 bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 flex flex-col gap-6 text-white md:hidden animate-in fade-in zoom-in-95 duration-300 shadow-2xl z-[60]">
-            {menuItems.map((item) => (
+            {HEADER_MENU_ITEMS.map((item) => (
               <Link key={item.name} href={item.href} className="text-lg tracking-widest border-b border-white/5 pb-2 transition-colors hover:text-yellow-500" onClick={() => setIsOpen(false)}>
                 {item.name}
               </Link>

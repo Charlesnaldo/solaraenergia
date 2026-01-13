@@ -2,27 +2,8 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
-
-const navLinks = [
-  { label: 'Home', href: '#home' },
-  { label: 'Como Funciona', href: '#faq' },
-  { label: 'Benefícios', href: '#beneficios' },
-  { label: 'Usinas', href: '#usinas' },
-  { label: 'Contato', href: '#contato' },
-];
-
-const legalLinks = [
-  { label: 'Termos de Uso', href: '/termos-de-uso' },
-  { label: 'Políticas de Privacidade', href: '/privacidade' },
-  { label: 'Cookies', href: '/cookies' },
-];
-
-const socialLinks = [
-  { Icon: Instagram, href: '#', label: 'Siga-nos no Instagram' },
-  { Icon: Linkedin, href: '#', label: 'Conecte-se no Linkedin' },
-  { Icon: Facebook, href: '#', label: 'Curta nossa página no Facebook' },
-];
+import { Mail, MapPin, Phone } from 'lucide-react';
+import { NAV_LINKS, SOCIAL_LINKS, LEGAL_LINKS } from "@/constants";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -60,7 +41,6 @@ export default function Footer() {
           <div className="space-y-6">
             <Link 
               href="/" 
-              aria-label="Solara Energia - Voltar ao topo"
               className="inline-block"
               onClick={scrollToTop}
             >
@@ -77,7 +57,7 @@ export default function Footer() {
               Transformando o consumo de energia empresarial através de inteligência e sustentabilidade.
             </p>
             <div className="flex gap-4">
-              {socialLinks.map(({ Icon, href, label }, i) => (
+              {SOCIAL_LINKS.map(({ Icon, href, label }, i) => (
                 <Link 
                   key={i} 
                   href={href} 
@@ -94,7 +74,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500">Navegação</h4>
             <ul className="space-y-4">
-              {navLinks.map((link) => (
+              {NAV_LINKS.map((link) => (
                 <li key={link.label}>
                   <Link 
                     href={link.href} 
@@ -108,34 +88,60 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* COLUNA 3: CONTATO */}
-          <div>
-            <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500">Contato</h4>
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 text-slate-400">
-                <Phone size={16} className="text-yellow-500" />
-                <span className="text-sm">(85) 99999-9999</span>
+          {/* COLUNA 3: CONTATO E DOWNLOAD APPS */}
+          <div className="space-y-10">
+            <div>
+              <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500">Contato</h4>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-slate-400">
+                  <Phone size={16} className="text-yellow-500" />
+                  <span className="text-sm">(85) 99999-9999</span>
+                </div>
+                <div className="flex items-center gap-3 text-slate-400">
+                  <Mail size={16} className="text-yellow-500" />
+                  <span className="text-sm">comercial@solara.com.br</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-slate-400">
-                <Mail size={16} className="text-yellow-500" />
-                <span className="text-sm">comercial@solara.com.br</span>
+            </div>
+
+            <div className="space-y-4 pt-6 border-t border-white/5">
+              <h4 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Nosso Aplicativo</h4>
+              <div className="flex flex-col gap-3">
+                <Link href="/app" className="transition-transform hover:scale-105 active:scale-95 w-fit">
+                  <Image 
+                    src="/app/rnk-aplicativo-google-play.png" 
+                    alt="Disponível na Google Play" 
+                    width={135} 
+                    height={40} 
+                    className="h-9 w-auto object-contain"
+                  />
+                </Link>
+                <Link href="/app" className="transition-transform hover:scale-105 active:scale-95 w-fit">
+                  <Image 
+                    src="/app/rnk-aplicativo-app-store.png" 
+                    alt="Disponível na App Store" 
+                    width={135} 
+                    height={40} 
+                    className="h-9 w-auto object-contain"
+                  />
+                </Link>
               </div>
             </div>
           </div>
 
-          {/* COLUNA 4: MATRIZ CEARÁ */}
+          {/* COLUNA 4: MATRIZ */}
           <div>
             <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500">Matriz</h4>
             <div className="flex gap-3">
               <MapPin size={16} className="text-yellow-500 shrink-0" />
               <p className="text-slate-400 text-sm leading-relaxed">
-                Fortaleza, Ceará<br />Nordeste - Brasil
+                Fortaleza, Ceará<br /> Brasil
               </p>
             </div>
           </div>
         </div>
 
-        {/* BARRA FINAL - CONTRASTE MELHORADO */}
+        {/* BARRA FINAL */}
         <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
           <div className="space-y-2">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -147,7 +153,7 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            {legalLinks.map((link) => (
+            {LEGAL_LINKS.map((link) => (
               <Link key={link.label} href={link.href} className="hover:text-yellow-500 transition-colors">
                 {link.label}
               </Link>

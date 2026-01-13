@@ -34,7 +34,7 @@ export default function Hero() {
         >
           <Zap size={14} className="text-yellow-500 fill-yellow-500" />
           <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] text-slate-300">
-            A Revolução Energética
+            Energia Solar por Assinatura
           </span>
         </m.div>
 
@@ -58,7 +58,7 @@ export default function Hero() {
           transition={{ duration: 1, delay: 0.3 }}
           className="max-w-2xl mx-auto text-sm md:text-lg text-slate-400 leading-relaxed mb-12"
         >
-          Reduza seus custos em até 95% e transforme sua empresa com a inteligência fotovoltaica da Solara.
+          Reduza seus custos em até 95% e transforme sua empresa, toda a economia do sol, sem nenhuma placa no seu telhado..
         </m.p>
 
         {/* Botões - Trocado para m.div */}

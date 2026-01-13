@@ -62,7 +62,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClo
                 
                 {/* Campo E-mail */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">E-mail corporativo</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail corporativo</label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-yellow-500 transition-colors" size={18} />
                     <input 
@@ -76,7 +76,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClo
                 {/* Campo Senha */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center px-1">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Senha secreta</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Senha secreta</label>
                     <button type="button" className="text-[10px] font-black text-yellow-500/60 hover:text-yellow-500 uppercase tracking-widest transition-colors">Esqueceu?</button>
                   </div>
                   <div className="relative group">
@@ -107,7 +107,7 @@ export default function LoginModal({ isOpen, onClose }: { isOpen: boolean; onClo
 
               {/* Rodapé */}
               <div className="mt-8 pt-6 border-t border-white/5 text-center relative z-10">
-                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                <p className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">
                   Solara &copy; 2026 - Tecnologia Fotovoltaica
                 </p>
               </div>
