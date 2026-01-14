@@ -68,14 +68,14 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="flex flex-col sm:flex-row items-center justify-center mb-15 gap-6"
         >
-          <button className="group relative bg-yellow-500 hover:bg-yellow-400 text-black px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all overflow-hidden active:scale-95 shadow-xl shadow-yellow-500/20">
+          <button className="cursor-pointer group relative bg-yellow-500 hover:bg-yellow-400 text-black px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all overflow-hidden active:scale-95 shadow-xl shadow-yellow-500/20">
             <span className="relative z-10 flex items-center gap-3">
               Solicitar Orçamento <ArrowRight size={18} />
             </span>
           </button>
 
           <Link href="/#usinas">
-            <button className="px-12 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all ">
+            <button className="px-12 py-5 rounded-2xl font-bold text-xs uppercase tracking-widest text-white border border-white/10 hover:bg-white/5 transition-all cursor-pointer ">
               Conhecer Usinas
             </button>
           </Link>
