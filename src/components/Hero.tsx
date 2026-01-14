@@ -45,9 +45,9 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.1 }}
           className="text-2xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-8"
         >
-          Enquanto você paga caro, <br className="hidden md:block" />
+          Digitalize sua conta de energia <br className="hidden md:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600 drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]">
-            o sol entra grátis na sua casa todos os dias.
+            e receba os créditos de nossas usinas.
           </span>
         </m.h1>
 
@@ -58,7 +58,7 @@ export default function Hero() {
           transition={{ duration: 1, delay: 0.3 }}
           className="max-w-2xl mx-auto text-sm md:text-lg text-slate-400 leading-relaxed mb-12"
         >
-          Reduza seus custos em até 95% e transforme sua empresa, toda a economia do sol, sem nenhuma placa no seu telhado..
+          Conecte sua empresa às usinas Solara e reduza sua fatura em até 95%. Tecnologia de ponta e economia real, sem a burocracia de instalar painéis no seu estabelecimento.
         </m.p>
 
         {/* Botões - Trocado para m.div */}

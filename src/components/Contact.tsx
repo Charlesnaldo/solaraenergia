@@ -153,7 +153,7 @@ export default function ContactUnified() {
 
                 <button 
                   type="submit"
-                  className="w-full group bg-yellow-500 hover:bg-yellow-400 text-black font-black py-6 rounded-2xl uppercase text-[11px] tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(234,179,8,0.3)] active:scale-95"
+                  className="cursor-pointer w-full group bg-yellow-500 hover:bg-yellow-400 text-black font-black py-6 rounded-2xl uppercase text-[11px] tracking-[0.3em] transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_-10px_rgba(234,179,8,0.3)] active:scale-95"
                 >
                   <Zap size={16} fill="black" />
                   Ativar Meu Desconto

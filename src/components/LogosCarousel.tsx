@@ -1,15 +1,19 @@
 'use client';
-// 1. Trocamos motion por m
+
 import { m } from 'framer-motion';
 import Image from 'next/image';
 
 const logos = [
-  { src: '/logos/logorickpan.avif', alt: 'Cliente rickpan', scale: 'scale-150' },
-  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente comercial freire' },
-  { src: '/logos/logo-comercial-freire.avif', alt: 'Economia Farma' },
-  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente 4' },
-  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente 5' },
-  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente 2' },
+  { src: '/logos/logorickpan.avif', alt: 'Cliente rickpan', scale: 'scale-[1.5]' },
+  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente comercial freire', scale: 'scale-110' },
+  { src: '/logos/shark.png', alt: 'Shark', scale: 'scale-180' }, 
+  { src: '/logos/economiafarma.png', alt: 'Economia Farma', scale: 'scale-300' },
+  
+  { src: '/logos/logorickpan.avif', alt: 'Cliente rickpan', scale: 'scale-[1.5]' },
+  { src: '/logos/logo-comercial-freire.avif', alt: 'Cliente comercial freire', scale: 'scale-110' },
+  { src: '/logos/shark.png', alt: 'Shark', scale: 'scale-180' }, 
+   { src: '/logos/economiafarma.png', alt: 'Economia Farma', scale: 'scale-300' },
+  
 ];
 
 export default function CompactLogos() {

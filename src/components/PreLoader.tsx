@@ -8,21 +8,20 @@ export default function PreLoader() {
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    // Aceleração agressiva para melhorar métricas de FCP/LCP
+    
     const interval = setInterval(() => {
       setLoadingProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          // O Google "vê" o conteúdo quando esse timer dispara. 
-          // 50ms é o "sweet spot" entre percepção visual e nota técnica.
+          
           setTimeout(() => setIsComplete(true), 50); 
           return 100;
         }
-        // Incremento rápido até 80%, depois suaviza (psicologia do loading)
+        
         const increment = prev > 80 ? 2 : 6; 
         return prev + increment;
       });
-    }, 15); // Reduzido de 25ms para 15ms para maior fluidez
+    }, 15); 
 
     const safetyTimer = setTimeout(() => setIsComplete(true), 3500);
 
@@ -44,7 +43,7 @@ export default function PreLoader() {
           }}
           className="fixed inset-0 z-[9999] bg-[#020617] flex items-center justify-center touch-none select-none"
         >
-          {/* FUNDO OTIMIZADO: Usando opacidade fixa para evitar recalculation de mesh */}
+          
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(255,184,0,0.02)_0%,_transparent_50%)]" />
 
           <div className="relative flex flex-col items-center justify-center w-full px-6">

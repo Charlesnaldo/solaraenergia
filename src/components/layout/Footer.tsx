@@ -105,7 +105,7 @@ export default function Footer() {
             </div>
 
             <div className="space-y-4 pt-6 border-t border-white/5">
-              <h4 className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Nosso Aplicativo</h4>
+              <h4 className="text-white font-bold uppercase text-[11px] tracking-[0.3em] mb-8 text-yellow-500">Nosso Aplicativo</h4>
               <div className="flex flex-col gap-3">
                 <Link href="/app" className="transition-transform hover:scale-105 active:scale-95 w-fit">
                   <Image 

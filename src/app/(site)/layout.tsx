@@ -1,6 +1,6 @@
-import type { Metadata, Viewport } from "next"; // Importe Viewport aqui
+import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
-// import "../globals.css";
+import "../globals.css";
 import Header from "@/components/layout/Header"; 
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -19,24 +19,30 @@ const poppins = Poppins({
   display: 'swap',
 });
 
-// 1. ADICIONE ESTA CONSTANTE PARA A COR DO IPHONE
 export const viewport: Viewport = {
   themeColor: "#000814", 
   width: "device-width",
   initialScale: 1,
-  // maximumScale: 1, 
 };
 
 export const metadata: Metadata = {
-  title: "Solara | Energia Solar Limpa",
+  
+  metadataBase: new URL(
+    process.env.NODE_ENV === 'production' 
+      ? 'https://solaraenergia.com.br' 
+      : 'http://localhost:3000'
+  ),
+  
+  title: "Solara | Energia Por Assinatura",
   description: "Economize até 95% na sua conta de energia com nossas usinas solares.",
-  keywords: ["energia solar", "solara", "economia de energia", "sustentabilidade"],
-  // 2. ADICIONE ISSO PARA MELHORAR A EXPERIÊNCIA NO IOS
+  keywords: ["energia solar", "solara", "economia de energia", "solara energia", "sustentabilidade"],
+  
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Solara Energia",
   },
+  
   openGraph: {
     title: "Solara Energia | Energia por Assinatura",
     description: "Reduza seus custos mensais com energia limpa gerada em nossas usinas no Ceará.",
@@ -46,7 +52,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/og-image.png', // Crie uma imagem de 1200x630 para o Google/WhatsApp
+        url: '/og-image.png', 
         width: 1200,
         height: 630,
         alt: 'Solara Energia Fortaleza',
@@ -54,9 +60,6 @@ export const metadata: Metadata = {
     ],
   },
 };
-
-
-
 
 export default function RootLayout({
   children,
