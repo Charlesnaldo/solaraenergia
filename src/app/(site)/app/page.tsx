@@ -7,7 +7,7 @@ import { m } from 'framer-motion'; // Importamos 'm' em vez de 'motion'
 
 export default function AppComingSoon() {
   return (
-    <div className="min-h-screen bg-[#000814] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <div className="pt-27 min-h-screen bg-[#000814] flex flex-col items-center justify-start px-6 relative overflow-hidden">
       {/* Efeito de luz de fundo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-yellow-500/10 rounded-full blur-[120px] pointer-events-none" />
 
