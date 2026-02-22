@@ -7,9 +7,23 @@ import Button from '@/components/Button';
 import LoginModal from '@/components/LoginModal';
 import { HEADER_MENU_ITEMS } from "@/constants";
 
+function getInitialLoginState() {
+  if (typeof window === 'undefined') {
+    return { isOpen: false, nextPath: '/admin' };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return {
+    isOpen: params.get('login') === '1',
+    nextPath: params.get('next') || '/admin',
+  };
+}
+
 export default function Header() {
+  const initial = getInitialLoginState();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(initial.isOpen);
+  const [loginRedirectPath] = useState(initial.nextPath);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -25,25 +39,22 @@ export default function Header() {
           ? 'bg-black/40 backdrop-blur-md border border-white/10 rounded-full py-3 px-8 shadow-2xl'
           : 'bg-transparent py-6 px-6'} flex items-center justify-between`}>
 
-          {/* Logo - Mantida conforme solicitado */}
           <Link href="/" aria-label="Solara Energia" className="flex items-center gap-0 group shrink-0">
             <div className="relative w-32 h-12 md:w-40 md:h-14 transition-transform duration-300 group-hover:scale-105">
               <Image src="/Solara2.svg" alt="Logo Solara Energia" fill className="object-contain" priority />
             </div>
           </Link>
 
-          {/* Desktop Menu - Ativa apenas em telas grandes (lg: 1024px+) */}
           <nav className="hidden lg:flex items-center">
-            <div className="flex items-center gap-0"> {/* Gap zero para controle total via padding */}
+            <div className="flex items-center gap-0">
               {HEADER_MENU_ITEMS.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   className="py-2 text-white/80 hover:text-yellow-400 hover:bg-white/5 rounded-full transition-all duration-300 whitespace-nowrap
-                    /* Tipografia Fluida para não ficar pequena demais */
-                    text-[clamp(16px,1.2vw,16px)] 
-                    font-semibold min-[1200px]:font-normal 
-                    px-2 min-[1150px]:px-3 min-[1250px]:px-5 
+                    text-[clamp(16px,1.2vw,16px)]
+                    font-semibold min-[1200px]:font-normal
+                    px-2 min-[1150px]:px-3 min-[1250px]:px-5
                     tracking-tight min-[1200px]:tracking-widest"
                 >
                   {item.name}
@@ -58,7 +69,6 @@ export default function Header() {
               icon={MessageSquare}
             />
 
-            {/* LOGIN - Espaçamento otimizado para tablets deitados */}
             <div className="flex items-center border-l border-white/10 pl-3 min-[1200px]:pl-6 ml-1 min-[1200px]:ml-4 mr-2">
               <button
                 onClick={() => setIsLoginOpen(true)}
@@ -72,9 +82,8 @@ export default function Header() {
             </div>
           </nav>
 
-          {/* Mobile Toggle - Aparece em Tablets (abaixo de 1024px) */}
-          <button 
-            className="lg:hidden p-2 text-white bg-white/5 rounded-full border border-white/10" 
+          <button
+            className="lg:hidden p-2 text-white bg-white/5 rounded-full border border-white/10"
             onClick={() => setIsOpen(!isOpen)}
             aria-expanded={isOpen}
           >
@@ -82,7 +91,6 @@ export default function Header() {
           </button>
         </div>
 
-        {/* Mobile Menu Overlay */}
         {isOpen && (
           <div className="absolute top-24 left-4 right-4 bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 flex flex-col gap-6 text-white lg:hidden animate-in fade-in zoom-in-95 duration-300 shadow-2xl z-[60]">
             {HEADER_MENU_ITEMS.map((item) => (
@@ -91,7 +99,7 @@ export default function Header() {
               </Link>
             ))}
 
-            <button 
+            <button
               onClick={() => { setIsOpen(false); setIsLoginOpen(true); }}
               className="flex items-center justify-center gap-3 py-4 text-yellow-500 font-bold tracking-widest border border-yellow-500/20 rounded-2xl bg-yellow-500/5"
             >
@@ -103,9 +111,10 @@ export default function Header() {
         )}
       </header>
 
-      <LoginModal 
-        isOpen={isLoginOpen} 
-        onClose={() => setIsLoginOpen(false)} 
+      <LoginModal
+        isOpen={isLoginOpen}
+        redirectPath={loginRedirectPath}
+        onClose={() => setIsLoginOpen(false)}
       />
     </>
   );
