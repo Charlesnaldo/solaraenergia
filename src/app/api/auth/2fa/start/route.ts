@@ -1,5 +1,6 @@
 ﻿import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
@@ -9,8 +10,7 @@ function hashCode(code: string) {
   return crypto.createHash('sha256').update(code).digest('hex');
 }
 
-async function getCookieClient() {
-  const cookieStore = await cookies();
+async function getSupabaseUser(req: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -18,7 +18,16 @@ async function getCookieClient() {
     throw new Error('Supabase not configured.');
   }
 
-  return createServerClient(url, anonKey, {
+  const authHeader = req.headers.get('authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (token) {
+    const client = createClient(url, anonKey, { auth: { autoRefreshToken: false, persistSession: false } });
+    const { data: auth } = await client.auth.getUser(token);
+    return auth.user;
+  }
+
+  const cookieStore = await cookies();
+  const serverClient = createServerClient(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -28,13 +37,14 @@ async function getCookieClient() {
       },
     },
   });
+
+  const { data: auth } = await serverClient.auth.getUser();
+  return auth.user;
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const supabase = await getCookieClient();
-    const { data: auth } = await supabase.auth.getUser();
-    const user = auth.user;
+    const user = await getSupabaseUser(req);
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

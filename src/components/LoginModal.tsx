@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { m, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, EyeOff, Eye, ArrowRight, Smartphone } from 'lucide-react';
 import { useState } from 'react';
@@ -19,6 +19,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'credentials' | 'code'>('credentials');
   const [challengeId, setChallengeId] = useState('');
+  const [accessToken, setAccessToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -30,22 +31,32 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+
       if (authError) {
         setError(authError.message);
         return;
       }
 
-      const res = await fetch('/api/auth/2fa/start', { method: 'POST' });
-      const payload = (await res.json()) as { error?: string; challengeId?: string };
-      if (!res.ok || !payload.challengeId) {
-        throw new Error(payload.error ?? 'Não foi possível iniciar o 2FA.');
+      const token = data.session?.access_token;
+      if (!token) {
+        throw new Error('No Supabase session returned after login.');
       }
 
+      const res = await fetch('/api/auth/2fa/start', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = (await res.json()) as { error?: string; challengeId?: string };
+      if (!res.ok || !payload.challengeId) {
+        throw new Error(payload.error ?? 'Nao foi possivel iniciar o 2FA.');
+      }
+
+      setAccessToken(token);
       setChallengeId(payload.challengeId);
       setStep('code');
-    } catch {
-      setError('Configuração do Supabase ou SMS ausente.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Configuracao do Supabase ou SMS ausente.');
     } finally {
       setLoading(false);
     }
@@ -57,23 +68,32 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
     setLoading(true);
 
     try {
+      if (!accessToken) {
+        throw new Error('No Supabase session available for 2FA verification.');
+      }
+
       const res = await fetch('/api/auth/2fa/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ challengeId, code }),
       });
       const payload = (await res.json()) as { error?: string };
       if (!res.ok) {
-        throw new Error(payload.error ?? 'Código inválido.');
+        throw new Error(payload.error ?? 'Codigo invalido.');
       }
 
       onClose();
       setStep('credentials');
       setCode('');
+      setChallengeId('');
+      setAccessToken('');
       router.push(redirectPath);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Código inválido.');
+      setError(err instanceof Error ? err.message : 'Codigo invalido.');
     } finally {
       setLoading(false);
     }
@@ -82,6 +102,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
   const reset = () => {
     setStep('credentials');
     setChallengeId('');
+    setAccessToken('');
     setCode('');
     setError('');
     onClose();
@@ -101,7 +122,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
                   <Image src="/Solara2.svg" alt="Logo Solara" fill className="object-contain" />
                 </div>
                 <h2 className="text-[18px] font-black text-white tracking-tight uppercase">Acesse sua conta</h2>
-                <p className="text-slate-400 text-[10px] mt-2 font-bold tracking-[0.2em] uppercase opacity-60">Área Exclusiva</p>
+                <p className="text-slate-400 text-[10px] mt-2 font-bold tracking-[0.2em] uppercase opacity-60">Area Exclusiva</p>
               </div>
 
               {step === 'credentials' ? (
@@ -138,11 +159,11 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
                 <form className="space-y-5 relative z-10" onSubmit={verifyCode}>
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300 flex items-start gap-3">
                     <Smartphone size={18} className="text-yellow-400 mt-0.5" />
-                    <p>Enviamos um código SMS para o celular cadastrado. Informe o código para concluir o acesso.</p>
+                    <p>Enviamos um codigo SMS para o celular cadastrado. Informe o codigo para concluir o acesso.</p>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Código SMS</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Codigo SMS</label>
                     <input required value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" placeholder="000000" className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-4 text-white text-sm outline-none focus:border-yellow-500/50 focus:bg-white/[0.05] transition-all placeholder:text-slate-600 tracking-[0.4em] text-center" />
                   </div>
 
