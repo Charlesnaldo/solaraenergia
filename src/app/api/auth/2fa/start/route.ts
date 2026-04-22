@@ -1,4 +1,4 @@
-﻿import crypto from 'node:crypto';
+import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
@@ -11,8 +11,8 @@ function hashCode(code: string) {
 }
 
 async function getSupabaseUser(req: Request) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
   if (!url || !anonKey) {
     throw new Error('Supabase not configured.');
@@ -73,7 +73,22 @@ export async function POST(req: Request) {
       .single();
 
     if (error || !challenge) {
-      return NextResponse.json({ error: 'Error creating 2FA challenge.' }, { status: 500 });
+      console.error('2FA challenge insert failed', {
+        message: error?.message,
+        details: error?.details,
+        hint: error?.hint,
+        code: error?.code,
+      });
+
+      return NextResponse.json(
+        {
+          error: error?.message ?? 'Error creating 2FA challenge.',
+          details: error?.details ?? null,
+          hint: error?.hint ?? null,
+          code: error?.code ?? null,
+        },
+        { status: 500 },
+      );
     }
 
     const smsResult = await sendSmsMessage({
@@ -86,3 +101,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Error starting 2FA.' }, { status: 500 });
   }
 }
+
