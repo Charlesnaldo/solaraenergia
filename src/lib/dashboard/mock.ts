@@ -1,4 +1,4 @@
-import type { DashboardOverview } from '@/lib/dashboard/types';
+﻿import type { DashboardOverview } from '@/lib/dashboard/types';
 
 export const mockOverview: DashboardOverview = {
   mrr: 48750,
@@ -21,7 +21,18 @@ export const mockOverview: DashboardOverview = {
       cpf_cnpj: '12.345.678/0001-90',
       email: 'financeiro@mercadinhofortaleza.com',
       telefone: '(85) 99999-1000',
+      whatsapp: null,
       endereco_completo: 'Fortaleza/CE',
+      rua: null,
+      numero: null,
+      bairro: null,
+      cidade: null,
+      estado: null,
+      cep: null,
+      complemento: null,
+      responsavel: null,
+      cargo_responsavel: null,
+      observacoes: null,
       status_assinatura: 'ativa',
       assinatura: {
         id: 'as-1',
