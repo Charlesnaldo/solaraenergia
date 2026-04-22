@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 import { createBoletoPdfBuffer } from '@/lib/billing/pdf';
 
-export async function GET(req: Request, context: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const adminUser = await getAuthenticatedAdminUser();
     if (!adminUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
     const url = new URL(req.url);
     const valor = Number(url.searchParams.get('valor') ?? 0);
     const dueDate = url.searchParams.get('dueDate')?.trim() ?? '';
