@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const faturamentoId = body.faturamentoId?.trim();
 
     if (!faturamentoId) {
-      return NextResponse.json({ error: 'faturamentoId È obrigatÛrio.' }, { status: 400 });
+      return NextResponse.json({ error: 'faturamentoId √© obrigat√≥rio.' }, { status: 400 });
     }
 
     const supabase = createSupabaseServiceClient();
@@ -25,16 +25,16 @@ export async function POST(req: Request) {
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: 'Faturamento n„o encontrado.' }, { status: 404 });
+      return NextResponse.json({ error: 'Faturamento n√£o encontrado.' }, { status: 404 });
     }
 
     if (!data.boleto_url) {
-      return NextResponse.json({ error: 'Este faturamento n„o possui URL de boleto.' }, { status: 400 });
+      return NextResponse.json({ error: 'Este faturamento n√£o possui URL de boleto.' }, { status: 400 });
     }
 
     const clienteInfo = Array.isArray(data.clientes) ? data.clientes[0] : data.clientes;
     if (!clienteInfo?.email || !clienteInfo?.nome) {
-      return NextResponse.json({ error: 'Cliente vinculado ao faturamento n„o possui e-mail v·lido.' }, { status: 400 });
+      return NextResponse.json({ error: 'Cliente vinculado ao faturamento n√£o possui e-mail v√°lido.' }, { status: 400 });
     }
 
     const emailResult = await sendBoletoEmail({
