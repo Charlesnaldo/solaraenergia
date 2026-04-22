@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { LayoutDashboard, Users, FileText, Settings, LogOut, Sun } from 'lucide-react';
 import "../../globals.css";
-import Image from 'next/image';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
