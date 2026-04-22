@@ -6,6 +6,12 @@ function sanitizeDocument(value: string) {
   return value.replace(/\D/g, '');
 }
 
+function parseNumber(value: unknown) {
+  const raw = typeof value === 'string' ? value.replace(',', '.').trim() : value;
+  const parsed = Number(raw ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 async function requireAdmin() {
   return getAuthenticatedAdminUser();
 }
@@ -21,10 +27,7 @@ export async function GET() {
   }
 
   const supabase = createSupabaseServiceClient();
-  const { data, error } = await supabase
-    .from('clientes')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('clientes').select('*').order('created_at', { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -49,10 +52,14 @@ export async function POST(req: Request) {
       cpf_cnpj?: string;
       email?: string;
       telefone?: string;
+      whatsapp?: string;
       endereco_completo?: string;
+      responsavel?: string;
+      cargo_responsavel?: string;
+      observacoes?: string;
       status_assinatura?: 'ativa' | 'inativa' | 'cancelada';
-      valor_mensal?: number;
-      dia_vencimento?: number;
+      valor_mensal?: string | number;
+      dia_vencimento?: string | number;
     };
 
     const nome = body.nome?.trim();
@@ -63,8 +70,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Dados obrigatórios inválidos.' }, { status: 400 });
     }
 
-    const valorMensal = Number(body.valor_mensal ?? 0);
-    const diaVencimento = Number(body.dia_vencimento ?? 10);
+    const valorMensal = parseNumber(body.valor_mensal);
+    const diaVencimento = parseNumber(body.dia_vencimento || 10);
     if (valorMensal <= 0 || diaVencimento < 1 || diaVencimento > 31) {
       return NextResponse.json({ error: 'Valor mensal ou dia de vencimento inválido.' }, { status: 400 });
     }
@@ -78,7 +85,11 @@ export async function POST(req: Request) {
         cpf_cnpj: cpfCnpj,
         email,
         telefone: body.telefone?.trim() || null,
+        whatsapp: body.whatsapp?.trim() || null,
         endereco_completo: body.endereco_completo?.trim() || null,
+        responsavel: body.responsavel?.trim() || null,
+        cargo_responsavel: body.cargo_responsavel?.trim() || null,
+        observacoes: body.observacoes?.trim() || null,
         status_assinatura: body.status_assinatura ?? 'ativa',
       })
       .select('*')
