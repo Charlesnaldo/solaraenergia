@@ -15,7 +15,7 @@ function getCookieClient() {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
-    throw new Error('Supabase n„o configurado.');
+    throw new Error('Supabase n√£o configurado.');
   }
 
   return createServerClient(url, anonKey, {
@@ -42,7 +42,7 @@ export async function POST() {
 
     const phone = user.phone || user.user_metadata?.phone || user.app_metadata?.phone;
     if (!phone) {
-      return NextResponse.json({ error: 'Usu·rio sem celular cadastrado para SMS.' }, { status: 400 });
+      return NextResponse.json({ error: 'Usu√°rio sem celular cadastrado para SMS.' }, { status: 400 });
     }
 
     const code = String(crypto.randomInt(100000, 999999));
@@ -68,7 +68,7 @@ export async function POST() {
 
     const smsResult = await sendSmsMessage({
       to: phone,
-      message: `Seu cÛdigo Solara È ${code}. Ele expira em 10 minutos.`,
+      message: `Seu c√≥digo Solara √© ${code}. Ele expira em 10 minutos.`,
     });
 
     return NextResponse.json({ challengeId: challenge.id, smsResult });

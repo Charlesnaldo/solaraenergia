@@ -14,7 +14,7 @@ function getCookieClient() {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
-    throw new Error('Supabase não configurado.');
+    throw new Error('Supabase nÃ£o configurado.');
   }
 
   return createServerClient(url, anonKey, {
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     const code = body.code?.trim();
 
     if (!challengeId || !code) {
-      return NextResponse.json({ error: 'challengeId e code são obrigatórios.' }, { status: 400 });
+      return NextResponse.json({ error: 'challengeId e code sÃ£o obrigatÃ³rios.' }, { status: 400 });
     }
 
     const supabase = getCookieClient();
@@ -56,11 +56,11 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     if (error || !challenge || challenge.usado || new Date(challenge.expira_em) < new Date()) {
-      return NextResponse.json({ error: 'Código inválido ou expirado.' }, { status: 401 });
+      return NextResponse.json({ error: 'CÃ³digo invÃ¡lido ou expirado.' }, { status: 401 });
     }
 
     if (hashCode(code) !== challenge.code_hash) {
-      return NextResponse.json({ error: 'Código inválido ou expirado.' }, { status: 401 });
+      return NextResponse.json({ error: 'CÃ³digo invÃ¡lido ou expirado.' }, { status: 401 });
     }
 
     const { error: updateError } = await service
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       .eq('usado', false);
 
     if (updateError) {
-      return NextResponse.json({ error: 'Código inválido ou expirado.' }, { status: 401 });
+      return NextResponse.json({ error: 'CÃ³digo invÃ¡lido ou expirado.' }, { status: 401 });
     }
 
     const response = NextResponse.json({ ok: true });
