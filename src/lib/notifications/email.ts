@@ -1,3 +1,5 @@
+import { Resend } from 'resend';
+
 interface SendBoletoEmailInput {
   to: string;
   clientName: string;
@@ -12,7 +14,7 @@ function money(value: number) {
 
 export async function sendBoletoEmail(input: SendBoletoEmailInput) {
   const resendKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.BILLING_FROM_EMAIL ?? 'financeiro@solaraenergia.com.br';
+  const fromEmail = process.env.BILLING_FROM_EMAIL ?? 'Solara <financeiro@solaraenergia.com.br>';
   const mockMode = process.env.EMAIL_MOCK === 'true';
 
   const subject = `Boleto Solara - vencimento ${input.dueDate}`;
@@ -31,29 +33,23 @@ export async function sendBoletoEmail(input: SendBoletoEmailInput) {
     return {
       ok: true,
       mocked: true,
-      reason: !resendKey ? 'RESEND_API_KEY não configurada. Use EMAIL_MOCK=true para testes explícitos.' : 'EMAIL_MOCK=true',
+      reason: !resendKey
+        ? 'RESEND_API_KEY não configurada. Use EMAIL_MOCK=true para testes explícitos.'
+        : 'EMAIL_MOCK=true',
     };
   }
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [input.to],
-      subject,
-      html,
-    }),
+  const resend = new Resend(resendKey);
+  const { data, error } = await resend.emails.send({
+    from: fromEmail,
+    to: input.to,
+    subject,
+    html,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Falha ao enviar e-mail: ${response.status} ${errorText}`);
+  if (error) {
+    throw new Error(`Falha ao enviar e-mail: ${error.message}`);
   }
 
-  const payload = (await response.json()) as { id?: string };
-  return { ok: true, id: payload.id, mocked: false };
+  return { ok: true, id: data?.id, mocked: false };
 }

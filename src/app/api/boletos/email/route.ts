@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import { sendBoletoEmail } from '@/lib/notifications/email';
+import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 
 export async function POST(req: Request) {
   try {
+    const adminUser = await getAuthenticatedAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = (await req.json()) as { faturamentoId?: string };
     const faturamentoId = body.faturamentoId?.trim();
 
     if (!faturamentoId) {
-      return NextResponse.json({ error: 'faturamentoId √© obrigat√≥rio.' }, { status: 400 });
+      return NextResponse.json({ error: 'faturamentoId È obrigatÛrio.' }, { status: 400 });
     }
 
     const supabase = createSupabaseServiceClient();
@@ -19,16 +25,16 @@ export async function POST(req: Request) {
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: 'Faturamento n√£o encontrado.' }, { status: 404 });
+      return NextResponse.json({ error: 'Faturamento n„o encontrado.' }, { status: 404 });
     }
 
     if (!data.boleto_url) {
-      return NextResponse.json({ error: 'Este faturamento n√£o possui URL de boleto.' }, { status: 400 });
+      return NextResponse.json({ error: 'Este faturamento n„o possui URL de boleto.' }, { status: 400 });
     }
 
     const clienteInfo = Array.isArray(data.clientes) ? data.clientes[0] : data.clientes;
     if (!clienteInfo?.email || !clienteInfo?.nome) {
-      return NextResponse.json({ error: 'Cliente vinculado ao faturamento n√£o possui e-mail v√°lido.' }, { status: 400 });
+      return NextResponse.json({ error: 'Cliente vinculado ao faturamento n„o possui e-mail v·lido.' }, { status: 400 });
     }
 
     const emailResult = await sendBoletoEmail({

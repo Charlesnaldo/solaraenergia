@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { gerarBoletoParaCliente } from '@/lib/billing/boletos';
+import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 
 export async function POST(req: Request) {
   try {
+    const adminUser = await getAuthenticatedAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = (await req.json()) as {
       clienteId?: string;
       valor?: number;
@@ -14,7 +20,7 @@ export async function POST(req: Request) {
     const dataVencimento = body.dataVencimento?.trim();
 
     if (!clienteId || valor <= 0 || !dataVencimento) {
-      return NextResponse.json({ error: 'clienteId, valor e dataVencimento sÃ£o obrigatÃ³rios.' }, { status: 400 });
+      return NextResponse.json({ error: 'clienteId, valor e dataVencimento são obrigatórios.' }, { status: 400 });
     }
 
     const faturamento = await gerarBoletoParaCliente({
@@ -29,4 +35,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

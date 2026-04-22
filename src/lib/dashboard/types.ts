@@ -6,7 +6,18 @@ export interface Cliente {
   cpf_cnpj: string;
   email: string;
   telefone: string | null;
+  whatsapp: string | null;
   endereco_completo: string | null;
+  rua: string | null;
+  numero: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  estado: string | null;
+  cep: string | null;
+  complemento: string | null;
+  responsavel: string | null;
+  cargo_responsavel: string | null;
+  observacoes: string | null;
   status_assinatura: ClienteStatus;
 }
 

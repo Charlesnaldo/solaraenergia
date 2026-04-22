@@ -7,7 +7,18 @@ create table if not exists public.clientes (
   cpf_cnpj text not null unique,
   email text not null,
   telefone text,
+  whatsapp text,
   endereco_completo text,
+  rua text,
+  numero text,
+  bairro text,
+  cidade text,
+  estado text,
+  cep text,
+  complemento text,
+  responsavel text,
+  cargo_responsavel text,
+  observacoes text,
   status_assinatura text not null default 'ativa' check (status_assinatura in ('ativa', 'inativa', 'cancelada')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -62,10 +73,21 @@ create table if not exists public.cliente_tokens (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.auth_challenges (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  phone text not null,
+  code_hash text not null,
+  expira_em timestamptz not null,
+  usado boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists idx_faturamento_status_vencimento on public.faturamento(status, data_vencimento);
 create index if not exists idx_assinaturas_cliente on public.assinaturas(cliente_id);
 create index if not exists idx_consumo_assinatura_ref on public.consumo_energia(assinatura_id, referencia);
 create index if not exists idx_cliente_cpf_cnpj on public.clientes(cpf_cnpj);
+create index if not exists idx_auth_challenges_user on public.auth_challenges(user_id, expira_em);
 
 alter table public.clientes enable row level security;
 alter table public.assinaturas enable row level security;
@@ -73,25 +95,51 @@ alter table public.consumo_energia enable row level security;
 alter table public.faturamento enable row level security;
 alter table public.usinas enable row level security;
 alter table public.cliente_tokens enable row level security;
+alter table public.auth_challenges enable row level security;
 
--- Admin role via Supabase Auth JWT custom claim
-create policy if not exists "admin_full_access_clientes" on public.clientes
-for all using (auth.jwt() ->> 'role' = 'admin') with check (auth.jwt() ->> 'role' = 'admin');
+drop policy if exists "admin_full_access_clientes" on public.clientes;
+create policy "admin_full_access_clientes" on public.clientes
+for all
+using (auth.jwt() ->> 'role' = 'admin')
+with check (auth.jwt() ->> 'role' = 'admin');
 
-create policy if not exists "admin_full_access_assinaturas" on public.assinaturas
-for all using (auth.jwt() ->> 'role' = 'admin') with check (auth.jwt() ->> 'role' = 'admin');
+drop policy if exists "admin_full_access_assinaturas" on public.assinaturas;
+create policy "admin_full_access_assinaturas" on public.assinaturas
+for all
+using (auth.jwt() ->> 'role' = 'admin')
+with check (auth.jwt() ->> 'role' = 'admin');
 
-create policy if not exists "admin_full_access_consumo" on public.consumo_energia
-for all using (auth.jwt() ->> 'role' = 'admin') with check (auth.jwt() ->> 'role' = 'admin');
+drop policy if exists "admin_full_access_consumo" on public.consumo_energia;
+create policy "admin_full_access_consumo" on public.consumo_energia
+for all
+using (auth.jwt() ->> 'role' = 'admin')
+with check (auth.jwt() ->> 'role' = 'admin');
 
-create policy if not exists "admin_full_access_faturamento" on public.faturamento
-for all using (auth.jwt() ->> 'role' = 'admin') with check (auth.jwt() ->> 'role' = 'admin');
+drop policy if exists "admin_full_access_faturamento" on public.faturamento;
+create policy "admin_full_access_faturamento" on public.faturamento
+for all
+using (auth.jwt() ->> 'role' = 'admin')
+with check (auth.jwt() ->> 'role' = 'admin');
 
-create policy if not exists "admin_full_access_usinas" on public.usinas
-for all using (auth.jwt() ->> 'role' = 'admin') with check (auth.jwt() ->> 'role' = 'admin');
+drop policy if exists "admin_full_access_usinas" on public.usinas;
+create policy "admin_full_access_usinas" on public.usinas
+for all
+using (auth.jwt() ->> 'role' = 'admin')
+with check (auth.jwt() ->> 'role' = 'admin');
 
-create policy if not exists "admin_full_access_tokens" on public.cliente_tokens
-for all using (auth.jwt() ->> 'role' = 'admin') with check (auth.jwt() ->> 'role' = 'admin');
+drop policy if exists "admin_full_access_tokens" on public.cliente_tokens;
+create policy "admin_full_access_tokens" on public.cliente_tokens
+for all
+using (auth.jwt() ->> 'role' = 'admin')
+with check (auth.jwt() ->> 'role' = 'admin');
+
+drop policy if exists "admin_full_access_challenges" on public.auth_challenges;
+create policy "admin_full_access_challenges" on public.auth_challenges
+for all
+using (auth.jwt() ->> 'role' = 'admin')
+with check (auth.jwt() ->> 'role' = 'admin');
 
 -- Portal cliente (sem login complexo): leitura validada por CPF/CNPJ + token em API server-side.
 -- Mantemos RLS estrito e uso de service_role apenas na API.
+
+

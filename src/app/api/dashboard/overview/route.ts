@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { mockOverview } from '@/lib/dashboard/mock';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
+import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 import type { DashboardOverview, MonthlyBillingPoint } from '@/lib/dashboard/types';
 
 function monthLabel(isoDate: string) {
@@ -10,6 +11,11 @@ function monthLabel(isoDate: string) {
 
 export async function GET() {
   try {
+    const adminUser = await getAuthenticatedAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
       return NextResponse.json(mockOverview);
     }

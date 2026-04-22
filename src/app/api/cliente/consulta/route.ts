@@ -8,7 +8,7 @@ function sanitizeDocument(value: string) {
 export async function POST(req: Request) {
   try {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      return NextResponse.json({ error: 'Portal indispon√≠vel: Supabase n√£o configurado.' }, { status: 501 });
+      return NextResponse.json({ error: 'Portal indisponÌvel: Supabase n„o configurado.' }, { status: 501 });
     }
 
     const body = (await req.json()) as {
@@ -20,32 +20,32 @@ export async function POST(req: Request) {
     const token = body.token?.trim();
 
     if (cpfCnpj.length < 11 || !token) {
-      return NextResponse.json({ error: 'CPF/CNPJ e token sao obrigat√≥rios.' }, { status: 400 });
+      return NextResponse.json({ error: 'Credenciais inv·lidas.' }, { status: 401 });
     }
 
     const supabase = createSupabaseServiceClient();
 
-    const { data: cliente, error: clienteError } = await supabase
+    const { data: cliente } = await supabase
       .from('clientes')
-      .select('*')
+      .select('id, nome, cpf_cnpj')
       .eq('cpf_cnpj', cpfCnpj)
       .single();
 
-    if (clienteError || !cliente) {
-      return NextResponse.json({ error: 'Cliente n√£o encontrado.' }, { status: 404 });
+    if (!cliente) {
+      return NextResponse.json({ error: 'Credenciais inv·lidas.' }, { status: 401 });
     }
 
-    const { data: tokenRow, error: tokenError } = await supabase
+    const { data: tokenRow } = await supabase
       .from('cliente_tokens')
-      .select('*')
+      .select('id')
       .eq('cliente_id', cliente.id)
       .eq('token', token)
       .eq('usado', false)
       .gte('expira_em', new Date().toISOString())
       .maybeSingle();
 
-    if (tokenError || !tokenRow) {
-      return NextResponse.json({ error: 'Token inv√°lido ou expirado.' }, { status: 401 });
+    if (!tokenRow) {
+      return NextResponse.json({ error: 'Credenciais inv·lidas.' }, { status: 401 });
     }
 
     const { data: assinatura } = await supabase
@@ -56,12 +56,14 @@ export async function POST(req: Request) {
       .limit(1)
       .maybeSingle();
 
+    const assinaturaId = assinatura?.id ?? null;
+
     const [consumoResult, faturamentoResult] = await Promise.all([
-      assinatura?.id
+      assinaturaId
         ? supabase
             .from('consumo_energia')
             .select('*')
-            .eq('assinatura_id', assinatura.id)
+            .eq('assinatura_id', assinaturaId)
             .order('referencia', { ascending: false })
             .limit(12)
         : Promise.resolve({ data: [], error: null }),
@@ -73,6 +75,16 @@ export async function POST(req: Request) {
         .limit(12),
     ]);
 
+    const { error: markUsedError } = await supabase
+      .from('cliente_tokens')
+      .update({ usado: true })
+      .eq('id', tokenRow.id)
+      .eq('usado', false);
+
+    if (markUsedError) {
+      return NextResponse.json({ error: 'Credenciais inv·lidas.' }, { status: 401 });
+    }
+
     return NextResponse.json({
       cliente,
       assinatura,
@@ -80,7 +92,6 @@ export async function POST(req: Request) {
       boletos: faturamentoResult.data ?? [],
     });
   } catch {
-    return NextResponse.json({ error: 'Erro ao consultar dados do cliente.' }, { status: 500 });
+    return NextResponse.json({ error: 'Credenciais inv·lidas.' }, { status: 401 });
   }
 }
-
