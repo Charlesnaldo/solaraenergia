@@ -89,6 +89,15 @@ create index if not exists idx_consumo_assinatura_ref on public.consumo_energia(
 create index if not exists idx_cliente_cpf_cnpj on public.clientes(cpf_cnpj);
 create index if not exists idx_auth_challenges_user on public.auth_challenges(user_id, expira_em);
 
+grant usage on schema public to service_role;
+grant select, insert, update, delete on public.clientes to service_role;
+grant select, insert, update, delete on public.assinaturas to service_role;
+grant select, insert, update, delete on public.consumo_energia to service_role;
+grant select, insert, update, delete on public.faturamento to service_role;
+grant select, insert, update, delete on public.usinas to service_role;
+grant select, insert, update, delete on public.cliente_tokens to service_role;
+grant select, insert, update, delete on public.auth_challenges to service_role;
+
 alter table public.clientes enable row level security;
 alter table public.assinaturas enable row level security;
 alter table public.consumo_energia enable row level security;
@@ -141,5 +150,6 @@ with check (auth.jwt() ->> 'role' = 'admin');
 
 -- Portal cliente (sem login complexo): leitura validada por CPF/CNPJ + token em API server-side.
 -- Mantemos RLS estrito e uso de service_role apenas na API.
+
 
 

@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
-import { sendSmsMessage } from '@/lib/notifications/sms';
 
 function hashCode(code: string) {
   return crypto.createHash('sha256').update(code).digest('hex');
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User without phone number for SMS.' }, { status: 400 });
     }
 
-    const code = String(crypto.randomInt(100000, 999999));
+    const code = '123456'; // fixed OTP for production testing
     const codeHash = hashCode(code);
     const expireAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
@@ -91,14 +90,18 @@ export async function POST(req: Request) {
       );
     }
 
-    const smsResult = await sendSmsMessage({
-      to: phone,
-      message: `Your Solara code is ${code}. It expires in 10 minutes.`,
+    return NextResponse.json({
+      challengeId: challenge.id,
+      smsResult: { ok: true, mocked: true, reason: 'SMS bypassed for testing.' },
     });
-
-    return NextResponse.json({ challengeId: challenge.id, smsResult });
   } catch {
     return NextResponse.json({ error: 'Error starting 2FA.' }, { status: 500 });
   }
 }
+
+
+
+
+
+
 
