@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+﻿import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -8,13 +8,13 @@ function hashCode(code: string) {
   return crypto.createHash('sha256').update(code).digest('hex');
 }
 
-function getCookieClient() {
+async function getCookieClient() {
   const cookieStore = await cookies();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
-    throw new Error('Supabase não configurado.');
+    throw new Error('Supabase not configured.');
   }
 
   return createServerClient(url, anonKey, {
@@ -36,10 +36,10 @@ export async function POST(req: Request) {
     const code = body.code?.trim();
 
     if (!challengeId || !code) {
-      return NextResponse.json({ error: 'challengeId e code são obrigatórios.' }, { status: 400 });
+      return NextResponse.json({ error: 'challengeId and code are required.' }, { status: 400 });
     }
 
-    const supabase = getCookieClient();
+    const supabase = await getCookieClient();
     const { data: auth } = await supabase.auth.getUser();
     const user = auth.user;
 
@@ -56,11 +56,11 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     if (error || !challenge || challenge.usado || new Date(challenge.expira_em) < new Date()) {
-      return NextResponse.json({ error: 'Código inválido ou expirado.' }, { status: 401 });
+      return NextResponse.json({ error: 'Code invalid or expired.' }, { status: 401 });
     }
 
     if (hashCode(code) !== challenge.code_hash) {
-      return NextResponse.json({ error: 'Código inválido ou expirado.' }, { status: 401 });
+      return NextResponse.json({ error: 'Code invalid or expired.' }, { status: 401 });
     }
 
     const { error: updateError } = await service
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       .eq('usado', false);
 
     if (updateError) {
-      return NextResponse.json({ error: 'Código inválido ou expirado.' }, { status: 401 });
+      return NextResponse.json({ error: 'Code invalid or expired.' }, { status: 401 });
     }
 
     const response = NextResponse.json({ ok: true });
@@ -84,7 +84,6 @@ export async function POST(req: Request) {
 
     return response;
   } catch {
-    return NextResponse.json({ error: 'Erro ao validar 2FA.' }, { status: 500 });
+    return NextResponse.json({ error: 'Error validating 2FA.' }, { status: 500 });
   }
 }
-

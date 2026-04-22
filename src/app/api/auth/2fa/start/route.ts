@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+﻿import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
@@ -9,13 +9,13 @@ function hashCode(code: string) {
   return crypto.createHash('sha256').update(code).digest('hex');
 }
 
-function getCookieClient() {
+async function getCookieClient() {
   const cookieStore = await cookies();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
-    throw new Error('Supabase não configurado.');
+    throw new Error('Supabase not configured.');
   }
 
   return createServerClient(url, anonKey, {
@@ -32,7 +32,7 @@ function getCookieClient() {
 
 export async function POST() {
   try {
-    const supabase = getCookieClient();
+    const supabase = await getCookieClient();
     const { data: auth } = await supabase.auth.getUser();
     const user = auth.user;
 
@@ -42,7 +42,7 @@ export async function POST() {
 
     const phone = user.phone || user.user_metadata?.phone || user.app_metadata?.phone;
     if (!phone) {
-      return NextResponse.json({ error: 'Usuário sem celular cadastrado para SMS.' }, { status: 400 });
+      return NextResponse.json({ error: 'User without phone number for SMS.' }, { status: 400 });
     }
 
     const code = String(crypto.randomInt(100000, 999999));
@@ -63,17 +63,16 @@ export async function POST() {
       .single();
 
     if (error || !challenge) {
-      return NextResponse.json({ error: 'Erro ao criar desafio 2FA.' }, { status: 500 });
+      return NextResponse.json({ error: 'Error creating 2FA challenge.' }, { status: 500 });
     }
 
     const smsResult = await sendSmsMessage({
       to: phone,
-      message: `Seu código Solara é ${code}. Ele expira em 10 minutos.`,
+      message: `Your Solara code is ${code}. It expires in 10 minutes.`,
     });
 
     return NextResponse.json({ challengeId: challenge.id, smsResult });
   } catch {
-    return NextResponse.json({ error: 'Erro ao iniciar 2FA.' }, { status: 500 });
+    return NextResponse.json({ error: 'Error starting 2FA.' }, { status: 500 });
   }
 }
-
