@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const dataVencimento = body.dataVencimento?.trim();
 
     if (!clienteId || valor <= 0 || !dataVencimento) {
-      return NextResponse.json({ error: 'clienteId, valor e dataVencimento são obrigatórios.' }, { status: 400 });
+      return NextResponse.json({ error: 'clienteId, valor e dataVencimento sÃ£o obrigatÃ³rios.' }, { status: 400 });
     }
 
     const faturamento = await gerarBoletoParaCliente({

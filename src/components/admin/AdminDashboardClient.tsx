@@ -151,14 +151,14 @@ export default function AdminDashboardClient() {
   const saveClient = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!form.nome.trim() || form.cpf_cnpj.replace(/\D/g, '').length < 11 || !emailRegex.test(form.email)) {
-      alert('Preencha nome, CPF/CNPJ e e-mail válidos.');
+      alert('Preencha nome, CPF/CNPJ e e-mail vÃ¡lidos.');
       return;
     }
 
     const valorMensal = Number(form.valor_mensal);
     const diaVencimento = Number(form.dia_vencimento);
     if (valorMensal <= 0 || diaVencimento < 1 || diaVencimento > 31) {
-      alert('Informe valor mensal e dia de vencimento válidos.');
+      alert('Informe valor mensal e dia de vencimento vÃ¡lidos.');
       return;
     }
 
@@ -239,7 +239,7 @@ export default function AdminDashboardClient() {
       return;
     }
     const failText = result.falhas?.length ? ` Falhas: ${result.falhas.join('; ')}` : '';
-    alert(`Faturamento concluído. ${result.sucesso}/${result.total} boletos gerados.${failText}`);
+    alert(`Faturamento concluÃ­do. ${result.sucesso}/${result.total} boletos gerados.${failText}`);
     await loadOverview();
   };
 
@@ -284,20 +284,20 @@ export default function AdminDashboardClient() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white">Dashboard Principal</h1>
-          <p className="text-slate-400">Cadastro, edição e operação financeira dos clientes.</p>
+          <p className="text-slate-400">Cadastro, ediÃ§Ã£o e operaÃ§Ã£o financeira dos clientes.</p>
         </div>
         <div className="flex gap-2">
           <button onClick={openCreate} className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-white hover:bg-white/5">Novo Cliente</button>
-          <button onClick={gerarFaturamento} className="rounded-xl bg-yellow-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-400">Gerar Faturamento do Mês</button>
+          <button onClick={gerarFaturamento} className="rounded-xl bg-yellow-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-400">Gerar Faturamento do MÃªs</button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">MRR</p><p className="mt-1 text-2xl font-bold text-white">{money(overview.mrr)}</p></div>
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">Clientes Ativos</p><p className="mt-1 text-2xl font-bold text-white">{overview.clientesAtivos}</p></div>
-        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">Inadimplência</p><p className="mt-1 text-2xl font-bold text-white">{overview.inadimplenciaPercentual}%</p></div>
-        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">Saúde da Usina</p><p className="mt-1 text-2xl font-bold text-emerald-400">{overview.saudeUsinaPercentual}%</p></div>
-        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">Geração em Tempo Real</p><p className="mt-1 text-2xl font-bold text-cyan-300">{overview.geracaoTempoRealKw} kW</p></div>
+        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">InadimplÃªncia</p><p className="mt-1 text-2xl font-bold text-white">{overview.inadimplenciaPercentual}%</p></div>
+        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">SaÃºde da Usina</p><p className="mt-1 text-2xl font-bold text-emerald-400">{overview.saudeUsinaPercentual}%</p></div>
+        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">GeraÃ§Ã£o em Tempo Real</p><p className="mt-1 text-2xl font-bold text-cyan-300">{overview.geracaoTempoRealKw} kW</p></div>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
@@ -329,7 +329,7 @@ export default function AdminDashboardClient() {
               <iframe title="Mapa do cliente" src={`https://maps.google.com/maps?q=${encodeURIComponent(selectedMapClient?.endereco_completo ?? '')}&output=embed`} className="h-full w-full" loading="lazy" />
             </div>
           </>
-        ) : <p className="text-sm text-slate-400">Nenhum cliente com endereço completo para exibir no mapa.</p>}
+        ) : <p className="text-sm text-slate-400">Nenhum cliente com endereÃ§o completo para exibir no mapa.</p>}
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
@@ -342,7 +342,7 @@ export default function AdminDashboardClient() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left text-slate-400">
-                <th className="px-2 py-3">Cliente</th><th className="px-2 py-3">Contato</th><th className="px-2 py-3">Status</th><th className="px-2 py-3">Valor Boleto (R$)</th><th className="px-2 py-3">Vencimento</th><th className="px-2 py-3">Último Boleto</th><th className="px-2 py-3">Ações</th>
+                <th className="px-2 py-3">Cliente</th><th className="px-2 py-3">Contato</th><th className="px-2 py-3">Status</th><th className="px-2 py-3">Valor Boleto (R$)</th><th className="px-2 py-3">Vencimento</th><th className="px-2 py-3">Ãšltimo Boleto</th><th className="px-2 py-3">AÃ§Ãµes</th>
               </tr>
             </thead>
             <tbody>
@@ -377,13 +377,13 @@ export default function AdminDashboardClient() {
               {(['nome','cpf_cnpj','email','telefone','whatsapp','responsavel','cargo_responsavel','cep','cidade','estado','bairro','numero'] as const).map((field) => (
                 <input key={field} className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white" placeholder={field} value={form[field]} onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))} />
               ))}
-              <input className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white md:col-span-2" placeholder="Endereço completo" value={form.endereco_completo} onChange={(e) => setForm((p) => ({ ...p, endereco_completo: e.target.value }))} />
+              <input className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white md:col-span-2" placeholder="EndereÃ§o completo" value={form.endereco_completo} onChange={(e) => setForm((p) => ({ ...p, endereco_completo: e.target.value }))} />
               <input className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white" placeholder="Complemento" value={form.complemento} onChange={(e) => setForm((p) => ({ ...p, complemento: e.target.value }))} />
               <select className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white" value={form.status_assinatura} onChange={(e) => setForm((p) => ({ ...p, status_assinatura: e.target.value as ClienteStatus }))}><option value="ativa">Ativa</option><option value="inativa">Inativa</option><option value="cancelada">Cancelada</option></select>
               <input className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white" placeholder="Valor mensal" type="number" value={form.valor_mensal} onChange={(e) => setForm((p) => ({ ...p, valor_mensal: e.target.value }))} />
               <input className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white" placeholder="Dia vencimento" type="number" value={form.dia_vencimento} onChange={(e) => setForm((p) => ({ ...p, dia_vencimento: e.target.value }))} />
               {editingClientId ? <input type="password" className="rounded-lg border border-yellow-500/30 bg-slate-900 px-3 py-2 text-white md:col-span-2" placeholder="Senha do administrador para salvar" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} /> : null}
-              <textarea className="min-h-28 rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white md:col-span-2" placeholder="Observações" value={form.observacoes} onChange={(e) => setForm((p) => ({ ...p, observacoes: e.target.value }))} />
+              <textarea className="min-h-28 rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white md:col-span-2" placeholder="ObservaÃ§Ãµes" value={form.observacoes} onChange={(e) => setForm((p) => ({ ...p, observacoes: e.target.value }))} />
             </div>
             <div className="mt-6 flex justify-end gap-2"><button onClick={() => { setShowModal(false); setEditingClientId(null); setAdminPassword(''); }} className="rounded-lg border border-white/15 px-4 py-2 text-white">Cancelar</button><button disabled={submitting} onClick={saveClient} className="rounded-lg bg-yellow-500 px-4 py-2 font-semibold text-slate-950 disabled:opacity-60">Salvar</button></div>
           </div>
@@ -393,7 +393,7 @@ export default function AdminDashboardClient() {
       {confirmDeleteClientId && (
         <div className="fixed inset-0 z-[90] grid place-items-center bg-black/70 p-4">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-950 p-6">
-            <h3 className="text-xl font-semibold text-white">Confirmar exclusão</h3>
+            <h3 className="text-xl font-semibold text-white">Confirmar exclusÃ£o</h3>
             <p className="mt-2 text-sm text-slate-400">Digite a senha do administrador para excluir este cliente permanentemente.</p>
             <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} className="mt-4 w-full rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white" placeholder="Senha do administrador" />
             <div className="mt-6 flex justify-end gap-2"><button onClick={() => { setConfirmDeleteClientId(null); setAdminPassword(''); }} className="rounded-lg border border-white/15 px-4 py-2 text-white">Cancelar</button><button disabled={submitting} onClick={deleteClient} className="rounded-lg bg-rose-500 px-4 py-2 font-semibold text-white disabled:opacity-60">Excluir</button></div>

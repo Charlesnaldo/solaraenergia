@@ -8,7 +8,7 @@ function sanitizeDocument(value: string) {
 export async function POST(req: Request) {
   try {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      return NextResponse.json({ error: 'Portal indisponível: Supabase não configurado.' }, { status: 501 });
+      return NextResponse.json({ error: 'Portal indisponÃ­vel: Supabase nÃ£o configurado.' }, { status: 501 });
     }
 
     const body = (await req.json()) as {
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const token = body.token?.trim();
 
     if (cpfCnpj.length < 11 || !token) {
-      return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
+      return NextResponse.json({ error: 'Credenciais invÃ¡lidas.' }, { status: 401 });
     }
 
     const supabase = createSupabaseServiceClient();
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       .single();
 
     if (!cliente) {
-      return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
+      return NextResponse.json({ error: 'Credenciais invÃ¡lidas.' }, { status: 401 });
     }
 
     const { data: tokenRow } = await supabase
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     if (!tokenRow) {
-      return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
+      return NextResponse.json({ error: 'Credenciais invÃ¡lidas.' }, { status: 401 });
     }
 
     const { data: assinatura } = await supabase
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       .eq('usado', false);
 
     if (markUsedError) {
-      return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
+      return NextResponse.json({ error: 'Credenciais invÃ¡lidas.' }, { status: 401 });
     }
 
     return NextResponse.json({
@@ -92,6 +92,6 @@ export async function POST(req: Request) {
       boletos: faturamentoResult.data ?? [],
     });
   } catch {
-    return NextResponse.json({ error: 'Credenciais inválidas.' }, { status: 401 });
+    return NextResponse.json({ error: 'Credenciais invÃ¡lidas.' }, { status: 401 });
   }
 }
