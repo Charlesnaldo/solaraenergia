@@ -148,6 +148,7 @@ Se o Itau exigir mTLS de entrada para webhook, uma rota normal na Vercel pode na
 - [ ] Migration aplicada no Supabase.
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` configurado apenas no servidor/Vercel.
 - [ ] `ADMIN_2FA_SECRET` configurado.
+- [ ] `ADMIN_2FA_TEST_CODE` removido apos os testes temporarios.
 - [ ] `SMS_MOCK=false` em producao.
 - [ ] `ITAU_MOCK=false` somente apos teste homologado.
 - [ ] `ITAU_CERT` e `ITAU_KEY` configurados como segredos.

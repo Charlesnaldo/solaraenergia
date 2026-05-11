@@ -14,6 +14,11 @@ function generateOtpCode() {
   return crypto.randomInt(100000, 1000000).toString();
 }
 
+function getTemporaryTestCode() {
+  const code = process.env.ADMIN_2FA_TEST_CODE?.trim();
+  return code && /^\d{6}$/.test(code) ? code : null;
+}
+
 function isAdminUser(user: Awaited<ReturnType<typeof getSupabaseUser>>) {
   const role = user?.app_metadata?.role;
   return role === 'admin' || role === 'service_role';
@@ -68,11 +73,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User without phone number for SMS.' }, { status: 400 });
     }
 
-    if (process.env.NODE_ENV === 'production' && process.env.SMS_MOCK === 'true') {
+    const temporaryTestCode = getTemporaryTestCode();
+    if (process.env.NODE_ENV === 'production' && process.env.SMS_MOCK === 'true' && !temporaryTestCode) {
       return NextResponse.json({ error: 'SMS mock cannot be enabled in production.' }, { status: 500 });
     }
 
-    const code = generateOtpCode();
+    const code = temporaryTestCode ?? generateOtpCode();
     const codeHash = hashCode(code);
     const expireAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
@@ -108,10 +114,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const smsResult = await sendSmsMessage({
-      to: phone,
-      message: `Seu codigo Solara Admin e ${code}. Ele expira em 10 minutos.`,
-    });
+    const smsResult = temporaryTestCode
+      ? { ok: true, mocked: true, reason: 'Temporary ADMIN_2FA_TEST_CODE enabled.' }
+      : await sendSmsMessage({
+          to: phone,
+          message: `Seu codigo Solara Admin e ${code}. Ele expira em 10 minutos.`,
+        });
 
     return NextResponse.json({
       challengeId: challenge.id,
