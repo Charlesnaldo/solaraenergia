@@ -66,7 +66,7 @@ export default function AdminClientesPage() {
       return;
     }
 
-    window.open(`/api/admin/clientes/${clienteId}/pdf?valor=${encodeURIComponent(String(valor))}&dueDate=${encodeURIComponent(dueDate)}`, '_blank', 'noopener,noreferrer');
+    window.open(`/api/admin/clientes/${clienteId}/pdf?valor=${encodeURIComponent(String(valor))}&dueDate=${encodeURIComponent(dueDate)}&download=1`, '_blank', 'noopener,noreferrer');
   };
 
   const generateOfficialBoleto = async (clienteId: string) => {
@@ -211,7 +211,7 @@ export default function AdminClientesPage() {
                   <td className="px-2 py-3">
                     <div className="flex flex-wrap gap-2">
                       <button onClick={() => openPdf(cliente.id)} className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200">
-                        Gerar PDF
+                        Baixar PDF
                       </button>
                       <button onClick={() => void generateOfficialBoleto(cliente.id)} disabled={busyId === cliente.id} className="rounded-lg bg-yellow-500 px-3 py-1 text-xs font-semibold text-slate-950 disabled:opacity-60">
                         {busyId === cliente.id ? 'Processando...' : 'Gerar boleto'}

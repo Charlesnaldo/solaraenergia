@@ -113,7 +113,7 @@ export default function AdminFaturasPage() {
     }
 
     window.open(
-      `/api/admin/clientes/${clienteId}/pdf?valor=${encodeURIComponent(String(valor))}&dueDate=${encodeURIComponent(dueDate)}`,
+      `/api/admin/clientes/${clienteId}/pdf?valor=${encodeURIComponent(String(valor))}&dueDate=${encodeURIComponent(dueDate)}&download=1`,
       '_blank',
       'noopener,noreferrer',
     );
@@ -316,7 +316,7 @@ export default function AdminFaturasPage() {
                         onClick={() => openPdf(cliente.id)}
                         className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200"
                       >
-                        PDF
+                        Baixar PDF
                       </button>
                       {cliente.ultimoFaturamento?.boleto_url ? (
                         <a

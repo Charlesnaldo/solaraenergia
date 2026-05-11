@@ -44,6 +44,10 @@ export interface Faturamento {
   linha_digitavel: string | null;
   pix_qr_code: string | null;
   pix_url: string | null;
+  pdf_base64: string | null;
+  pdf_filename: string | null;
+  pdf_content_type: string | null;
+  pdf_gerado_em: string | null;
 }
 
 export interface MonthlyBillingPoint {
