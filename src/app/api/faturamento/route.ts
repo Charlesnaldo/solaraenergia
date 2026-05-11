@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import { gerarBoletoParaCliente } from '@/lib/billing/boletos';
+import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
+
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   try {
+    const adminUser = await getAuthenticatedAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = (await req.json()) as {
       itens?: Array<{
         clienteId: string;

@@ -4,9 +4,19 @@ import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
+import { sendSmsMessage } from '@/lib/notifications/sms';
 
 function hashCode(code: string) {
   return crypto.createHash('sha256').update(code).digest('hex');
+}
+
+function generateOtpCode() {
+  return crypto.randomInt(100000, 1000000).toString();
+}
+
+function isAdminUser(user: Awaited<ReturnType<typeof getSupabaseUser>>) {
+  const role = user?.app_metadata?.role;
+  return role === 'admin' || role === 'service_role';
 }
 
 async function getSupabaseUser(req: Request) {
@@ -49,12 +59,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!isAdminUser(user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const phone = user.phone || user.user_metadata?.phone || user.app_metadata?.phone;
     if (!phone) {
       return NextResponse.json({ error: 'User without phone number for SMS.' }, { status: 400 });
     }
 
-    const code = '123456'; // fixed OTP for production testing
+    if (process.env.NODE_ENV === 'production' && process.env.SMS_MOCK === 'true') {
+      return NextResponse.json({ error: 'SMS mock cannot be enabled in production.' }, { status: 500 });
+    }
+
+    const code = generateOtpCode();
     const codeHash = hashCode(code);
     const expireAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
@@ -90,9 +108,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const smsResult = await sendSmsMessage({
+      to: phone,
+      message: `Seu codigo Solara Admin e ${code}. Ele expira em 10 minutos.`,
+    });
+
     return NextResponse.json({
       challengeId: challenge.id,
-      smsResult: { ok: true, mocked: true, reason: 'SMS bypassed for testing.' },
+      smsResult,
+      ...(process.env.NODE_ENV !== 'production' && smsResult.mocked ? { devCode: code } : {}),
     });
   } catch {
     return NextResponse.json({ error: 'Error starting 2FA.' }, { status: 500 });

@@ -1,4 +1,4 @@
-// Supabase Edge Function: boleto-reminder
+ï»¿// Supabase Edge Function: boleto-reminder
 // Deploy: supabase functions deploy boleto-reminder
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -11,7 +11,17 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  const cronSecret = Deno.env.get('REMINDER_CRON_SECRET');
+  const expectedAuthorization = `Bearer ${cronSecret || serviceRoleKey}`;
+
+  if (req.headers.get('Authorization') !== expectedAuthorization) {
+    return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
+      headers: { 'content-type': 'application/json' },
+      status: 401,
+    });
+  }
+
   const targetDate = new Date();
   targetDate.setDate(targetDate.getDate() + 3);
   const yyyyMmDd = targetDate.toISOString().slice(0, 10);
@@ -26,7 +36,7 @@ Deno.serve(async () => {
     return new Response(JSON.stringify({ ok: false, error: error.message }), { status: 500 });
   }
 
-  // Hook para integrações reais (SendGrid, Twilio, Z-API etc).
+  // Hook para integraÃ§Ãµes reais (SendGrid, Twilio, Z-API etc).
   const reminders = (data ?? []).map((item) => ({
     faturamento_id: item.id,
     canal_email: item.clientes.email,
@@ -40,3 +50,4 @@ Deno.serve(async () => {
     status: 200,
   });
 });
+

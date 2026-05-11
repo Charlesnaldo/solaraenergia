@@ -4,9 +4,15 @@ import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
+import { createTwoFactorCookieValue } from '@/lib/auth/two-factor';
 
 function hashCode(code: string) {
   return crypto.createHash('sha256').update(code).digest('hex');
+}
+
+function isAdminUser(user: Awaited<ReturnType<typeof getSupabaseUser>>) {
+  const role = user?.app_metadata?.role;
+  return role === 'admin' || role === 'service_role';
 }
 
 async function getSupabaseUser(req: Request) {
@@ -57,6 +63,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!isAdminUser(user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const service = createSupabaseServiceClient();
     const { data: challenge, error } = await service
       .from('auth_challenges')
@@ -83,10 +93,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Code invalid or expired.' }, { status: 401 });
     }
 
+    const twoFactorCookieValue = await createTwoFactorCookieValue(user.id);
     const response = NextResponse.json({ ok: true });
-    response.cookies.set('solara_admin_2fa', user.id, {
+    response.cookies.set('solara_admin_2fa', twoFactorCookieValue, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 8,

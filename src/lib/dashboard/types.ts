@@ -34,10 +34,15 @@ export interface Faturamento {
   cliente_id: string;
   assinatura_id: string | null;
   id_itau: string | null;
+  nosso_numero: string | null;
   valor: number;
   data_vencimento: string;
   status: 'pendente' | 'pago' | 'atrasado';
   boleto_url: string | null;
+  codigo_barras: string | null;
+  linha_digitavel: string | null;
+  pix_qr_code: string | null;
+  pix_url: string | null;
 }
 
 export interface MonthlyBillingPoint {

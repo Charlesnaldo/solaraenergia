@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
+import { isTwoFactorCookieValid } from '@/lib/auth/two-factor';
 
 export async function getAuthenticatedAdminUser() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -31,7 +32,7 @@ export async function getAuthenticatedAdminUser() {
 
   const role = user?.app_metadata?.role;
   const isAdmin = role === 'admin' || role === 'service_role';
-  const isTwoFactorValid = twoFactorCookie?.value === user?.id;
+  const isTwoFactorValid = await isTwoFactorCookieValid(twoFactorCookie?.value, user?.id);
 
   return isAdmin && isTwoFactorValid ? user : null;
 }

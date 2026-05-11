@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 
     const { data: faturamento } = await supabase
       .from('faturamento')
-      .select('boleto_url')
+      .select('boleto_url, linha_digitavel, codigo_barras, pix_url')
       .eq('cliente_id', id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -44,6 +44,9 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       amount: valor,
       dueDate,
       boletoUrl: faturamento?.boleto_url ?? null,
+      linhaDigitavel: faturamento?.linha_digitavel ?? null,
+      codigoBarras: faturamento?.codigo_barras ?? null,
+      pixUrl: faturamento?.pix_url ?? null,
     });
 
     return new NextResponse(pdf, {

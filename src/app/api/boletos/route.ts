@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { gerarBoletoParaCliente } from '@/lib/billing/boletos';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 
+export const runtime = 'nodejs';
+
 export async function POST(req: Request) {
   try {
     const adminUser = await getAuthenticatedAdminUser();
