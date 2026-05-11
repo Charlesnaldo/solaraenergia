@@ -4,6 +4,12 @@ import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 
 export const runtime = 'nodejs';
 
+function parseMoney(value: unknown) {
+  const raw = typeof value === 'string' ? value.trim().replace(/\./g, '').replace(',', '.') : value;
+  const parsed = Number(raw ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export async function POST(req: Request) {
   try {
     const adminUser = await getAuthenticatedAdminUser();
@@ -13,16 +19,24 @@ export async function POST(req: Request) {
 
     const body = (await req.json()) as {
       clienteId?: string;
-      valor?: number;
+      valor?: string | number;
       dataVencimento?: string;
     };
 
     const clienteId = body.clienteId?.trim();
-    const valor = Number(body.valor ?? 0);
+    const valor = parseMoney(body.valor);
     const dataVencimento = body.dataVencimento?.trim();
 
-    if (!clienteId || valor <= 0 || !dataVencimento) {
-      return NextResponse.json({ error: 'clienteId, valor e dataVencimento são obrigatórios.' }, { status: 400 });
+    if (!clienteId) {
+      return NextResponse.json({ error: 'Cliente obrigatorio para gerar boleto.' }, { status: 400 });
+    }
+
+    if (valor <= 0) {
+      return NextResponse.json({ error: 'Informe um valor valido para gerar boleto.' }, { status: 400 });
+    }
+
+    if (!dataVencimento) {
+      return NextResponse.json({ error: 'Informe a data de vencimento para gerar boleto.' }, { status: 400 });
     }
 
     const faturamento = await gerarBoletoParaCliente({

@@ -7,6 +7,12 @@ function money(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
+function parseMoneyInput(value: string) {
+  const normalized = value.trim().replace(/\./g, '').replace(',', '.');
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function nextDueDate(day: number) {
   const now = new Date();
   const date = new Date(now.getFullYear(), now.getMonth(), day);
@@ -68,7 +74,7 @@ export default function AdminFaturasPage() {
   }, [overview, query, statusFilter]);
 
   const generateBoleto = async (clienteId: string) => {
-    const valor = Number(billingValues[clienteId] ?? 0);
+    const valor = parseMoneyInput(billingValues[clienteId] ?? '');
     const dataVencimento = dueDates[clienteId];
 
     if (valor <= 0 || !dataVencimento) {
@@ -99,7 +105,7 @@ export default function AdminFaturasPage() {
   };
 
   const openPdf = (clienteId: string) => {
-    const valor = Number(billingValues[clienteId] ?? 0);
+    const valor = parseMoneyInput(billingValues[clienteId] ?? '');
     const dueDate = dueDates[clienteId];
     if (valor <= 0 || !dueDate) {
       alert('Informe valor e vencimento antes de gerar o PDF.');

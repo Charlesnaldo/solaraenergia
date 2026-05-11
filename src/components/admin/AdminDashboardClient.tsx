@@ -30,6 +30,12 @@ function money(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
+function parseMoneyInput(value: string) {
+  const normalized = value.trim().replace(/\./g, '').replace(',', '.');
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function nextDueDate(day: number) {
   const now = new Date();
   const date = new Date(now.getFullYear(), now.getMonth(), day);
@@ -205,7 +211,7 @@ export default function AdminDashboardClient() {
   };
 
   const gerarBoletoCliente = async (clienteId: string) => {
-    const valor = Number(billingValues[clienteId] ?? 0);
+    const valor = parseMoneyInput(billingValues[clienteId] ?? '');
     const dataVencimento = dueDates[clienteId];
     if (valor <= 0 || !dataVencimento) return alert('Informe valor e vencimento para esse cliente.');
 
