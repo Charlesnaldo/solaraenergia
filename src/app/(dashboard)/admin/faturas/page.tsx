@@ -58,7 +58,7 @@ export default function AdminFaturasPage() {
       const matchQuery =
         cliente.nome.toLowerCase().includes(normalizedQuery) ||
         cliente.cpf_cnpj.includes(query) ||
-        cliente.email.toLowerCase().includes(normalizedQuery);
+        (cliente.email ?? '').toLowerCase().includes(normalizedQuery);
       const matchStatus = statusFilter === 'todos' ? true : cliente.status_assinatura === statusFilter;
       return matchQuery && matchStatus;
     });
@@ -194,7 +194,7 @@ export default function AdminFaturasPage() {
                   <td className="px-2 py-3">
                     <p className="font-semibold text-white">{cliente.nome}</p>
                     <p className="text-xs text-slate-400">{cliente.cpf_cnpj}</p>
-                    <p className="text-xs text-slate-500">{cliente.email}</p>
+                    <p className="text-xs text-slate-500">{cliente.email ?? 'Sem e-mail'}</p>
                   </td>
                   <td className="px-2 py-3">
                     <input

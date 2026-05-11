@@ -3,10 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { DashboardOverview, ClienteStatus } from '@/lib/dashboard/types';
 
-function money(value: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-}
-
 function nextDueDate(day: number) {
   const now = new Date();
   const date = new Date(now.getFullYear(), now.getMonth(), day);
@@ -56,7 +52,7 @@ export default function AdminClientesPage() {
       const matchQuery =
         cliente.nome.toLowerCase().includes(normalizedQuery) ||
         cliente.cpf_cnpj.includes(query) ||
-        cliente.email.toLowerCase().includes(normalizedQuery);
+        (cliente.email ?? '').toLowerCase().includes(normalizedQuery);
       const matchStatus = statusFilter === 'todos' ? true : cliente.status_assinatura === statusFilter;
       return matchQuery && matchStatus;
     });
@@ -190,7 +186,7 @@ export default function AdminClientesPage() {
                     <p className="text-xs text-slate-400">{cliente.cpf_cnpj}</p>
                   </td>
                   <td className="px-2 py-3">
-                    <p>{cliente.email}</p>
+                    <p>{cliente.email ?? 'Sem e-mail'}</p>
                     <p className="text-xs text-slate-400">{cliente.telefone || cliente.whatsapp || '-'}</p>
                   </td>
                   <td className="px-2 py-3">

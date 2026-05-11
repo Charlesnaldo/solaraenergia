@@ -4,7 +4,7 @@ export interface Cliente {
   id: string;
   nome: string;
   cpf_cnpj: string;
-  email: string;
+  email: string | null;
   telefone: string | null;
   whatsapp: string | null;
   endereco_completo: string | null;

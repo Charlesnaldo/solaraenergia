@@ -64,15 +64,15 @@ export async function POST(req: Request) {
 
     const nome = body.nome?.trim();
     const cpfCnpj = sanitizeDocument(body.cpf_cnpj ?? '');
-    const email = body.email?.trim();
+    const email = body.email?.trim() || null;
 
-    if (!nome || cpfCnpj.length < 11 || !email) {
+    if (!nome || cpfCnpj.length < 11) {
       return NextResponse.json({ error: 'Dados obrigatórios inválidos.' }, { status: 400 });
     }
 
-    const valorMensal = parseNumber(body.valor_mensal);
+    const valorMensal = parseNumber(body.valor_mensal ?? 0);
     const diaVencimento = parseNumber(body.dia_vencimento || 10);
-    if (valorMensal <= 0 || diaVencimento < 1 || diaVencimento > 31) {
+    if (valorMensal < 0 || diaVencimento < 1 || diaVencimento > 31) {
       return NextResponse.json({ error: 'Valor mensal ou dia de vencimento inválido.' }, { status: 400 });
     }
 
@@ -96,6 +96,13 @@ export async function POST(req: Request) {
       .single();
 
     if (clienteError || !cliente) {
+      if (clienteError?.message?.toLowerCase().includes('permission denied')) {
+        return NextResponse.json(
+          { error: 'Sem permissao para gravar clientes. Confira se SUPABASE_SERVICE_ROLE_KEY na Vercel e a service_role key do projeto correto.' },
+          { status: 500 },
+        );
+      }
+
       return NextResponse.json({ error: clienteError?.message ?? 'Erro ao criar cliente.' }, { status: 500 });
     }
 
