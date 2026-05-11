@@ -49,7 +49,7 @@ export async function gerarBoletoParaCliente(params: {
       nosso_numero: itau.nossoNumero || null,
       valor: params.valor,
       data_vencimento: params.dataVencimento,
-      status: 'pendente',
+      status: 'gerado',
       boleto_url: itau.boletoUrl,
       codigo_barras: itau.codigoBarras || null,
       linha_digitavel: itau.linhaDigitavel || null,

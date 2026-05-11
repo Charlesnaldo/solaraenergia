@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase
       .from('faturamento')
-      .select('id, valor, data_vencimento, boleto_url, clientes!inner(nome, email)')
+      .select('id, valor, data_vencimento, boleto_url, linha_digitavel, pix_url, clientes!inner(nome, email)')
       .eq('id', faturamentoId)
       .single();
 

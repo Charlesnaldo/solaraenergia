@@ -39,10 +39,10 @@ export async function GET() {
 
     const clientesAtivos = clientesRows.filter((c) => c.status_assinatura === 'ativa').length;
 
-    const pendentesOuAtrasados = faturamentoRows.filter((f) => f.status === 'pendente' || f.status === 'atrasado');
-    const atrasados = pendentesOuAtrasados.filter((f) => f.status === 'atrasado').length;
-    const inadimplenciaPercentual = pendentesOuAtrasados.length
-      ? Number(((atrasados / pendentesOuAtrasados.length) * 100).toFixed(1))
+    const cobrancasEmAberto = faturamentoRows.filter((f) => f.status === 'gerado' || f.status === 'nao_pago' || f.status === 'pendente' || f.status === 'atrasado');
+    const naoPagas = cobrancasEmAberto.filter((f) => f.status === 'nao_pago' || f.status === 'atrasado').length;
+    const inadimplenciaPercentual = cobrancasEmAberto.length
+      ? Number(((naoPagas / cobrancasEmAberto.length) * 100).toFixed(1))
       : 0;
 
     const monthlyMap = new Map<string, number>();

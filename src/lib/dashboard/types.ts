@@ -1,4 +1,5 @@
 export type ClienteStatus = 'ativa' | 'inativa' | 'cancelada';
+export type FaturamentoStatus = 'gerado' | 'pago' | 'nao_pago';
 
 export interface Cliente {
   id: string;
@@ -37,7 +38,7 @@ export interface Faturamento {
   nosso_numero: string | null;
   valor: number;
   data_vencimento: string;
-  status: 'pendente' | 'pago' | 'atrasado';
+  status: FaturamentoStatus;
   boleto_url: string | null;
   codigo_barras: string | null;
   linha_digitavel: string | null;

@@ -9,7 +9,9 @@ import type { ClienteStatus, DashboardOverview } from '@/lib/dashboard/types';
 interface ClientForm {
   nome: string;
   cpf_cnpj: string;
+  email: string;
   telefone: string;
+  whatsapp: string;
   endereco_completo: string;
   status_assinatura: ClienteStatus;
 }
@@ -17,7 +19,9 @@ interface ClientForm {
 const emptyForm: ClientForm = {
   nome: '',
   cpf_cnpj: '',
+  email: '',
   telefone: '',
+  whatsapp: '',
   endereco_completo: '',
   status_assinatura: 'ativa',
 };
@@ -39,7 +43,9 @@ function formFromClient(cliente?: DashboardOverview['clientes'][number] | null):
   return {
     nome: cliente.nome ?? '',
     cpf_cnpj: cliente.cpf_cnpj ?? '',
-    telefone: cliente.telefone ?? cliente.whatsapp ?? '',
+    email: cliente.email ?? '',
+    telefone: cliente.telefone ?? '',
+    whatsapp: cliente.whatsapp ?? '',
     endereco_completo: cliente.endereco_completo ?? '',
     status_assinatura: cliente.status_assinatura,
   };
@@ -67,6 +73,7 @@ export default function AdminDashboardClient() {
   const [submitting, setSubmitting] = useState(false);
   const [generatingClientId, setGeneratingClientId] = useState<string | null>(null);
   const [emailingBillingId, setEmailingBillingId] = useState<string | null>(null);
+  const [whatsappingBillingId, setWhatsappingBillingId] = useState<string | null>(null);
   const [form, setForm] = useState<ClientForm>(emptyForm);
   const [billingValues, setBillingValues] = useState<Record<string, string>>({});
   const [dueDates, setDueDates] = useState<Record<string, string>>({});
@@ -238,6 +245,24 @@ export default function AdminDashboardClient() {
     }
   };
 
+  const enviarWhatsappCliente = async (faturamentoId: string) => {
+    setWhatsappingBillingId(faturamentoId);
+    try {
+      const res = await fetch('/api/boletos/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ faturamentoId }),
+      });
+      const payload = (await res.json()) as { error?: string; whatsappResult?: { mocked?: boolean; reason?: string } };
+      if (!res.ok) throw new Error(payload.error ?? 'Falha ao enviar WhatsApp.');
+      alert(payload.whatsappResult?.mocked ? `WhatsApp em modo mock. ${payload.whatsappResult.reason ?? ''}` : 'WhatsApp enviado para o cliente com sucesso.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Falha ao enviar WhatsApp.');
+    } finally {
+      setWhatsappingBillingId(null);
+    }
+  };
+
   if (loading || !overview) return <div className="text-slate-300">Carregando dashboard...</div>;
 
   return (
@@ -340,7 +365,8 @@ export default function AdminDashboardClient() {
                     <p className="text-xs text-slate-500">{cliente.endereco_completo || '-'}</p>
                   </td>
                   <td className="px-2 py-3">
-                    <p>{cliente.telefone || cliente.whatsapp || '-'}</p>
+                    <p>{cliente.telefone || '-'}</p>
+                    <p className="text-xs text-slate-400">{cliente.whatsapp ? `WhatsApp: ${cliente.whatsapp}` : 'Sem WhatsApp'}</p>
                     <p className="text-xs text-slate-400">{cliente.email || 'Sem e-mail'}</p>
                   </td>
                   <td className="px-2 py-3">
@@ -392,6 +418,15 @@ export default function AdminDashboardClient() {
                       </button>
                       <button
                         onClick={() => {
+                          if (cliente.ultimoFaturamento?.id) void enviarWhatsappCliente(cliente.ultimoFaturamento.id);
+                        }}
+                        disabled={!cliente.ultimoFaturamento?.id || whatsappingBillingId === cliente.ultimoFaturamento?.id}
+                        className="rounded-lg border border-emerald-400/30 px-3 py-1 text-xs font-semibold text-emerald-200 disabled:opacity-50"
+                      >
+                        {whatsappingBillingId === cliente.ultimoFaturamento?.id ? 'Enviando...' : 'WhatsApp'}
+                      </button>
+                      <button
+                        onClick={() => {
                           setEditingClientId(cliente.id);
                           setForm(formFromClient(cliente));
                           setShowModal(true);
@@ -440,9 +475,21 @@ export default function AdminDashboardClient() {
               />
               <input
                 className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"
+                placeholder="E-mail para envio do boleto"
+                value={form.email}
+                onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"
                 placeholder="Telefone"
                 value={form.telefone}
                 onChange={(e) => setForm((prev) => ({ ...prev, telefone: e.target.value }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"
+                placeholder="WhatsApp para envio do boleto"
+                value={form.whatsapp}
+                onChange={(e) => setForm((prev) => ({ ...prev, whatsapp: e.target.value }))}
               />
               <select
                 className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"

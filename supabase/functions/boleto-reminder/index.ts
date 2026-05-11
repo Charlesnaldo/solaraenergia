@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
   const { data, error } = await supabase
     .from('faturamento')
     .select('id, valor, data_vencimento, boleto_url, clientes!inner(nome, email, telefone)')
-    .eq('status', 'pendente')
+    .in('status', ['gerado', 'nao_pago'])
     .eq('data_vencimento', yyyyMmDd);
 
   if (error) {

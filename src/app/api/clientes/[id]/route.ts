@@ -68,7 +68,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const payload = {
     nome: body.nome?.trim(),
     cpf_cnpj: body.cpf_cnpj ? sanitizeDocument(body.cpf_cnpj) : undefined,
-    email: body.email?.trim(),
+    email: body.email?.trim() || null,
     telefone: body.telefone?.trim() || null,
     whatsapp: body.whatsapp?.trim() || null,
     endereco_completo: body.endereco_completo?.trim() || null,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { ClienteStatus, DashboardOverview } from '@/lib/dashboard/types';
+import type { ClienteStatus, DashboardOverview, FaturamentoStatus } from '@/lib/dashboard/types';
 
 function money(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -22,6 +22,9 @@ export default function AdminFaturasPage() {
   const [billingValues, setBillingValues] = useState<Record<string, string>>({});
   const [dueDates, setDueDates] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [emailingBillingId, setEmailingBillingId] = useState<string | null>(null);
+  const [whatsappingBillingId, setWhatsappingBillingId] = useState<string | null>(null);
+  const [statusBillingId, setStatusBillingId] = useState<string | null>(null);
 
   const loadOverview = async () => {
     setLoading(true);
@@ -110,12 +113,66 @@ export default function AdminFaturasPage() {
     );
   };
 
+  const sendEmail = async (faturamentoId: string) => {
+    setEmailingBillingId(faturamentoId);
+    try {
+      const res = await fetch('/api/boletos/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ faturamentoId }),
+      });
+      const payload = (await res.json()) as { error?: string; emailResult?: { mocked?: boolean; reason?: string } };
+      if (!res.ok) throw new Error(payload.error ?? 'Falha ao enviar e-mail.');
+      alert(payload.emailResult?.mocked ? `E-mail em modo mock. ${payload.emailResult.reason ?? ''}` : 'E-mail enviado.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Falha ao enviar e-mail.');
+    } finally {
+      setEmailingBillingId(null);
+    }
+  };
+
+  const sendWhatsapp = async (faturamentoId: string) => {
+    setWhatsappingBillingId(faturamentoId);
+    try {
+      const res = await fetch('/api/boletos/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ faturamentoId }),
+      });
+      const payload = (await res.json()) as { error?: string; whatsappResult?: { mocked?: boolean; reason?: string } };
+      if (!res.ok) throw new Error(payload.error ?? 'Falha ao enviar WhatsApp.');
+      alert(payload.whatsappResult?.mocked ? `WhatsApp em modo mock. ${payload.whatsappResult.reason ?? ''}` : 'WhatsApp enviado.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Falha ao enviar WhatsApp.');
+    } finally {
+      setWhatsappingBillingId(null);
+    }
+  };
+
+  const updateBillingStatus = async (faturamentoId: string, status: FaturamentoStatus) => {
+    setStatusBillingId(faturamentoId);
+    try {
+      const res = await fetch('/api/boletos/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ faturamentoId, status }),
+      });
+      const payload = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(payload.error ?? 'Falha ao atualizar status.');
+      await loadOverview();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Falha ao atualizar status.');
+    } finally {
+      setStatusBillingId(null);
+    }
+  };
+
   if (loading || !overview) {
     return <div className="text-slate-300">Carregando boletos...</div>;
   }
 
   const totalPendente = overview.clientes.reduce(
-    (sum, cliente) => sum + (cliente.ultimoFaturamento?.status === 'pendente' ? Number(cliente.ultimoFaturamento.valor ?? 0) : 0),
+    (sum, cliente) => sum + (cliente.ultimoFaturamento?.status === 'gerado' || cliente.ultimoFaturamento?.status === 'nao_pago' ? Number(cliente.ultimoFaturamento.valor ?? 0) : 0),
     0,
   );
 
@@ -183,6 +240,7 @@ export default function AdminFaturasPage() {
                 <th className="px-2 py-3">Valor</th>
                 <th className="px-2 py-3">Vencimento</th>
                 <th className="px-2 py-3">Ultimo boleto</th>
+                <th className="px-2 py-3">Status</th>
                 <th className="px-2 py-3">Linha digitavel</th>
                 <th className="px-2 py-3">Pix</th>
                 <th className="px-2 py-3">Acoes</th>
@@ -212,11 +270,26 @@ export default function AdminFaturasPage() {
                     />
                   </td>
                   <td className="px-2 py-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">{cliente.ultimoFaturamento?.status ?? '-'}</p>
                     <p className="text-sm text-white">
                       {cliente.ultimoFaturamento ? money(Number(cliente.ultimoFaturamento.valor)) : '-'}
                     </p>
                     <p className="text-xs text-slate-500">{cliente.ultimoFaturamento?.nosso_numero ?? ''}</p>
+                  </td>
+                  <td className="px-2 py-3">
+                    {cliente.ultimoFaturamento?.id ? (
+                      <select
+                        value={cliente.ultimoFaturamento.status}
+                        disabled={statusBillingId === cliente.ultimoFaturamento.id}
+                        onChange={(e) => void updateBillingStatus(cliente.ultimoFaturamento!.id, e.target.value as FaturamentoStatus)}
+                        className="rounded-lg border border-white/15 bg-slate-950 px-2 py-1 text-xs text-white outline-none disabled:opacity-60"
+                      >
+                        <option value="gerado">Gerado</option>
+                        <option value="pago">Pago</option>
+                        <option value="nao_pago">Nao pago</option>
+                      </select>
+                    ) : (
+                      '-'
+                    )}
                   </td>
                   <td className="max-w-xs truncate px-2 py-3 text-xs text-slate-300">
                     {cliente.ultimoFaturamento?.linha_digitavel ?? '-'}
@@ -249,6 +322,24 @@ export default function AdminFaturasPage() {
                           Abrir
                         </a>
                       ) : null}
+                      <button
+                        onClick={() => {
+                          if (cliente.ultimoFaturamento?.id) void sendEmail(cliente.ultimoFaturamento.id);
+                        }}
+                        disabled={!cliente.ultimoFaturamento?.id || emailingBillingId === cliente.ultimoFaturamento?.id}
+                        className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                      >
+                        {emailingBillingId === cliente.ultimoFaturamento?.id ? 'Enviando...' : 'E-mail'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (cliente.ultimoFaturamento?.id) void sendWhatsapp(cliente.ultimoFaturamento.id);
+                        }}
+                        disabled={!cliente.ultimoFaturamento?.id || whatsappingBillingId === cliente.ultimoFaturamento?.id}
+                        className="rounded-lg border border-emerald-400/30 px-3 py-1 text-xs font-semibold text-emerald-200 disabled:opacity-50"
+                      >
+                        {whatsappingBillingId === cliente.ultimoFaturamento?.id ? 'Enviando...' : 'WhatsApp'}
+                      </button>
                     </div>
                   </td>
                 </tr>
