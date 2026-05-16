@@ -65,6 +65,14 @@ export function clearItauAccessTokenCache() {
   pendingTokenRequest = null;
 }
 
+export function getItauCachedTokenExpiresIn() {
+  if (!cache) {
+    return 0;
+  }
+
+  return Math.max(0, Math.floor((cache.expiresAt - Date.now()) / 1000));
+}
+
 export async function getItauAccessToken(options: { forceRefresh?: boolean } = {}) {
   if (!options.forceRefresh) {
     const cachedToken = getValidCachedToken();

@@ -61,6 +61,51 @@ function readPfxFromEnv() {
   };
 }
 
+export function getItauMtlsStatus() {
+  if (process.env.ITAU_MTLS_DISABLED === 'true') {
+    return { pfxLoaded: false, mtlsDisabled: true };
+  }
+
+  const pfxBase64 = process.env.ITAU_PFX_BASE64?.trim();
+  const pfxPath = process.env.ITAU_PFX_PATH?.trim();
+  const passphrase = process.env.ITAU_PFX_PASSPHRASE?.trim();
+
+  if (!passphrase) {
+    return { pfxLoaded: false, mtlsDisabled: false };
+  }
+
+  if (pfxBase64) {
+    const normalized = pfxBase64.replace(/\s/g, '');
+    const looksLikeBase64 = normalized.length > 0 && normalized.length % 4 !== 1 && /^[A-Za-z0-9+/]+={0,2}$/.test(normalized);
+
+    if (!looksLikeBase64) {
+      return { pfxLoaded: false, mtlsDisabled: false };
+    }
+
+    return {
+      pfxLoaded: Buffer.from(normalized, 'base64').length > 0,
+      mtlsDisabled: false,
+    };
+  }
+
+  if (pfxPath) {
+    try {
+      const resolvedPath = path.isAbsolute(pfxPath)
+        ? pfxPath
+        : path.resolve(/*turbopackIgnore: true*/ process.cwd(), pfxPath);
+
+      return {
+        pfxLoaded: fs.statSync(resolvedPath).isFile(),
+        mtlsDisabled: false,
+      };
+    } catch {
+      return { pfxLoaded: false, mtlsDisabled: false };
+    }
+  }
+
+  return { pfxLoaded: false, mtlsDisabled: false };
+}
+
 function createMtlsAgent() {
   if (process.env.ITAU_MTLS_DISABLED === 'true') {
     return undefined;
