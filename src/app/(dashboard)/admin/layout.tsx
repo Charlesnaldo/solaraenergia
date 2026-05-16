@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FileText, LayoutDashboard, LogOut, Settings, Sun, Users } from 'lucide-react';
+import { FileText, FlaskConical, LayoutDashboard, LogOut, Settings, Sun, Users } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import '../../globals.css';
 
@@ -10,6 +10,7 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/clientes', label: 'Clientes', icon: Users },
   { href: '/admin/faturas', label: 'Boletos e Itaú', icon: FileText },
+  { href: '/admin/testes', label: 'Testes', icon: FlaskConical },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
