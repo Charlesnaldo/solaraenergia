@@ -4,8 +4,9 @@ Este guia descreve o que precisa estar pronto para rodar a integracao de boletos
 
 ## Arquivos Envolvidos
 
-- `src/lib/itau/http.ts`: chamada HTTPS com mTLS usando `ITAU_CERT` e `ITAU_KEY`.
-- `src/lib/itau/auth.ts`: obtencao e cache do access token Itau.
+- `src/lib/itau/http.ts`: chamada HTTPS com mTLS usando PFX ou PEM.
+- `src/lib/itau/auth.ts`: obtencao, cache e renovacao do access token Itau.
+- `src/lib/itau/client.ts`: funcao base para chamadas Itau com `Authorization: Bearer`.
 - `src/lib/itau/bolecode.ts`: payload de emissao Bolecode.
 - `src/lib/billing/boletos.ts`: fluxo do app que busca cliente no Supabase, emite no Itau e salva faturamento.
 - `src/app/api/boletos/route.ts`: endpoint admin para gerar boleto de um cliente.
@@ -41,6 +42,9 @@ ITAU_API_URL=
 ITAU_BOLETO_URL=
 ITAU_CLIENT_ID=
 ITAU_CLIENT_SECRET=
+ITAU_PFX_PATH=
+ITAU_PFX_BASE64=
+ITAU_PFX_PASSPHRASE=
 ITAU_CERT=
 ITAU_KEY=
 ITAU_CA=
@@ -50,11 +54,23 @@ ITAU_CHAVE_PIX=
 ```
 
 Observacoes:
-- `ITAU_CERT` e `ITAU_KEY` devem ficar como segredo, nunca no Git.
+- Preferir `ITAU_PFX_PATH` em ambiente local/servidor com arquivo seguro, ou `ITAU_PFX_BASE64` em plataformas que nao aceitam arquivo secreto.
+- `ITAU_PFX_PASSPHRASE` deve conter a senha do PFX configurada fora do codigo.
+- `ITAU_CERT` e `ITAU_KEY` continuam suportados como alternativa PEM e devem ficar como segredo, nunca no Git.
 - Se colar PEM em variavel de ambiente, preserve quebras de linha como `\n`.
 - `ITAU_CA` e opcional, mas deve ser usado se o Itau fornecer cadeia CA especifica.
 - Para testes sem chamar o banco, use `ITAU_MOCK=true`.
 - Nao use `NEXT_PUBLIC_` para nenhum segredo Itau.
+
+Exemplo local usando o PFX gerado:
+
+```env
+ITAU_MOCK=false
+ITAU_PFX_PATH=itau.pfx
+ITAU_PFX_PASSPHRASE=<senha do PFX>
+ITAU_CLIENT_ID=<client id>
+ITAU_CLIENT_SECRET=<client secret>
+```
 
 ## Supabase
 
@@ -112,7 +128,7 @@ Teste pelo painel admin, nao chamando a API publica direto sem sessao.
 
 Antes de `ITAU_MOCK=false`:
 
-1. Conferir se `ITAU_CERT` e `ITAU_KEY` estao corretos.
+1. Conferir se `ITAU_PFX_PATH` e `ITAU_PFX_PASSPHRASE` estao corretos, ou se `ITAU_CERT` e `ITAU_KEY` estao corretos.
 2. Conferir se `ITAU_CLIENT_ID` e `ITAU_CLIENT_SECRET` pertencem ao mesmo ambiente da URL.
 3. Conferir se a URL de token e a URL de boletos sao do mesmo ambiente.
 4. Conferir se `ITAU_ID_BENEFICIARIO` foi informado pelo Itau.
@@ -151,7 +167,7 @@ Se o Itau exigir mTLS de entrada para webhook, uma rota normal na Vercel pode na
 - [ ] `ADMIN_2FA_TEST_CODE` removido apos os testes temporarios.
 - [ ] `SMS_MOCK=false` em producao.
 - [ ] `ITAU_MOCK=false` somente apos teste homologado.
-- [ ] `ITAU_CERT` e `ITAU_KEY` configurados como segredos.
+- [ ] `ITAU_PFX_PATH`/`ITAU_PFX_BASE64` e `ITAU_PFX_PASSPHRASE` configurados como segredos, ou `ITAU_CERT` e `ITAU_KEY` configurados como segredos.
 - [ ] Certificado dentro da validade.
 - [ ] Token Itau validado.
 - [ ] Emissao testada com cliente real controlado.

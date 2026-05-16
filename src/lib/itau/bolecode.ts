@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
-import { getItauAccessToken } from '@/lib/itau/auth';
-import { requestItauJson } from '@/lib/itau/http';
+import { requestItauApiJson } from '@/lib/itau/client';
 
 export interface EmitirBolecodeInput {
   seuNumero: string;
@@ -115,7 +114,6 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
     return createMockBolecode(input);
   }
 
-  const token = await getItauAccessToken();
   const cpfCnpj = onlyDigits(input.pagador.cpfCnpj);
   const isPessoaFisica = cpfCnpj.length <= 11;
 
@@ -158,17 +156,16 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
     },
   };
 
-  const response = await requestItauJson<ItauBolecodeResponse>(getBolecodeUrl(), {
+  const response = await requestItauApiJson<ItauBolecodeResponse>(getBolecodeUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });
 
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`Erro ao emitir Bolecode Itau: ${response.status} ${response.text}`);
+    throw new Error(`Erro ao emitir Bolecode Itau: HTTP ${response.status}.`);
   }
 
   return readBolecodeResponse(response.data);

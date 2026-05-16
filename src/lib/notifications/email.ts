@@ -20,19 +20,38 @@ function money(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function requireHttpUrl(value: string) {
+  const url = new URL(value);
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+    throw new Error('URL de boleto invalida.');
+  }
+
+  return url.toString();
+}
+
 export async function sendBoletoEmail(input: SendBoletoEmailInput) {
   const resendKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.BILLING_FROM_EMAIL ?? 'Solara <financeiro@solaraenergia.com.br>';
   const mockMode = process.env.EMAIL_MOCK === 'true';
+  const boletoUrl = requireHttpUrl(input.boletoUrl);
 
-  const subject = `Boleto Solara - vencimento ${input.dueDate}`;
+  const subject = `Boleto Solara - vencimento ${escapeHtml(input.dueDate)}`;
   const html = `
     <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
-      <h2>Olá, ${input.clientName}</h2>
+      <h2>Olá, ${escapeHtml(input.clientName)}</h2>
       <p>Seu boleto do mês já está disponível.</p>
       <p><strong>Valor:</strong> ${money(input.amount)}</p>
-      <p><strong>Vencimento:</strong> ${input.dueDate}</p>
-      <p><a href="${input.boletoUrl}" target="_blank" rel="noreferrer">Clique aqui para baixar o boleto</a></p>
+      <p><strong>Vencimento:</strong> ${escapeHtml(input.dueDate)}</p>
+      <p><a href="${escapeHtml(boletoUrl)}" target="_blank" rel="noreferrer">Clique aqui para baixar o boleto</a></p>
       <p>Atenciosamente,<br/>Equipe Solara</p>
     </div>
   `;
@@ -67,13 +86,13 @@ export async function sendBoletoPdfEmail(input: SendBoletoPdfEmailInput) {
   const fromEmail = process.env.BILLING_FROM_EMAIL ?? 'Solara <financeiro@solaraenergia.com.br>';
   const mockMode = process.env.EMAIL_MOCK === 'true';
 
-  const subject = `Boleto PDF Solara - vencimento ${input.dueDate}`;
+  const subject = `Boleto PDF Solara - vencimento ${escapeHtml(input.dueDate)}`;
   const html = `
     <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
-      <h2>Olá, ${input.clientName}</h2>
+      <h2>Olá, ${escapeHtml(input.clientName)}</h2>
       <p>Segue o boleto em PDF em anexo.</p>
       <p><strong>Valor:</strong> ${money(input.amount)}</p>
-      <p><strong>Vencimento:</strong> ${input.dueDate}</p>
+      <p><strong>Vencimento:</strong> ${escapeHtml(input.dueDate)}</p>
       <p>Atenciosamente,<br/>Equipe Solara</p>
     </div>
   `;

@@ -1,9 +1,11 @@
+import fs from 'node:fs';
 import https from 'node:https';
+import path from 'node:path';
 
 type RequestBody = string | Buffer | undefined;
 
-interface ItauRequestOptions {
-  method: 'GET' | 'POST' | 'PATCH';
+export interface ItauRequestOptions {
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   headers?: Record<string, string>;
   body?: RequestBody;
   mtls?: boolean;
@@ -16,8 +18,47 @@ export interface ItauHttpResponse<T> {
   text: string;
 }
 
+let mtlsAgent: https.Agent | undefined;
+
 function normalizePem(value: string | undefined) {
   return value?.trim().replace(/\\n/g, '\n');
+}
+
+function requireEnv(name: string) {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(`Configure ${name}.`);
+  }
+
+  return value;
+}
+
+function readPfxFromEnv() {
+  const pfxBase64 = process.env.ITAU_PFX_BASE64?.trim();
+  const pfxPath = process.env.ITAU_PFX_PATH?.trim();
+
+  if (pfxBase64) {
+    const passphrase = requireEnv('ITAU_PFX_PASSPHRASE');
+
+    return {
+      pfx: Buffer.from(pfxBase64, 'base64'),
+      passphrase,
+    };
+  }
+
+  if (!pfxPath) {
+    return null;
+  }
+
+  const passphrase = requireEnv('ITAU_PFX_PASSPHRASE');
+  const resolvedPath = path.isAbsolute(pfxPath)
+    ? pfxPath
+    : path.resolve(/*turbopackIgnore: true*/ process.cwd(), pfxPath);
+
+  return {
+    pfx: fs.readFileSync(resolvedPath),
+    passphrase,
+  };
 }
 
 function createMtlsAgent() {
@@ -25,21 +66,38 @@ function createMtlsAgent() {
     return undefined;
   }
 
+  if (mtlsAgent) {
+    return mtlsAgent;
+  }
+
+  const pfxConfig = readPfxFromEnv();
+  if (pfxConfig) {
+    mtlsAgent = new https.Agent({
+      ...pfxConfig,
+      keepAlive: true,
+      rejectUnauthorized: true,
+    });
+
+    return mtlsAgent;
+  }
+
   const cert = normalizePem(process.env.ITAU_CERT);
   const key = normalizePem(process.env.ITAU_KEY);
   const ca = normalizePem(process.env.ITAU_CA);
 
   if (!cert || !key) {
-    throw new Error('Configure ITAU_CERT e ITAU_KEY para chamadas mTLS do Itau.');
+    throw new Error('Configure ITAU_PFX_PATH e ITAU_PFX_PASSPHRASE, ou ITAU_CERT e ITAU_KEY, para chamadas mTLS do Itau.');
   }
 
-  return new https.Agent({
+  mtlsAgent = new https.Agent({
     cert,
     key,
     ca,
     keepAlive: true,
     rejectUnauthorized: true,
   });
+
+  return mtlsAgent;
 }
 
 function parseJson<T>(text: string): T {
@@ -47,7 +105,11 @@ function parseJson<T>(text: string): T {
     return {} as T;
   }
 
-  return JSON.parse(text) as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return {} as T;
+  }
 }
 
 export async function requestItauJson<T>(url: string, options: ItauRequestOptions): Promise<ItauHttpResponse<T>> {
