@@ -21,11 +21,15 @@ export async function POST(req: Request) {
       clienteId?: string;
       valor?: string | number;
       dataVencimento?: string;
+      simulacao?: boolean;
+      etapa_processo_boleto?: string;
     };
 
     const clienteId = body.clienteId?.trim();
     const valor = parseMoney(body.valor);
     const dataVencimento = body.dataVencimento?.trim();
+    const etapaProcessoBoleto = body.etapa_processo_boleto?.trim();
+    const simulacao = body.simulacao === true || etapaProcessoBoleto === 'Simulacao';
 
     if (!clienteId) {
       return NextResponse.json({ error: 'Cliente obrigatorio para gerar boleto.' }, { status: 400 });
@@ -39,13 +43,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Informe a data de vencimento para gerar boleto.' }, { status: 400 });
     }
 
+    if (etapaProcessoBoleto && etapaProcessoBoleto !== 'Simulacao') {
+      return NextResponse.json({ error: 'Para teste seguro, use etapa_processo_boleto: "Simulacao".' }, { status: 400 });
+    }
+
     const faturamento = await gerarBoletoParaCliente({
       clienteId,
       valor,
       dataVencimento,
+      simulacao,
     });
 
-    return NextResponse.json({ faturamento }, { status: 201 });
+    return NextResponse.json({ faturamento }, { status: simulacao ? 200 : 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno ao gerar boleto.';
     return NextResponse.json({ error: message }, { status: 500 });

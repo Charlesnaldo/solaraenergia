@@ -5,6 +5,7 @@ export async function gerarBoletoParaCliente(params: {
   clienteId: string;
   valor: number;
   dataVencimento: string;
+  simulacao?: boolean;
 }) {
   const supabase = createSupabaseServiceClient();
 
@@ -31,7 +32,24 @@ export async function gerarBoletoParaCliente(params: {
       cidade: cliente.cidade,
       uf: cliente.estado,
     },
+    simulacao: params.simulacao,
   });
+
+  if (params.simulacao) {
+    return {
+      simulacao: true,
+      etapa_processo_boleto: 'Simulacao',
+      itau: {
+        idBoleto: itau.idBoleto,
+        nossoNumero: itau.nossoNumero,
+        codigoBarras: itau.codigoBarras,
+        linhaDigitavel: itau.linhaDigitavel,
+        qrCodePresente: Boolean(itau.qrCode),
+        pixUrlPresente: Boolean(itau.pixUrl),
+        boletoUrlPresente: Boolean(itau.boletoUrl),
+      },
+    };
+  }
 
   const { data: assinatura } = await supabase
     .from('assinaturas')
