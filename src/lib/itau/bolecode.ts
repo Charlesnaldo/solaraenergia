@@ -150,6 +150,13 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function addDaysIsoDate(dateIso: string, days: number) {
+  const date = new Date(`${dateIso}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+
+  return date.toISOString().slice(0, 10);
+}
+
 function requireEnv(name: string) {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -263,7 +270,7 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
       }
     : undefined;
 
-  const payload = {
+  const data = {
     etapa_processo_boleto: input.simulacao ? 'simulacao' : 'efetivacao',
     codigo_canal_operacao: 'API',
     beneficiario: {
@@ -273,7 +280,7 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
       descricao_instrumento_cobranca: 'boleto_pix',
       tipo_boleto: 'a vista',
       codigo_carteira: process.env.ITAU_CODIGO_CARTEIRA?.trim() || '109',
-      codigo_especie: '01',
+      codigo_especie: process.env.ITAU_CODIGO_ESPECIE?.trim() || '04',
       valor_abatimento: formatItauAmount(0),
       valor_total_titulo: valorFormatado,
       data_emissao: todayIsoDate(),
@@ -295,6 +302,7 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
         {
           numero_nosso_numero: input.seuNumero.padStart(8, '0'),
           data_vencimento: input.dataVencimento,
+          data_limite_pagamento: addDaysIsoDate(input.dataVencimento, 30),
           valor_titulo: valorFormatado,
           texto_seu_numero: input.seuNumero,
           texto_uso_beneficiario: input.mensagem ?? undefined,
@@ -307,6 +315,7 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
     },
     dados_qrcode: chavePix ? { chave: chavePix } : undefined,
   };
+  const payload = { data };
 
   const response = await requestItauApiJson<ItauBolecodeResponse>(getBolecodeUrl(), {
     method: 'POST',
