@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { requestItauApiJson } from '@/lib/itau/client';
+import type { ItauHttpResponse } from '@/lib/itau/http';
 
 export interface EmitirBolecodeInput {
   seuNumero: string;
@@ -47,6 +48,81 @@ interface ItauBolecodeResponse {
       numero_nosso_numero?: string;
     }>;
   };
+}
+
+function getHeader(headers: Record<string, string | string[] | undefined>, name: string) {
+  const target = name.toLowerCase();
+  const found = Object.entries(headers).find(([key]) => key.toLowerCase() === target)?.[1];
+
+  return Array.isArray(found) ? found.join(', ') : found;
+}
+
+function readItauErrorMessage(data: unknown, text: string) {
+  if (data && typeof data === 'object') {
+    const record = data as Record<string, unknown>;
+    const candidates = [
+      record.mensagem,
+      record.message,
+      record.descricao,
+      record.detail,
+      record.title,
+      record.error_description,
+      record.error,
+    ];
+    const message = candidates.find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+    if (message) {
+      return message.trim().slice(0, 500);
+    }
+
+    if (Array.isArray(record.campos)) {
+      const fieldMessages = record.campos
+        .map((field) => {
+          if (!field || typeof field !== 'object') {
+            return null;
+          }
+
+          const item = field as Record<string, unknown>;
+          const campo = typeof item.campo === 'string' ? item.campo : null;
+          const mensagem = typeof item.mensagem === 'string' ? item.mensagem : null;
+
+          if (!mensagem) {
+            return null;
+          }
+
+          return campo ? `${campo}: ${mensagem}` : mensagem;
+        })
+        .filter((value): value is string => Boolean(value));
+
+      if (fieldMessages.length > 0) {
+        return fieldMessages.join('; ').slice(0, 500);
+      }
+    }
+  }
+
+  return text.trim().slice(0, 500) || null;
+}
+
+export class ItauBolecodeError extends Error {
+  readonly status: number;
+  readonly mensagemItau: string | null;
+  readonly diagnostics: Record<string, string | number | null>;
+
+  constructor(response: ItauHttpResponse<ItauBolecodeResponse>) {
+    const mensagemItau = readItauErrorMessage(response.data, response.text);
+
+    super(`Erro ao emitir Bolecode Itau: HTTP ${response.status}${mensagemItau ? ` - ${mensagemItau}` : ''}.`);
+    this.name = 'ItauBolecodeError';
+    this.status = response.status;
+    this.mensagemItau = mensagemItau;
+    this.diagnostics = {
+      status: response.status,
+      mensagem: mensagemItau,
+      x_itau_client_cert_error: getHeader(response.headers, 'x-itau-client-cert-error') ?? null,
+      x_itau_correlation_id: getHeader(response.headers, 'x-itau-correlationID') ?? null,
+      x_correlation_id: getHeader(response.headers, 'x-correlation-id') ?? null,
+    };
+  }
 }
 
 function onlyDigits(value: string) {
@@ -165,7 +241,7 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
   });
 
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`Erro ao emitir Bolecode Itau: HTTP ${response.status}.`);
+    throw new ItauBolecodeError(response);
   }
 
   return readBolecodeResponse(response.data);

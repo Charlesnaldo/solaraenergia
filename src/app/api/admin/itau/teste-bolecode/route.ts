@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
-import { createSeuNumero, emitirBolecode } from '@/lib/itau/bolecode';
+import { createSeuNumero, emitirBolecode, ItauBolecodeError } from '@/lib/itau/bolecode';
 
 export const runtime = 'nodejs';
 
@@ -191,11 +191,14 @@ export async function POST(req: Request) {
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
+    const itauError = error instanceof ItauBolecodeError ? error : null;
+
     return NextResponse.json(
       {
         status: 'erro',
-        mensagem_itau: null,
+        mensagem_itau: itauError?.mensagemItau ?? null,
         erro: error instanceof Error ? error.message : 'Falha ao testar BoleCode em simulacao.',
+        detalhe_itau: itauError?.diagnostics ?? null,
         payload_sanitizado: {
           etapa_processo_boleto: 'Simulacao',
           simulacao: true,

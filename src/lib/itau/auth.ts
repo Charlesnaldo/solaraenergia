@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { requestItauJson } from '@/lib/itau/http';
 
 interface TokenCache {
@@ -43,7 +44,11 @@ async function requestNewAccessToken() {
 
   const response = await requestItauJson<ItauTokenResponse>(getTokenUrl(), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'x-itau-correlationID': crypto.randomUUID(),
+      'x-itau-flowID': crypto.randomUUID(),
+    },
     body,
   });
 
