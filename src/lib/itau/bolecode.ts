@@ -127,6 +127,8 @@ export class ItauBolecodeError extends Error {
     this.diagnostics = {
       status: response.status,
       mensagem: mensagemItau,
+      endpoint: describeBolecodeEndpoint().maskedUrl,
+      endpoint_source: describeBolecodeEndpoint().source,
       x_itau_client_cert_error: getHeader(response.headers, 'x-itau-client-cert-error') ?? null,
       x_itau_correlation_id: getHeader(response.headers, 'x-itau-correlationID') ?? null,
       x_correlation_id: getHeader(response.headers, 'x-correlation-id') ?? null,
@@ -170,6 +172,38 @@ function createMockBolecode(input: EmitirBolecodeInput): BolecodeOutput {
     pixUrl: `https://solaraenergia.com.br/boletos/${suffix}`,
     boletoUrl: `https://solaraenergia.com.br/boletos/${suffix}`,
     raw: { mocked: true, input },
+  };
+}
+
+function maskEndpointUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.hostname}${parsed.pathname}`;
+  } catch {
+    return 'invalid_url';
+  }
+}
+
+export function describeBolecodeEndpoint() {
+  const boletoUrl = process.env.ITAU_BOLETO_URL?.trim();
+  if (boletoUrl) {
+    return {
+      source: 'ITAU_BOLETO_URL',
+      maskedUrl: maskEndpointUrl(boletoUrl),
+    };
+  }
+
+  const apiUrl = process.env.ITAU_API_URL?.trim();
+  if (apiUrl) {
+    return {
+      source: 'ITAU_API_URL_FALLBACK',
+      maskedUrl: maskEndpointUrl(`${apiUrl.replace(/\/$/, '')}/boletos/v3/boletos`),
+    };
+  }
+
+  return {
+    source: 'missing',
+    maskedUrl: '',
   };
 }
 

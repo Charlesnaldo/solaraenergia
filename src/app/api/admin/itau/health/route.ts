@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
-import { getItauAccessToken, getItauCachedTokenExpiresIn } from '@/lib/itau/auth';
+import { getItauAccessToken, getItauCachedTokenDiagnostics, getItauCachedTokenExpiresIn } from '@/lib/itau/auth';
+import { describeBolecodeEndpoint } from '@/lib/itau/bolecode';
 import { getItauMtlsStatus } from '@/lib/itau/http';
 
 export const runtime = 'nodejs';
@@ -62,11 +63,13 @@ export async function GET() {
 
   let tokenOk = false;
   let tokenExpiresIn = 0;
+  let tokenDiagnostics = getItauCachedTokenDiagnostics();
 
   if (authEnvOk) {
     try {
       await getItauAccessToken();
       tokenExpiresIn = getItauCachedTokenExpiresIn();
+      tokenDiagnostics = getItauCachedTokenDiagnostics();
       tokenOk = tokenExpiresIn > 0;
     } catch {
       tokenOk = false;
@@ -80,8 +83,10 @@ export async function GET() {
       pfx_loaded: mtls.pfxLoaded,
       token_ok: tokenOk,
       token_expires_in: tokenExpiresIn,
+      token_diagnostics: tokenDiagnostics,
       api_base_url: maskUrl(process.env.ITAU_API_URL),
       boleto_url: maskUrl(process.env.ITAU_BOLETO_URL),
+      bolecode_endpoint: describeBolecodeEndpoint(),
       id_beneficiario_ok: idBeneficiarioOk,
       webhook_url_configured: webhookUrlConfigured,
     },
