@@ -12,6 +12,7 @@ export interface EmitirBolecodeInput {
     email?: string | null;
     cep?: string | null;
     logradouro?: string | null;
+    bairro?: string | null;
     cidade?: string | null;
     uf?: string | null;
   };
@@ -59,11 +60,68 @@ interface ItauBolecodeResponse {
   };
 }
 
+type ItauDiagnostics = Record<string, unknown>;
+
 function getHeader(headers: Record<string, string | string[] | undefined>, name: string) {
   const target = name.toLowerCase();
   const found = Object.entries(headers).find(([key]) => key.toLowerCase() === target)?.[1];
 
   return Array.isArray(found) ? found.join(', ') : found;
+}
+
+function readStringField(record: Record<string, unknown>, names: string[]) {
+  for (const name of names) {
+    const value = record[name];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function readItauValidationDetails(data: unknown) {
+  if (!data || typeof data !== 'object') {
+    return [];
+  }
+
+  const details: Array<Record<string, string>> = [];
+  const seen = new Set<string>();
+
+  function collect(value: unknown) {
+    if (!value || typeof value !== 'object') {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach(collect);
+      return;
+    }
+
+    const record = value as Record<string, unknown>;
+    const campo = readStringField(record, ['campo', 'field', 'parametro', 'parameter', 'path']);
+    const mensagem = readStringField(record, ['mensagem', 'message', 'descricao', 'description', 'detail', 'erro', 'error']);
+
+    if (campo || mensagem) {
+      const key = `${campo ?? ''}:${mensagem ?? ''}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        details.push({
+          ...(campo ? { campo: campo.slice(0, 180) } : {}),
+          ...(mensagem ? { mensagem: mensagem.slice(0, 300) } : {}),
+        });
+      }
+    }
+
+    for (const nested of Object.values(record)) {
+      if (nested && typeof nested === 'object') {
+        collect(nested);
+      }
+    }
+  }
+
+  collect(data);
+  return details.slice(0, 20);
 }
 
 function readItauErrorMessage(data: unknown, text: string) {
@@ -115,10 +173,11 @@ function readItauErrorMessage(data: unknown, text: string) {
 export class ItauBolecodeError extends Error {
   readonly status: number;
   readonly mensagemItau: string | null;
-  readonly diagnostics: Record<string, string | number | null>;
+  readonly diagnostics: ItauDiagnostics;
 
   constructor(response: ItauHttpResponse<ItauBolecodeResponse>) {
     const mensagemItau = readItauErrorMessage(response.data, response.text);
+    const validationDetails = readItauValidationDetails(response.data);
 
     super(`Erro ao emitir Bolecode Itau: HTTP ${response.status}${mensagemItau ? ` - ${mensagemItau}` : ''}.`);
     this.name = 'ItauBolecodeError';
@@ -129,6 +188,8 @@ export class ItauBolecodeError extends Error {
       mensagem: mensagemItau,
       endpoint: describeBolecodeEndpoint().maskedUrl,
       endpoint_source: describeBolecodeEndpoint().source,
+      payload_shape: shouldWrapBolecodePayload() ? 'data' : 'root',
+      validacao_campos: validationDetails,
       x_itau_client_cert_error: getHeader(response.headers, 'x-itau-client-cert-error') ?? null,
       x_itau_correlation_id: getHeader(response.headers, 'x-itau-correlationID') ?? null,
       x_correlation_id: getHeader(response.headers, 'x-correlation-id') ?? null,
@@ -138,6 +199,17 @@ export class ItauBolecodeError extends Error {
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, '');
+}
+
+function sanitizeItauText(value: string | null | undefined, maxLength: number) {
+  const sanitized = (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9 .,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return sanitized.slice(0, maxLength);
 }
 
 function formatItauAmount(value: number) {
@@ -164,6 +236,15 @@ function requireEnv(name: string) {
   }
 
   return value;
+}
+
+function requireItauValue(name: string, value: string | null | undefined) {
+  const sanitized = value?.trim();
+  if (!sanitized) {
+    throw new Error(`Complete os dados do cliente para emitir Bolecode: ${name}.`);
+  }
+
+  return sanitized;
 }
 
 function createMockBolecode(input: EmitirBolecodeInput): BolecodeOutput {
@@ -228,6 +309,10 @@ function getBolecodeUrl() {
   return requireEnv('ITAU_BOLETO_URL');
 }
 
+function shouldWrapBolecodePayload() {
+  return process.env.ITAU_BOLECODE_WRAP_DATA === 'true';
+}
+
 function readBolecodeResponse(payload: ItauBolecodeResponse): BolecodeOutput {
   const data = Array.isArray(payload.data) ? payload.data[0] : payload.data;
   const boleto = ((data ?? payload) || {}) as ItauBolecodeResponse;
@@ -260,15 +345,15 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
   const cpfCnpj = onlyDigits(input.pagador.cpfCnpj);
   const isPessoaFisica = cpfCnpj.length <= 11;
   const valorFormatado = formatItauAmount(input.valor);
-  const chavePix = process.env.ITAU_CHAVE_PIX?.trim();
-  const endereco = input.pagador.logradouro
-    ? {
-        nome_logradouro: input.pagador.logradouro,
-        nome_cidade: input.pagador.cidade ?? undefined,
-        sigla_UF: input.pagador.uf ?? undefined,
-        numero_CEP: input.pagador.cep ? onlyDigits(input.pagador.cep) : undefined,
-      }
-    : undefined;
+  const chavePix = requireEnv('ITAU_CHAVE_PIX');
+  const endereco = {
+    nome_logradouro: sanitizeItauText(requireItauValue('logradouro', input.pagador.logradouro), 45),
+    nome_bairro: sanitizeItauText(requireItauValue('bairro', input.pagador.bairro), 15),
+    nome_cidade: sanitizeItauText(requireItauValue('cidade', input.pagador.cidade), 20),
+    sigla_UF: sanitizeItauText(requireItauValue('UF', input.pagador.uf), 2).toUpperCase(),
+    numero_CEP: onlyDigits(requireItauValue('CEP', input.pagador.cep)).slice(0, 8),
+  };
+  const textoUsoBeneficiario = sanitizeItauText(input.mensagem ?? input.seuNumero, 25);
 
   const data = {
     etapa_processo_boleto: input.simulacao ? 'simulacao' : 'efetivacao',
@@ -280,16 +365,17 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
       descricao_instrumento_cobranca: 'boleto_pix',
       tipo_boleto: 'a vista',
       codigo_carteira: process.env.ITAU_CODIGO_CARTEIRA?.trim() || '109',
+      codigo_tipo_vencimento: 3,
       codigo_especie: process.env.ITAU_CODIGO_ESPECIE?.trim() || '04',
       valor_abatimento: formatItauAmount(0),
       valor_total_titulo: valorFormatado,
       data_emissao: todayIsoDate(),
-      indicador_pagamento_parcial: false,
-      quantidade_maximo_parcial: 0,
+      pagamento_parcial: false,
+      quantidade_maximo_parcial: '0',
       desconto_expresso: false,
       pagador: {
         pessoa: {
-          nome_pessoa: input.pagador.nome,
+          nome_pessoa: sanitizeItauText(input.pagador.nome, 50),
           tipo_pessoa: {
             codigo_tipo_pessoa: isPessoaFisica ? 'F' : 'J',
             numero_cadastro_pessoa_fisica: isPessoaFisica ? cpfCnpj : undefined,
@@ -305,17 +391,16 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
           data_limite_pagamento: addDaysIsoDate(input.dataVencimento, 30),
           valor_titulo: valorFormatado,
           texto_seu_numero: input.seuNumero,
-          texto_uso_beneficiario: input.mensagem ?? undefined,
+          texto_uso_beneficiario: textoUsoBeneficiario || undefined,
         },
       ],
       recebimento_divergente: {
         codigo_tipo_autorizacao: '03',
-        codigo_tipo_recebimento: 'P',
       },
     },
-    dados_qrcode: chavePix ? { chave: chavePix } : undefined,
+    dados_qrcode: { chave: chavePix },
   };
-  const payload = { data };
+  const payload = shouldWrapBolecodePayload() ? { data } : data;
 
   const response = await requestItauApiJson<ItauBolecodeResponse>(getBolecodeUrl(), {
     method: 'POST',

@@ -40,6 +40,7 @@ ITAU_MTLS_DISABLED=false
 ITAU_AUTH_URL=https://sts.itau.com.br/api/oauth/token
 ITAU_API_URL=
 ITAU_BOLETO_URL=
+ITAU_BOLECODE_WRAP_DATA=false
 ITAU_BOLETOS_NOTIFICACOES_URL=
 ITAU_CLIENT_ID=
 ITAU_CLIENT_SECRET=
@@ -57,6 +58,7 @@ ITAU_CHAVE_PIX=
 
 Observacoes:
 - Preferir `ITAU_BOLETO_URL` com a URL completa do endpoint de emissao informado pelo Itau. Se ela estiver vazia, o app monta `ITAU_API_URL + /boletos/v3/boletos`.
+- Para `https://secure.api.itau/pix_recebimentos_conciliacoes/v2/boletos_pix`, mantenha `ITAU_BOLECODE_WRAP_DATA=false`.
 - Preferir `ITAU_PFX_PATH` em ambiente local/servidor com arquivo seguro, ou `ITAU_PFX_BASE64` em plataformas que nao aceitam arquivo secreto.
 - `ITAU_PFX_PASSPHRASE` deve conter a senha do PFX configurada fora do codigo.
 - `ITAU_CERT` e `ITAU_KEY` continuam suportados como alternativa PEM e devem ficar como segredo, nunca no Git.
