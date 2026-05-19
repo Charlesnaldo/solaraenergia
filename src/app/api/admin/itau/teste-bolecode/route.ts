@@ -167,7 +167,7 @@ export async function POST(req: Request) {
         status: 'ok',
         mensagem_itau: readMensagemItau(itau.raw),
         payload_sanitizado: {
-          etapa_processo_boleto: 'Simulacao',
+          etapa_processo_boleto: 'simulacao',
           simulacao: true,
           valor: valor.toFixed(2),
           data_vencimento: dataVencimento,
@@ -200,7 +200,7 @@ export async function POST(req: Request) {
         erro: error instanceof Error ? error.message : 'Falha ao testar BoleCode em simulacao.',
         detalhe_itau: itauError?.diagnostics ?? null,
         payload_sanitizado: {
-          etapa_processo_boleto: 'Simulacao',
+          etapa_processo_boleto: 'simulacao',
           simulacao: true,
           valor: valor.toFixed(2),
           data_vencimento: dataVencimento,

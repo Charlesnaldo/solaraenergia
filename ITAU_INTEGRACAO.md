@@ -19,7 +19,7 @@ Este guia descreve o que precisa estar pronto para rodar a integracao de boletos
 2. Solicitar `client_id`, `client_secret` ou token temporario conforme o processo do banco.
 3. Gerar par de chaves e certificado dinamico conforme a documentacao oficial.
 4. Confirmar com o Itau:
-   - URL base da API de boletos/Bolecode.
+   - URL exata da API de emissao Bolecode.
    - URL de token em producao.
    - `id_beneficiario`.
    - `codigo_carteira`.
@@ -55,6 +55,7 @@ ITAU_CHAVE_PIX=
 ```
 
 Observacoes:
+- Preferir `ITAU_BOLETO_URL` com a URL completa do endpoint de emissao informado pelo Itau. Se ela estiver vazia, o app monta `ITAU_API_URL + /boletos/v3/boletos`.
 - Preferir `ITAU_PFX_PATH` em ambiente local/servidor com arquivo seguro, ou `ITAU_PFX_BASE64` em plataformas que nao aceitam arquivo secreto.
 - `ITAU_PFX_PASSPHRASE` deve conter a senha do PFX configurada fora do codigo.
 - `ITAU_CERT` e `ITAU_KEY` continuam suportados como alternativa PEM e devem ficar como segredo, nunca no Git.
@@ -131,7 +132,7 @@ Antes de `ITAU_MOCK=false`:
 
 1. Conferir se `ITAU_PFX_PATH` e `ITAU_PFX_PASSPHRASE` estao corretos, ou se `ITAU_CERT` e `ITAU_KEY` estao corretos.
 2. Conferir se `ITAU_CLIENT_ID` e `ITAU_CLIENT_SECRET` pertencem ao mesmo ambiente da URL.
-3. Conferir se a URL de token e a URL de boletos sao do mesmo ambiente.
+3. Conferir se a URL de token e `ITAU_BOLETO_URL` sao do mesmo ambiente/produto.
 4. Conferir se `ITAU_ID_BENEFICIARIO` foi informado pelo Itau.
 5. Emitir um boleto de baixo valor em ambiente homologado/sandbox, se disponivel.
 6. Validar no Supabase se `id_itau`, `nosso_numero`, `linha_digitavel` e `api_response` foram salvos.

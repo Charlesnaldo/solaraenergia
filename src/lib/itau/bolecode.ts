@@ -31,7 +31,7 @@ export interface BolecodeOutput {
 }
 
 interface ItauBolecodeResponse {
-  data?: unknown[];
+  data?: unknown[] | Record<string, unknown>;
   id_boleto?: string;
   numero_nosso_numero?: string;
   codigo_barras?: string;
@@ -39,13 +39,22 @@ interface ItauBolecodeResponse {
   linha_digitavel?: string;
   url?: string;
   pix?: {
+    txid?: string;
     tx_id?: string;
     url?: string;
     qr_code?: string;
   };
+  dados_qrcode?: {
+    emv?: string;
+    location?: string;
+    base64?: string;
+    txid?: string;
+  };
   dado_boleto?: {
     dados_individuais_boleto?: Array<{
       numero_nosso_numero?: string;
+      codigo_barras?: string;
+      numero_linha_digitavel?: string;
     }>;
   };
 }
@@ -129,6 +138,16 @@ function onlyDigits(value: string) {
   return value.replace(/\D/g, '');
 }
 
+function formatItauAmount(value: number) {
+  return Math.round(value * 100)
+    .toString()
+    .padStart(17, '0');
+}
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function requireEnv(name: string) {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -155,6 +174,11 @@ function createMockBolecode(input: EmitirBolecodeInput): BolecodeOutput {
 }
 
 function getBolecodeUrl() {
+  const boletoUrl = process.env.ITAU_BOLETO_URL?.trim();
+  if (boletoUrl) {
+    return boletoUrl;
+  }
+
   const apiUrl = process.env.ITAU_API_URL?.trim();
   if (apiUrl) {
     return `${apiUrl.replace(/\/$/, '')}/boletos/v3/boletos`;
@@ -164,19 +188,21 @@ function getBolecodeUrl() {
 }
 
 function readBolecodeResponse(payload: ItauBolecodeResponse): BolecodeOutput {
-  const boleto = ((payload.data?.[0] ?? payload) || {}) as ItauBolecodeResponse;
+  const data = Array.isArray(payload.data) ? payload.data[0] : payload.data;
+  const boleto = ((data ?? payload) || {}) as ItauBolecodeResponse;
+  const boletoIndividual = boleto.dado_boleto?.dados_individuais_boleto?.[0];
 
   return {
     idBoleto: boleto.id_boleto ?? crypto.randomUUID(),
     nossoNumero:
       boleto.numero_nosso_numero ??
-      boleto.dado_boleto?.dados_individuais_boleto?.[0]?.numero_nosso_numero ??
+      boletoIndividual?.numero_nosso_numero ??
       '',
-    codigoBarras: boleto.codigo_barras ?? '',
-    linhaDigitavel: boleto.numero_linha_digitavel ?? boleto.linha_digitavel ?? '',
-    qrCode: boleto.pix?.tx_id ?? boleto.pix?.qr_code ?? '',
-    pixUrl: boleto.pix?.url ?? '',
-    boletoUrl: boleto.url ?? boleto.pix?.url ?? null,
+    codigoBarras: boleto.codigo_barras ?? boletoIndividual?.codigo_barras ?? '',
+    linhaDigitavel: boleto.numero_linha_digitavel ?? boleto.linha_digitavel ?? boletoIndividual?.numero_linha_digitavel ?? '',
+    qrCode: boleto.dados_qrcode?.emv ?? boleto.pix?.qr_code ?? boleto.pix?.tx_id ?? boleto.pix?.txid ?? '',
+    pixUrl: boleto.dados_qrcode?.location ?? boleto.pix?.url ?? '',
+    boletoUrl: boleto.url ?? boleto.dados_qrcode?.location ?? boleto.pix?.url ?? null,
     raw: payload,
   };
 }
@@ -192,44 +218,60 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
 
   const cpfCnpj = onlyDigits(input.pagador.cpfCnpj);
   const isPessoaFisica = cpfCnpj.length <= 11;
+  const valorFormatado = formatItauAmount(input.valor);
+  const chavePix = process.env.ITAU_CHAVE_PIX?.trim();
+  const endereco = input.pagador.logradouro
+    ? {
+        nome_logradouro: input.pagador.logradouro,
+        nome_cidade: input.pagador.cidade ?? undefined,
+        sigla_UF: input.pagador.uf ?? undefined,
+        numero_CEP: input.pagador.cep ? onlyDigits(input.pagador.cep) : undefined,
+      }
+    : undefined;
 
   const payload = {
-    etapa_processo_boleto: input.simulacao ? 'Simulacao' : 'efetivacao',
+    etapa_processo_boleto: input.simulacao ? 'simulacao' : 'efetivacao',
     codigo_canal_operacao: 'API',
     beneficiario: {
       id_beneficiario: requireEnv('ITAU_ID_BENEFICIARIO'),
     },
     dado_boleto: {
-      tipo_boleto: 'COBRANCA',
+      descricao_instrumento_cobranca: 'boleto_pix',
+      tipo_boleto: 'a vista',
       codigo_carteira: process.env.ITAU_CODIGO_CARTEIRA?.trim() || '109',
-      valor_total_titulo: input.valor.toFixed(2),
-      data_vencimento: input.dataVencimento,
-      seu_numero: input.seuNumero,
-      chave_pix: process.env.ITAU_CHAVE_PIX?.trim() || undefined,
+      codigo_especie: '01',
+      valor_abatimento: formatItauAmount(0),
+      valor_total_titulo: valorFormatado,
+      data_emissao: todayIsoDate(),
+      indicador_pagamento_parcial: false,
+      quantidade_maximo_parcial: 0,
+      desconto_expresso: false,
+      pagador: {
+        pessoa: {
+          nome_pessoa: input.pagador.nome,
+          tipo_pessoa: {
+            codigo_tipo_pessoa: isPessoaFisica ? 'F' : 'J',
+            numero_cadastro_pessoa_fisica: isPessoaFisica ? cpfCnpj : undefined,
+            numero_cadastro_nacional_pessoa_juridica: isPessoaFisica ? undefined : cpfCnpj,
+          },
+        },
+        endereco,
+      },
       dados_individuais_boleto: [
         {
           numero_nosso_numero: input.seuNumero.padStart(8, '0'),
           data_vencimento: input.dataVencimento,
-          valor_titulo: input.valor.toFixed(2),
+          valor_titulo: valorFormatado,
           texto_seu_numero: input.seuNumero,
+          texto_uso_beneficiario: input.mensagem ?? undefined,
         },
       ],
-      sacado_avalista: {
-        nome_pessoa: input.pagador.nome,
-        tipo_pessoa: isPessoaFisica ? 'FISICA' : 'JURIDICA',
-        numero_cadastro_pessoa_fisica: isPessoaFisica ? cpfCnpj : undefined,
-        numero_cadastro_nacional_pessoa_juridica: isPessoaFisica ? undefined : cpfCnpj,
-        endereco: input.pagador.logradouro
-          ? {
-              nome_logradouro: input.pagador.logradouro,
-              nome_cidade: input.pagador.cidade ?? undefined,
-              sigla_UF: input.pagador.uf ?? undefined,
-              numero_CEP: input.pagador.cep ? onlyDigits(input.pagador.cep) : undefined,
-            }
-          : undefined,
+      recebimento_divergente: {
+        codigo_tipo_autorizacao: '03',
+        codigo_tipo_recebimento: 'P',
       },
-      mensagem: input.mensagem ? { linha_1: input.mensagem } : undefined,
     },
+    dados_qrcode: chavePix ? { chave: chavePix } : undefined,
   };
 
   const response = await requestItauApiJson<ItauBolecodeResponse>(getBolecodeUrl(), {

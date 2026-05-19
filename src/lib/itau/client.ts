@@ -6,12 +6,15 @@ type AuthenticatedItauRequestOptions = Omit<ItauRequestOptions, 'mtls'>;
 
 function withAuthorization(options: AuthenticatedItauRequestOptions, token: string): ItauRequestOptions {
   const clientId = process.env.ITAU_CLIENT_ID?.trim();
+  const correlationId = crypto.randomUUID();
 
   return {
     ...options,
     headers: {
       ...(clientId ? { 'x-itau-apikey': clientId } : {}),
-      'x-itau-correlationID': crypto.randomUUID(),
+      'Accept': 'application/json',
+      'x-correlationID': correlationId,
+      'x-itau-correlationID': correlationId,
       'x-itau-flowID': crypto.randomUUID(),
       ...options.headers,
       Authorization: `Bearer ${token}`,

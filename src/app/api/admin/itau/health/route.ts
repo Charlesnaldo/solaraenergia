@@ -46,6 +46,7 @@ export async function GET() {
   const idBeneficiarioOk = hasEnv('ITAU_ID_BENEFICIARIO');
   const webhookUrlConfigured = isValidUrl(process.env.ITAU_BOLETOS_NOTIFICACOES_URL);
   const apiUrlOk = isValidUrl(process.env.ITAU_API_URL);
+  const boletoUrlOk = isValidUrl(process.env.ITAU_BOLETO_URL);
   const authEnvOk =
     hasEnv('ITAU_CLIENT_ID') &&
     hasEnv('ITAU_CLIENT_SECRET') &&
@@ -55,7 +56,7 @@ export async function GET() {
     process.env.ITAU_MOCK !== 'true';
   const envOk =
     authEnvOk &&
-    apiUrlOk &&
+    (apiUrlOk || boletoUrlOk) &&
     idBeneficiarioOk &&
     webhookUrlConfigured;
 
@@ -80,6 +81,7 @@ export async function GET() {
       token_ok: tokenOk,
       token_expires_in: tokenExpiresIn,
       api_base_url: maskUrl(process.env.ITAU_API_URL),
+      boleto_url: maskUrl(process.env.ITAU_BOLETO_URL),
       id_beneficiario_ok: idBeneficiarioOk,
       webhook_url_configured: webhookUrlConfigured,
     },
