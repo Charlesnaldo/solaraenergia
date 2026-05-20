@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 
     const { data: ultimoFaturamento } = await supabase
       .from('faturamento')
-      .select('id, boleto_url, linha_digitavel, codigo_barras, pix_url')
+      .select('id, boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url')
       .eq('cliente_id', id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
           data_vencimento: dueDate,
           status: 'gerado',
         })
-        .select('id, boleto_url, linha_digitavel, codigo_barras, pix_url')
+        .select('id, boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url')
         .single();
 
       if (novoFaturamentoError || !novoFaturamento) {
@@ -83,6 +83,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       linhaDigitavel: faturamento.linha_digitavel ?? null,
       codigoBarras: faturamento.codigo_barras ?? null,
       pixUrl: faturamento.pix_url ?? null,
+      pixQrCode: faturamento.pix_qr_code ?? null,
     });
 
     const filename = `boleto-${cliente.id}-${dueDate}.pdf`;

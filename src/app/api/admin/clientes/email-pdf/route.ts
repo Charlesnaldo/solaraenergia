@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     const { data: faturamento } = await supabase
       .from('faturamento')
-      .select('boleto_url, linha_digitavel, codigo_barras, pix_url')
+      .select('boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url')
       .eq('cliente_id', clienteId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
       linhaDigitavel: faturamento?.linha_digitavel ?? null,
       codigoBarras: faturamento?.codigo_barras ?? null,
       pixUrl: faturamento?.pix_url ?? null,
+      pixQrCode: faturamento?.pix_qr_code ?? null,
     });
 
     const emailResult = await sendBoletoPdfEmail({

@@ -276,17 +276,17 @@ export default function AdminFaturasPage() {
 
       <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-[1280px] table-fixed text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left text-slate-400">
-                <th className="px-2 py-3">Cliente</th>
-                <th className="px-2 py-3">Valor</th>
-                <th className="px-2 py-3">Vencimento</th>
-                <th className="px-2 py-3">Ultimo boleto</th>
-                <th className="px-2 py-3">Status</th>
-                <th className="px-2 py-3">Linha digitavel</th>
-                <th className="px-2 py-3">Pix</th>
-                <th className="px-2 py-3">Acoes</th>
+                <th className="w-[210px] px-2 py-3">Cliente</th>
+                <th className="w-[110px] px-2 py-3">Valor</th>
+                <th className="w-[150px] px-2 py-3">Vencimento</th>
+                <th className="w-[130px] px-2 py-3">Ultimo boleto</th>
+                <th className="w-[110px] px-2 py-3">Status</th>
+                <th className="w-[260px] px-2 py-3">Linha digitavel</th>
+                <th className="w-[210px] px-2 py-3">Pix</th>
+                <th className="w-[300px] px-2 py-3">Acoes</th>
               </tr>
             </thead>
             <tbody>
@@ -334,14 +334,21 @@ export default function AdminFaturasPage() {
                       '-'
                     )}
                   </td>
-                  <td className="max-w-xs truncate px-2 py-3 text-xs text-slate-300">
-                    {cliente.ultimoFaturamento?.linha_digitavel ?? '-'}
-                  </td>
-                  <td className="max-w-[180px] truncate px-2 py-3 text-xs text-slate-300">
-                    {cliente.ultimoFaturamento?.pix_url ?? cliente.ultimoFaturamento?.pix_qr_code ?? '-'}
+                  <td className="px-2 py-3">
+                    <span className="block max-w-[250px] truncate font-mono text-[11px] text-slate-300" title={cliente.ultimoFaturamento?.linha_digitavel ?? '-'}>
+                      {cliente.ultimoFaturamento?.linha_digitavel ?? '-'}
+                    </span>
                   </td>
                   <td className="px-2 py-3">
-                    <div className="flex flex-wrap gap-2">
+                    <span
+                      className="block max-w-[200px] truncate font-mono text-[11px] text-slate-300"
+                      title={cliente.ultimoFaturamento?.pix_url ?? cliente.ultimoFaturamento?.pix_qr_code ?? '-'}
+                    >
+                      {cliente.ultimoFaturamento?.pix_url ?? cliente.ultimoFaturamento?.pix_qr_code ?? '-'}
+                    </span>
+                  </td>
+                  <td className="px-2 py-3">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => void generateBoleto(cliente.id)}
                         disabled={busyId === cliente.id}
