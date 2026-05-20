@@ -13,6 +13,13 @@ interface ClientForm {
   telefone: string;
   whatsapp: string;
   endereco_completo: string;
+  rua: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  complemento: string;
   status_assinatura: ClienteStatus;
 }
 
@@ -23,6 +30,13 @@ const emptyForm: ClientForm = {
   telefone: '',
   whatsapp: '',
   endereco_completo: '',
+  rua: '',
+  numero: '',
+  bairro: '',
+  cidade: '',
+  estado: '',
+  cep: '',
+  complemento: '',
   status_assinatura: 'ativa',
 };
 
@@ -53,6 +67,13 @@ function formFromClient(cliente?: DashboardOverview['clientes'][number] | null):
     telefone: cliente.telefone ?? '',
     whatsapp: cliente.whatsapp ?? '',
     endereco_completo: cliente.endereco_completo ?? '',
+    rua: cliente.rua ?? '',
+    numero: cliente.numero ?? '',
+    bairro: cliente.bairro ?? '',
+    cidade: cliente.cidade ?? '',
+    estado: cliente.estado ?? '',
+    cep: cliente.cep ?? '',
+    complemento: cliente.complemento ?? '',
     status_assinatura: cliente.status_assinatura,
   };
 }
@@ -130,7 +151,9 @@ export default function AdminDashboardClient() {
     return overview.clientes.filter((cliente) => {
       const email = cliente.email ?? '';
       const telefone = cliente.telefone ?? cliente.whatsapp ?? '';
-      const endereco = cliente.endereco_completo ?? '';
+      const endereco = [cliente.endereco_completo, cliente.rua, cliente.bairro, cliente.cidade, cliente.estado, cliente.cep]
+        .filter(Boolean)
+        .join(' ');
       const matchQuery =
         cliente.nome.toLowerCase().includes(normalizedQuery) ||
         cliente.cpf_cnpj.includes(query) ||
@@ -368,7 +391,11 @@ export default function AdminDashboardClient() {
                   <td className="px-2 py-3">
                     <p className="font-semibold text-white">{cliente.nome}</p>
                     <p className="text-xs text-slate-400">{cliente.cpf_cnpj}</p>
-                    <p className="text-xs text-slate-500">{cliente.endereco_completo || '-'}</p>
+                    <p className="text-xs text-slate-500">
+                      {[cliente.rua, cliente.numero, cliente.bairro, cliente.cidade, cliente.estado, cliente.cep].filter(Boolean).join(', ') ||
+                        cliente.endereco_completo ||
+                        '-'}
+                    </p>
                   </td>
                   <td className="px-2 py-3">
                     <p>{cliente.telefone || '-'}</p>
@@ -511,6 +538,49 @@ export default function AdminDashboardClient() {
                 placeholder="Endereco"
                 value={form.endereco_completo}
                 onChange={(e) => setForm((prev) => ({ ...prev, endereco_completo: e.target.value }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none md:col-span-2"
+                placeholder="Rua / logradouro"
+                value={form.rua}
+                onChange={(e) => setForm((prev) => ({ ...prev, rua: e.target.value }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"
+                placeholder="Numero"
+                value={form.numero}
+                onChange={(e) => setForm((prev) => ({ ...prev, numero: e.target.value }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"
+                placeholder="Bairro"
+                value={form.bairro}
+                onChange={(e) => setForm((prev) => ({ ...prev, bairro: e.target.value }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"
+                placeholder="Cidade"
+                value={form.cidade}
+                onChange={(e) => setForm((prev) => ({ ...prev, cidade: e.target.value }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white uppercase outline-none"
+                placeholder="UF"
+                value={form.estado}
+                maxLength={2}
+                onChange={(e) => setForm((prev) => ({ ...prev, estado: e.target.value.toUpperCase() }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"
+                placeholder="CEP"
+                value={form.cep}
+                onChange={(e) => setForm((prev) => ({ ...prev, cep: e.target.value }))}
+              />
+              <input
+                className="rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white outline-none"
+                placeholder="Complemento"
+                value={form.complemento}
+                onChange={(e) => setForm((prev) => ({ ...prev, complemento: e.target.value }))}
               />
               {editingClientId ? (
                 <input

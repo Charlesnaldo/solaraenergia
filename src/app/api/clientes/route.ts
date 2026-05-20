@@ -54,6 +54,13 @@ export async function POST(req: Request) {
       telefone?: string;
       whatsapp?: string;
       endereco_completo?: string;
+      rua?: string;
+      numero?: string;
+      bairro?: string;
+      cidade?: string;
+      estado?: string;
+      cep?: string;
+      complemento?: string;
       responsavel?: string;
       cargo_responsavel?: string;
       observacoes?: string;
@@ -87,6 +94,13 @@ export async function POST(req: Request) {
         telefone: body.telefone?.trim() || null,
         whatsapp: body.whatsapp?.trim() || null,
         endereco_completo: body.endereco_completo?.trim() || null,
+        rua: body.rua?.trim() || null,
+        numero: body.numero?.trim() || null,
+        bairro: body.bairro?.trim() || null,
+        cidade: body.cidade?.trim() || null,
+        estado: body.estado?.trim() || null,
+        cep: body.cep?.trim() || null,
+        complemento: body.complemento?.trim() || null,
         responsavel: body.responsavel?.trim() || null,
         cargo_responsavel: body.cargo_responsavel?.trim() || null,
         observacoes: body.observacoes?.trim() || null,

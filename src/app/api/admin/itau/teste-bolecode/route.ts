@@ -14,6 +14,7 @@ interface ClienteBolecodeTeste {
   cep: string | null;
   endereco_completo: string | null;
   rua: string | null;
+  numero: string | null;
   bairro: string | null;
   cidade: string | null;
   estado: string | null;
@@ -69,7 +70,7 @@ async function readCliente(clienteId: string | undefined) {
   if (clienteId) {
     const { data, error } = await supabase
       .from('clientes')
-      .select('id, nome, cpf_cnpj, email, cep, endereco_completo, rua, bairro, cidade, estado')
+      .select('id, nome, cpf_cnpj, email, cep, endereco_completo, rua, numero, bairro, cidade, estado')
       .eq('id', clienteId)
       .single();
 
@@ -82,7 +83,7 @@ async function readCliente(clienteId: string | undefined) {
 
   const { data: activeClient } = await supabase
     .from('clientes')
-    .select('id, nome, cpf_cnpj, email, cep, endereco_completo, rua, bairro, cidade, estado')
+    .select('id, nome, cpf_cnpj, email, cep, endereco_completo, rua, numero, bairro, cidade, estado')
     .eq('status_assinatura', 'ativa')
     .order('created_at', { ascending: true })
     .limit(1)
@@ -94,7 +95,7 @@ async function readCliente(clienteId: string | undefined) {
 
   const { data } = await supabase
     .from('clientes')
-    .select('id, nome, cpf_cnpj, email, cep, endereco_completo, rua, bairro, cidade, estado')
+    .select('id, nome, cpf_cnpj, email, cep, endereco_completo, rua, numero, bairro, cidade, estado')
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -157,7 +158,7 @@ export async function POST(req: Request) {
         cpfCnpj: cliente.cpf_cnpj,
         email: cliente.email,
         cep: cliente.cep,
-        logradouro: cliente.rua ?? cliente.endereco_completo,
+        logradouro: [cliente.rua, cliente.numero].filter(Boolean).join(', ') || cliente.endereco_completo,
         bairro: cliente.bairro,
         cidade: cliente.cidade,
         uf: cliente.estado,

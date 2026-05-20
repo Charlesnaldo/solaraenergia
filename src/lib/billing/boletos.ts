@@ -11,7 +11,7 @@ export async function gerarBoletoParaCliente(params: {
 
   const { data: cliente, error: clienteError } = await supabase
     .from('clientes')
-    .select('id, nome, cpf_cnpj, email, cep, endereco_completo, rua, bairro, cidade, estado')
+    .select('id, nome, cpf_cnpj, email, cep, endereco_completo, rua, numero, bairro, cidade, estado')
     .eq('id', params.clienteId)
     .single();
 
@@ -28,7 +28,7 @@ export async function gerarBoletoParaCliente(params: {
       cpfCnpj: cliente.cpf_cnpj,
       email: cliente.email,
       cep: cliente.cep,
-      logradouro: cliente.rua ?? cliente.endereco_completo,
+      logradouro: [cliente.rua, cliente.numero].filter(Boolean).join(', ') || cliente.endereco_completo,
       bairro: cliente.bairro,
       cidade: cliente.cidade,
       uf: cliente.estado,
