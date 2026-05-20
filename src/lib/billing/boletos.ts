@@ -80,6 +80,12 @@ export async function gerarBoletoParaCliente(params: {
     .single();
 
   if (faturamentoError) {
+    if (faturamentoError.message.toLowerCase().includes('permission denied')) {
+      throw new Error(
+        'Erro ao salvar faturamento: permissao negada no Supabase. Aplique a migration/grants de service_role para a tabela faturamento e confira SUPABASE_SERVICE_ROLE_KEY na Vercel.',
+      );
+    }
+
     throw new Error(`Erro ao salvar faturamento: ${faturamentoError.message}`);
   }
 
