@@ -18,6 +18,7 @@ export default function AdminClientesPage() {
   const [billingValues, setBillingValues] = useState<Record<string, string>>({});
   const [dueDates, setDueDates] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [deletingBillingId, setDeletingBillingId] = useState<string | null>(null);
 
   const loadOverview = async () => {
     setLoading(true);
@@ -140,6 +141,30 @@ export default function AdminClientesPage() {
     }
   };
 
+  const deleteBoleto = async (faturamentoId: string) => {
+    const adminPassword = window.prompt('Digite a senha do administrador para excluir este boleto.');
+    if (!adminPassword) return;
+
+    const confirmed = window.confirm('Excluir este boleto do painel? Esta acao nao cancela automaticamente a cobranca no Itau.');
+    if (!confirmed) return;
+
+    setDeletingBillingId(faturamentoId);
+    try {
+      const res = await fetch('/api/boletos', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ faturamentoId, adminPassword }),
+      });
+      const payload = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(payload.error ?? 'Falha ao excluir boleto.');
+      await loadOverview();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Falha ao excluir boleto.');
+    } finally {
+      setDeletingBillingId(null);
+    }
+  };
+
   if (loading || !overview) {
     return <div className="text-slate-300">Carregando clientes...</div>;
   }
@@ -255,6 +280,15 @@ export default function AdminClientesPage() {
                       </button>
                       <button onClick={() => void sendPdfEmail(cliente.id)} disabled={busyId === cliente.id} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50">
                         {busyId === cliente.id ? 'Enviando...' : 'Enviar e-mail com PDF'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (cliente.ultimoFaturamento?.id) void deleteBoleto(cliente.ultimoFaturamento.id);
+                        }}
+                        disabled={!cliente.ultimoFaturamento?.id || deletingBillingId === cliente.ultimoFaturamento?.id}
+                        className="rounded-lg border border-rose-400/30 px-3 py-1 text-xs font-semibold text-rose-200 disabled:opacity-50"
+                      >
+                        {deletingBillingId === cliente.ultimoFaturamento?.id ? 'Excluindo...' : 'Excluir boleto'}
                       </button>
                     </div>
                   </td>

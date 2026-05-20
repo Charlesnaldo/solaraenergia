@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { gerarBoletoParaCliente } from '@/lib/billing/boletos';
-import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
+import { getAuthenticatedAdminUser, verifyAdminPassword } from '@/lib/auth/admin';
+import { createSupabaseServiceClient } from '@/lib/supabase/service';
 
 export const runtime = 'nodejs';
 
@@ -57,6 +58,38 @@ export async function POST(req: Request) {
     return NextResponse.json({ faturamento }, { status: simulacao ? 200 : 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno ao gerar boleto.';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const adminUser = await getAuthenticatedAdminUser();
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = (await req.json()) as { faturamentoId?: string; adminPassword?: string };
+    const faturamentoId = body.faturamentoId?.trim();
+
+    if (!faturamentoId) {
+      return NextResponse.json({ error: 'faturamentoId e obrigatorio.' }, { status: 400 });
+    }
+
+    if (!body.adminPassword || !(await verifyAdminPassword(body.adminPassword))) {
+      return NextResponse.json({ error: 'Senha do administrador invalida.' }, { status: 401 });
+    }
+
+    const supabase = createSupabaseServiceClient();
+    const { error } = await supabase.from('faturamento').delete().eq('id', faturamentoId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Erro ao excluir boleto.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

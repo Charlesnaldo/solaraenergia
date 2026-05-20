@@ -1,34 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
-import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
+import { getAuthenticatedAdminUser, verifyAdminPassword } from '@/lib/auth/admin';
 
 function sanitizeDocument(value: string) {
   return value.replace(/\D/g, '');
-}
-
-async function verifyAdminPassword(password: string) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const adminUser = await getAuthenticatedAdminUser();
-
-  if (!url || !anonKey || !adminUser?.email) {
-    return false;
-  }
-
-  const authClient = createClient(url, anonKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-
-  const { error } = await authClient.auth.signInWithPassword({
-    email: adminUser.email,
-    password,
-  });
-
-  return !error;
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

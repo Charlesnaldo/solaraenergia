@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { isTwoFactorCookieValid } from '@/lib/auth/two-factor';
 
@@ -35,4 +36,28 @@ export async function getAuthenticatedAdminUser() {
   const isTwoFactorValid = await isTwoFactorCookieValid(twoFactorCookie?.value, user?.id);
 
   return isAdmin && isTwoFactorValid ? user : null;
+}
+
+export async function verifyAdminPassword(password: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const adminUser = await getAuthenticatedAdminUser();
+
+  if (!url || !anonKey || !adminUser?.email) {
+    return false;
+  }
+
+  const authClient = createClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  const { error } = await authClient.auth.signInWithPassword({
+    email: adminUser.email,
+    password,
+  });
+
+  return !error;
 }

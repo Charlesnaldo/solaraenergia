@@ -43,6 +43,15 @@
     --ring: 45 100% 50%;
     --radius: 0.75rem;
   }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
 }
 
 @layer utilities {
