@@ -58,15 +58,31 @@ export default function AdminClientesPage() {
     });
   }, [overview, query, statusFilter]);
 
-  const openPdf = (clienteId: string) => {
+  const buildPdfUrl = (clienteId: string, download = false) => {
     const valor = Number(billingValues[clienteId] ?? 0);
     const dueDate = dueDates[clienteId];
     if (valor <= 0 || !dueDate) {
       alert('Informe valor e vencimento antes de gerar o PDF.');
-      return;
+      return null;
     }
 
-    window.open(`/api/admin/clientes/${clienteId}/pdf?valor=${encodeURIComponent(String(valor))}&dueDate=${encodeURIComponent(dueDate)}&download=1`, '_blank', 'noopener,noreferrer');
+    const params = new URLSearchParams({
+      valor: String(valor),
+      dueDate,
+    });
+
+    if (download) {
+      params.set('download', '1');
+    }
+
+    return `/api/admin/clientes/${clienteId}/pdf?${params.toString()}`;
+  };
+
+  const openPdf = (clienteId: string, download = false) => {
+    const url = buildPdfUrl(clienteId, download);
+    if (!url) return;
+
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const generateOfficialBoleto = async (clienteId: string) => {
@@ -207,12 +223,33 @@ export default function AdminClientesPage() {
                       className="rounded-lg border border-white/15 bg-slate-950 px-2 py-1 text-white"
                     />
                   </td>
-                  <td className="px-2 py-3">{cliente.ultimoFaturamento?.boleto_url ? <a href={cliente.ultimoFaturamento.boleto_url} target="_blank" rel="noreferrer" className="text-yellow-400 underline">Baixar</a> : '-'}</td>
+                  <td className="px-2 py-3">
+                    {cliente.ultimoFaturamento?.boleto_url ? (
+                      <a href={cliente.ultimoFaturamento.boleto_url} target="_blank" rel="noreferrer" className="text-yellow-400 underline">
+                        Abrir boleto
+                      </a>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
                   <td className="px-2 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => openPdf(cliente.id)} className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200">
+                      <button onClick={() => openPdf(cliente.id)} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white">
+                        Visualizar PDF
+                      </button>
+                      <button onClick={() => openPdf(cliente.id, true)} className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200">
                         Baixar PDF
                       </button>
+                      {cliente.ultimoFaturamento?.boleto_url ? (
+                        <a
+                          href={cliente.ultimoFaturamento.boleto_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white"
+                        >
+                          Abrir boleto
+                        </a>
+                      ) : null}
                       <button onClick={() => void generateOfficialBoleto(cliente.id)} disabled={busyId === cliente.id} className="rounded-lg bg-yellow-500 px-3 py-1 text-xs font-semibold text-slate-950 disabled:opacity-60">
                         {busyId === cliente.id ? 'Processando...' : 'Gerar boleto'}
                       </button>

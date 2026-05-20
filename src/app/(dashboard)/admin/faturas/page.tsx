@@ -104,19 +104,31 @@ export default function AdminFaturasPage() {
     }
   };
 
-  const openPdf = (clienteId: string) => {
+  const buildPdfUrl = (clienteId: string, download = false) => {
     const valor = parseMoneyInput(billingValues[clienteId] ?? '');
     const dueDate = dueDates[clienteId];
     if (valor <= 0 || !dueDate) {
       alert('Informe valor e vencimento antes de gerar o PDF.');
-      return;
+      return null;
     }
 
-    window.open(
-      `/api/admin/clientes/${clienteId}/pdf?valor=${encodeURIComponent(String(valor))}&dueDate=${encodeURIComponent(dueDate)}&download=1`,
-      '_blank',
-      'noopener,noreferrer',
-    );
+    const params = new URLSearchParams({
+      valor: String(valor),
+      dueDate,
+    });
+
+    if (download) {
+      params.set('download', '1');
+    }
+
+    return `/api/admin/clientes/${clienteId}/pdf?${params.toString()}`;
+  };
+
+  const openPdf = (clienteId: string, download = false) => {
+    const url = buildPdfUrl(clienteId, download);
+    if (!url) return;
+
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const sendEmail = async (faturamentoId: string) => {
@@ -314,6 +326,12 @@ export default function AdminFaturasPage() {
                       </button>
                       <button
                         onClick={() => openPdf(cliente.id)}
+                        className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white"
+                      >
+                        Visualizar PDF
+                      </button>
+                      <button
+                        onClick={() => openPdf(cliente.id, true)}
                         className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200"
                       >
                         Baixar PDF
@@ -325,7 +343,7 @@ export default function AdminFaturasPage() {
                           rel="noreferrer"
                           className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white"
                         >
-                          Abrir
+                          Abrir boleto
                         </a>
                       ) : null}
                       <button
