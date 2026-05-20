@@ -371,7 +371,6 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
       valor_total_titulo: valorFormatado,
       data_emissao: todayIsoDate(),
       pagamento_parcial: false,
-      quantidade_maximo_parcial: '0',
       desconto_expresso: false,
       pagador: {
         pessoa: {
