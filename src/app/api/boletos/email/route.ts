@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
-import { sendBoletoEmail } from '@/lib/notifications/email';
+import { createBoletoPdfBuffer } from '@/lib/billing/pdf';
+import { sendBoletoEmail, sendBoletoPdfEmail } from '@/lib/notifications/email';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 
 export async function POST(req: Request) {
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
     const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase
       .from('faturamento')
-      .select('id, valor, data_vencimento, boleto_url, linha_digitavel, pix_url, clientes!inner(nome, email)')
+      .select('id, valor, data_vencimento, boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url, clientes!inner(nome, cpf_cnpj, email)')
       .eq('id', faturamentoId)
       .single();
 
@@ -28,22 +29,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Faturamento não encontrado.' }, { status: 404 });
     }
 
-    if (!data.boleto_url) {
-      return NextResponse.json({ error: 'Este faturamento não possui URL de boleto.' }, { status: 400 });
-    }
-
     const clienteInfo = Array.isArray(data.clientes) ? data.clientes[0] : data.clientes;
-    if (!clienteInfo?.email || !clienteInfo?.nome) {
+    if (!clienteInfo?.email || !clienteInfo?.nome || !clienteInfo?.cpf_cnpj) {
       return NextResponse.json({ error: 'Cliente vinculado ao faturamento não possui e-mail válido.' }, { status: 400 });
     }
 
-    const emailResult = await sendBoletoEmail({
-      to: clienteInfo.email,
-      clientName: clienteInfo.nome,
-      boletoUrl: data.boleto_url,
-      dueDate: data.data_vencimento,
-      amount: Number(data.valor),
-    });
+    if (!data.boleto_url && !data.linha_digitavel && !data.codigo_barras && !data.pix_url && !data.pix_qr_code) {
+      return NextResponse.json({ error: 'Este faturamento nao possui dados do Itau suficientes para envio.' }, { status: 400 });
+    }
+
+    const amount = Number(data.valor);
+    const emailResult = data.boleto_url
+      ? await sendBoletoEmail({
+          to: clienteInfo.email,
+          clientName: clienteInfo.nome,
+          boletoUrl: data.boleto_url,
+          dueDate: data.data_vencimento,
+          amount,
+        })
+      : await sendBoletoPdfEmail({
+          to: clienteInfo.email,
+          clientName: clienteInfo.nome,
+          dueDate: data.data_vencimento,
+          amount,
+          pdfBuffer: createBoletoPdfBuffer({
+            clientName: clienteInfo.nome,
+            clientDocument: clienteInfo.cpf_cnpj,
+            amount,
+            dueDate: data.data_vencimento,
+            boletoUrl: null,
+            linhaDigitavel: data.linha_digitavel,
+            codigoBarras: data.codigo_barras,
+            pixUrl: data.pix_url,
+            pixQrCode: data.pix_qr_code,
+          }),
+        });
 
     return NextResponse.json({ ok: true, emailResult });
   } catch (error) {

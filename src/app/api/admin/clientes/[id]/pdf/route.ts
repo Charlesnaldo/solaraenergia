@@ -20,6 +20,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const url = new URL(req.url);
     const valor = parseMoney(url.searchParams.get('valor'));
     const dueDate = url.searchParams.get('dueDate')?.trim() ?? '';
+    const faturamentoId = url.searchParams.get('faturamentoId')?.trim() ?? '';
     const shouldDownload = url.searchParams.get('download') === '1';
 
     if (!id || valor <= 0 || !dueDate) {
@@ -37,15 +38,20 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Cliente nao encontrado.' }, { status: 404 });
     }
 
-    const { data: ultimoFaturamento } = await supabase
+    const faturamentoQuery = supabase
       .from('faturamento')
       .select('id, boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url')
-      .eq('cliente_id', id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .eq('cliente_id', id);
+
+    const { data: ultimoFaturamento } = faturamentoId
+      ? await faturamentoQuery.eq('id', faturamentoId).maybeSingle()
+      : await faturamentoQuery.order('created_at', { ascending: false }).limit(1).maybeSingle();
 
     let faturamento = ultimoFaturamento;
+
+    if (!faturamento && faturamentoId) {
+      return NextResponse.json({ error: 'Faturamento nao encontrado para gerar PDF.' }, { status: 404 });
+    }
 
     if (!faturamento) {
       const { data: assinatura } = await supabase

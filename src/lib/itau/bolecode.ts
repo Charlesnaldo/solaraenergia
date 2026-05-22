@@ -321,22 +321,64 @@ function shouldWrapBolecodePayload() {
   return process.env.ITAU_BOLECODE_WRAP_DATA === 'true';
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function readFirstString(records: Array<Record<string, unknown> | null | undefined>, names: string[]) {
+  for (const record of records) {
+    if (!record) {
+      continue;
+    }
+
+    for (const name of names) {
+      const value = record[name];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+  }
+
+  return '';
+}
+
+function firstRecord(value: unknown) {
+  if (Array.isArray(value)) {
+    return asRecord(value[0]);
+  }
+
+  return asRecord(value);
+}
+
 function readBolecodeResponse(payload: ItauBolecodeResponse): BolecodeOutput {
-  const data = Array.isArray(payload.data) ? payload.data[0] : payload.data;
-  const boleto = ((data ?? payload) || {}) as ItauBolecodeResponse;
-  const boletoIndividual = boleto.dado_boleto?.dados_individuais_boleto?.[0];
+  const payloadRecord = asRecord(payload);
+  const dataRecord = firstRecord(payload.data);
+  const boletoRecord = asRecord(dataRecord?.dado_boleto) ?? asRecord(payloadRecord?.dado_boleto);
+  const boletoIndividual =
+    firstRecord(boletoRecord?.dados_individuais_boleto) ??
+    firstRecord(dataRecord?.dados_individuais_boleto) ??
+    firstRecord(payloadRecord?.dados_individuais_boleto);
+  const qrCodeRecord = asRecord(dataRecord?.dados_qrcode) ?? asRecord(payloadRecord?.dados_qrcode);
+  const pixRecord = asRecord(dataRecord?.pix) ?? asRecord(payloadRecord?.pix);
+
+  const boletoRecords = [boletoIndividual, boletoRecord, dataRecord, payloadRecord];
+  const pixRecords = [qrCodeRecord, pixRecord, dataRecord, payloadRecord];
+  const pixUrl =
+    readFirstString([qrCodeRecord, pixRecord], ['location', 'url_pix', 'pix_url', 'url']) ||
+    readFirstString([dataRecord, payloadRecord], ['pix_url', 'url_pix']);
+  const genericUrl = readFirstString([dataRecord, payloadRecord], ['url']);
+  const boletoUrl =
+    readFirstString(boletoRecords, ['url_boleto', 'boleto_url', 'url_pdf', 'url_download', 'url_visualizacao', 'link_boleto']) ||
+    (genericUrl && genericUrl !== pixUrl ? genericUrl : '');
 
   return {
-    idBoleto: boleto.id_boleto ?? crypto.randomUUID(),
-    nossoNumero:
-      boleto.numero_nosso_numero ??
-      boletoIndividual?.numero_nosso_numero ??
-      '',
-    codigoBarras: boleto.codigo_barras ?? boletoIndividual?.codigo_barras ?? '',
-    linhaDigitavel: boleto.numero_linha_digitavel ?? boleto.linha_digitavel ?? boletoIndividual?.numero_linha_digitavel ?? '',
-    qrCode: boleto.dados_qrcode?.emv ?? boleto.pix?.qr_code ?? boleto.pix?.tx_id ?? boleto.pix?.txid ?? '',
-    pixUrl: boleto.dados_qrcode?.location ?? boleto.pix?.url ?? '',
-    boletoUrl: boleto.url ?? boleto.dados_qrcode?.location ?? boleto.pix?.url ?? null,
+    idBoleto: readFirstString(boletoRecords, ['id_boleto', 'id_boleto_pix', 'id', 'numero_boleto']) || crypto.randomUUID(),
+    nossoNumero: readFirstString(boletoRecords, ['numero_nosso_numero', 'nosso_numero']),
+    codigoBarras: readFirstString(boletoRecords, ['codigo_barras', 'numero_codigo_barras']),
+    linhaDigitavel: readFirstString(boletoRecords, ['numero_linha_digitavel', 'linha_digitavel']),
+    qrCode: readFirstString(pixRecords, ['emv', 'emv_qrcode', 'qr_code', 'qrcode', 'payload_pix', 'brcode', 'copia_cola', 'tx_id', 'txid']),
+    pixUrl,
+    boletoUrl: boletoUrl || null,
     raw: payload,
   };
 }

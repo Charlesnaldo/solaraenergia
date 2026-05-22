@@ -90,11 +90,12 @@ export default function AdminFaturasPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clienteId, valor, dataVencimento }),
       });
-      const payload = (await res.json()) as { error?: string; faturamento?: { boleto_url?: string | null } };
+      const payload = (await res.json()) as { error?: string; faturamento?: { boleto_url?: string | null }; admin_pdf_url?: string | null };
       if (!res.ok) throw new Error(payload.error ?? 'Falha ao gerar boleto.');
 
-      if (payload.faturamento?.boleto_url) {
-        window.open(payload.faturamento.boleto_url, '_blank', 'noopener,noreferrer');
+      const boletoUrl = payload.faturamento?.boleto_url ?? payload.admin_pdf_url;
+      if (boletoUrl) {
+        window.open(boletoUrl, '_blank', 'noopener,noreferrer');
       }
 
       await loadOverview();
@@ -221,11 +222,11 @@ export default function AdminFaturasPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.16),_transparent_34%),linear-gradient(180deg,_rgba(2,6,23,0.95),_rgba(15,23,42,0.9))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
+      <section className="rounded-[1.5rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.16),_transparent_34%),linear-gradient(180deg,_rgba(2,6,23,0.95),_rgba(15,23,42,0.9))] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:p-6 md:rounded-[2rem]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-yellow-300/80">Boletos e Itau</p>
-            <h1 className="mt-2 text-3xl font-black text-white md:text-4xl">Emissao de boletos</h1>
+            <h1 className="mt-2 text-2xl font-black text-white sm:text-3xl md:text-4xl">Emissao de boletos</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
               Gere boletos em modo mock ou Itau real conforme as variaveis da Vercel. O retorno salva linha digitavel,
               codigo de barras, Pix e identificadores do banco em faturamento.
@@ -233,7 +234,7 @@ export default function AdminFaturasPage() {
           </div>
           <button
             onClick={() => void loadOverview()}
-            className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10"
+            className="w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10 sm:w-fit"
           >
             Recarregar
           </button>
@@ -255,17 +256,17 @@ export default function AdminFaturasPage() {
         </div>
       </section>
 
-      <section className="flex flex-wrap gap-3">
+      <section className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar por nome, CPF/CNPJ ou e-mail"
-          className="min-w-[220px] flex-1 rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-yellow-500"
+          className="min-w-0 rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-yellow-500"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-          className="rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+          className="w-full rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
         >
           <option value="todos">Todos</option>
           <option value="ativa">Ativa</option>
@@ -274,8 +275,137 @@ export default function AdminFaturasPage() {
         </select>
       </section>
 
-      <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
-        <div className="overflow-x-auto">
+      <section className="rounded-[1.5rem] border border-white/10 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.2)] md:rounded-[1.75rem] md:p-5">
+        <div className="space-y-3 md:hidden">
+          {filteredClients.map((cliente) => (
+            <article key={cliente.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-white">{cliente.nome}</p>
+                  <p className="text-xs text-slate-400">{cliente.cpf_cnpj}</p>
+                  <p className="truncate text-xs text-slate-500">{cliente.email ?? 'Sem e-mail'}</p>
+                </div>
+                <span className="shrink-0 rounded-full border border-white/15 px-2 py-1 text-[10px] uppercase tracking-wide text-slate-200">
+                  {cliente.status_assinatura}
+                </span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <label className="space-y-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Valor</span>
+                  <input
+                    value={billingValues[cliente.id] ?? ''}
+                    onChange={(e) => setBillingValues((prev) => ({ ...prev, [cliente.id]: e.target.value }))}
+                    className="w-full rounded-lg border border-white/15 bg-slate-950 px-2 py-2 text-sm text-white"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Vencimento</span>
+                  <input
+                    type="date"
+                    value={dueDates[cliente.id] ?? ''}
+                    onChange={(e) => setDueDates((prev) => ({ ...prev, [cliente.id]: e.target.value }))}
+                    className="w-full rounded-lg border border-white/15 bg-slate-950 px-2 py-2 text-sm text-white"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-4 grid gap-3 text-sm">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Ultimo boleto</p>
+                  <p className="mt-1 text-white">{cliente.ultimoFaturamento ? money(Number(cliente.ultimoFaturamento.valor)) : '-'}</p>
+                  <p className="break-all font-mono text-xs text-slate-500">{cliente.ultimoFaturamento?.nosso_numero ?? ''}</p>
+                </div>
+                {cliente.ultimoFaturamento?.id ? (
+                  <label className="space-y-1">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Status</span>
+                    <select
+                      value={cliente.ultimoFaturamento.status}
+                      disabled={statusBillingId === cliente.ultimoFaturamento.id}
+                      onChange={(e) => void updateBillingStatus(cliente.ultimoFaturamento!.id, e.target.value as FaturamentoStatus)}
+                      className="w-full rounded-lg border border-white/15 bg-slate-950 px-2 py-2 text-sm text-white outline-none disabled:opacity-60"
+                    >
+                      <option value="gerado">Gerado</option>
+                      <option value="pago">Pago</option>
+                      <option value="nao_pago">Nao pago</option>
+                    </select>
+                  </label>
+                ) : null}
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Linha digitavel</p>
+                  <p className="mt-1 break-all font-mono text-xs text-slate-300">{cliente.ultimoFaturamento?.linha_digitavel ?? '-'}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Pix</p>
+                  <p className="mt-1 break-all font-mono text-xs text-slate-300">
+                    {cliente.ultimoFaturamento?.pix_url ?? cliente.ultimoFaturamento?.pix_qr_code ?? '-'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => void generateBoleto(cliente.id)}
+                  disabled={busyId === cliente.id}
+                  className="rounded-lg bg-yellow-500 px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-60"
+                >
+                  {busyId === cliente.id ? 'Gerando...' : 'Gerar boleto'}
+                </button>
+                <button
+                  onClick={() => openPdf(cliente.id)}
+                  className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white"
+                >
+                  Visualizar PDF
+                </button>
+                <button
+                  onClick={() => openPdf(cliente.id, true)}
+                  className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200"
+                >
+                  Baixar PDF
+                </button>
+                {cliente.ultimoFaturamento?.boleto_url ? (
+                  <a
+                    href={cliente.ultimoFaturamento.boleto_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg border border-white/20 px-3 py-2 text-center text-xs font-semibold text-white"
+                  >
+                    Abrir boleto
+                  </a>
+                ) : null}
+                <button
+                  onClick={() => {
+                    if (cliente.ultimoFaturamento?.id) void sendEmail(cliente.ultimoFaturamento.id);
+                  }}
+                  disabled={!cliente.ultimoFaturamento?.id || emailingBillingId === cliente.ultimoFaturamento?.id}
+                  className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                >
+                  {emailingBillingId === cliente.ultimoFaturamento?.id ? 'Enviando...' : 'E-mail'}
+                </button>
+                <button
+                  onClick={() => {
+                    if (cliente.ultimoFaturamento?.id) void sendWhatsapp(cliente.ultimoFaturamento.id);
+                  }}
+                  disabled={!cliente.ultimoFaturamento?.id || whatsappingBillingId === cliente.ultimoFaturamento?.id}
+                  className="rounded-lg border border-emerald-400/30 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-50"
+                >
+                  {whatsappingBillingId === cliente.ultimoFaturamento?.id ? 'Enviando...' : 'WhatsApp'}
+                </button>
+                <button
+                  onClick={() => {
+                    if (cliente.ultimoFaturamento?.id) void deleteBoleto(cliente.ultimoFaturamento.id);
+                  }}
+                  disabled={!cliente.ultimoFaturamento?.id || deletingBillingId === cliente.ultimoFaturamento?.id}
+                  className="col-span-2 rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 disabled:opacity-50"
+                >
+                  {deletingBillingId === cliente.ultimoFaturamento?.id ? 'Excluindo...' : 'Excluir'}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-[1280px] table-fixed text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left text-slate-400">

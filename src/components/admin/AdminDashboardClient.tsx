@@ -245,9 +245,10 @@ export default function AdminDashboardClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clienteId, valor, dataVencimento }),
       });
-      const payload = (await res.json()) as { error?: string; faturamento?: { boleto_url?: string | null } };
+      const payload = (await res.json()) as { error?: string; faturamento?: { boleto_url?: string | null }; admin_pdf_url?: string | null };
       if (!res.ok) throw new Error(payload.error ?? 'Falha ao gerar boleto.');
-      if (payload.faturamento?.boleto_url) window.open(payload.faturamento.boleto_url, '_blank', 'noopener,noreferrer');
+      const boletoUrl = payload.faturamento?.boleto_url ?? payload.admin_pdf_url;
+      if (boletoUrl) window.open(boletoUrl, '_blank', 'noopener,noreferrer');
       await loadOverview();
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Falha ao gerar boleto.');
@@ -296,16 +297,16 @@ export default function AdminDashboardClient() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.15),_transparent_35%),linear-gradient(180deg,_rgba(2,6,23,0.96),_rgba(15,23,42,0.92))] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.25)] md:p-8">
+      <section className="rounded-[1.5rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.15),_transparent_35%),linear-gradient(180deg,_rgba(2,6,23,0.96),_rgba(15,23,42,0.92))] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:p-6 md:rounded-[2rem] md:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
+          <div className="min-w-0 max-w-2xl">
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-yellow-300/80">Painel administrativo</p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-white md:text-5xl">Dashboard Principal</h1>
+            <h1 className="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl md:text-5xl">Dashboard Principal</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300 md:text-base">
               Cadastro simples de clientes, faturamento e operacao financeira em um unico painel.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-3 sm:flex sm:flex-wrap">
             <button
               onClick={() => {
                 setEditingClientId(null);
@@ -334,8 +335,8 @@ export default function AdminDashboardClient() {
         <StatCard label="Geracao em tempo real" value={`${overview.geracaoTempoRealKw} kW`} accent="text-cyan-300" />
       </section>
 
-      <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <section className="rounded-[1.5rem] border border-white/10 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.2)] md:rounded-[1.75rem] md:p-5">
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <h2 className="text-lg font-semibold text-white">Faturamento mensal</h2>
           <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Visao consolidada</p>
         </div>
@@ -352,18 +353,18 @@ export default function AdminDashboardClient() {
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
-        <div className="mb-4 flex flex-wrap gap-3">
+      <section className="rounded-[1.5rem] border border-white/10 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.2)] md:rounded-[1.75rem] md:p-5">
+        <div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nome, CPF/CNPJ, telefone ou endereco"
-            className="min-w-[220px] flex-1 rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-yellow-500"
+            className="min-w-0 rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-yellow-500"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+            className="w-full rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
           >
             <option value="todos">Todos</option>
             <option value="ativa">Ativa</option>
@@ -372,7 +373,112 @@ export default function AdminDashboardClient() {
           </select>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="space-y-3 md:hidden">
+          {filteredClients.map((cliente) => (
+            <article key={cliente.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-white">{cliente.nome}</p>
+                  <p className="text-xs text-slate-400">{cliente.cpf_cnpj}</p>
+                </div>
+                <span className="shrink-0 rounded-full border border-white/15 px-2 py-1 text-[10px] uppercase tracking-wide text-white">
+                  {cliente.status_assinatura}
+                </span>
+              </div>
+
+              <div className="mt-3 space-y-1 text-sm text-slate-300">
+                <p>{cliente.telefone || '-'}</p>
+                <p className="text-xs text-slate-400">{cliente.whatsapp ? `WhatsApp: ${cliente.whatsapp}` : 'Sem WhatsApp'}</p>
+                <p className="truncate text-xs text-slate-400">{cliente.email || 'Sem e-mail'}</p>
+                <p className="text-xs text-slate-500">
+                  {[cliente.rua, cliente.numero, cliente.bairro, cliente.cidade, cliente.estado, cliente.cep].filter(Boolean).join(', ') ||
+                    cliente.endereco_completo ||
+                    '-'}
+                </p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <label className="space-y-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Valor boleto</span>
+                  <input
+                    value={billingValues[cliente.id] ?? ''}
+                    onChange={(e) => setBillingValues((prev) => ({ ...prev, [cliente.id]: e.target.value }))}
+                    className="w-full rounded-lg border border-white/15 bg-slate-950 px-2 py-2 text-sm text-white"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Vencimento</span>
+                  <input
+                    type="date"
+                    value={dueDates[cliente.id] ?? ''}
+                    onChange={(e) => setDueDates((prev) => ({ ...prev, [cliente.id]: e.target.value }))}
+                    className="w-full rounded-lg border border-white/15 bg-slate-950 px-2 py-2 text-sm text-white"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Ultimo boleto</p>
+                {cliente.ultimoFaturamento?.boleto_url ? (
+                  <a href={cliente.ultimoFaturamento.boleto_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm text-yellow-400 underline">
+                    Baixar
+                  </a>
+                ) : (
+                  <p className="mt-1 text-sm text-slate-300">-</p>
+                )}
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => void gerarBoletoCliente(cliente.id)}
+                  disabled={generatingClientId === cliente.id}
+                  className="rounded-lg bg-yellow-500 px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-60"
+                >
+                  {generatingClientId === cliente.id ? 'Gerando...' : 'Gerar boleto'}
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingClientId(cliente.id);
+                    setForm(formFromClient(cliente));
+                    setShowModal(true);
+                  }}
+                  className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => {
+                    if (cliente.ultimoFaturamento?.id) void enviarEmailCliente(cliente.ultimoFaturamento.id);
+                  }}
+                  disabled={!cliente.ultimoFaturamento?.id || emailingBillingId === cliente.ultimoFaturamento?.id}
+                  className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                >
+                  {emailingBillingId === cliente.ultimoFaturamento?.id ? 'Enviando...' : 'E-mail'}
+                </button>
+                <button
+                  onClick={() => {
+                    if (cliente.ultimoFaturamento?.id) void enviarWhatsappCliente(cliente.ultimoFaturamento.id);
+                  }}
+                  disabled={!cliente.ultimoFaturamento?.id || whatsappingBillingId === cliente.ultimoFaturamento?.id}
+                  className="rounded-lg border border-emerald-400/30 px-3 py-2 text-xs font-semibold text-emerald-200 disabled:opacity-50"
+                >
+                  {whatsappingBillingId === cliente.ultimoFaturamento?.id ? 'Enviando...' : 'WhatsApp'}
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmDeleteClientId(cliente.id);
+                    setAdminPassword('');
+                  }}
+                  className="col-span-2 rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200"
+                >
+                  Excluir
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left text-slate-400">
@@ -488,8 +594,8 @@ export default function AdminDashboardClient() {
 
       {showModal ? (
         <div className="fixed inset-0 z-[80] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-[1.75rem] border border-white/10 bg-slate-950 p-6 shadow-[0_30px_100px_rgba(0,0,0,0.45)]">
-            <div className="mb-5 flex items-center justify-between gap-3">
+          <div className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[1.5rem] border border-white/10 bg-slate-950 p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] sm:p-6 md:rounded-[1.75rem]">
+            <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <h3 className="text-xl font-semibold text-white">{editingClientId ? 'Editar cliente' : 'Cadastro de cliente'}</h3>
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Dados basicos</p>
             </div>
@@ -592,7 +698,7 @@ export default function AdminDashboardClient() {
                 />
               ) : null}
             </div>
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 grid gap-2 sm:flex sm:justify-end">
               <button
                 onClick={() => {
                   setShowModal(false);
@@ -614,7 +720,7 @@ export default function AdminDashboardClient() {
 
       {confirmDeleteClientId ? (
         <div className="fixed inset-0 z-[90] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[1.75rem] border border-white/10 bg-slate-950 p-6 shadow-[0_30px_100px_rgba(0,0,0,0.45)]">
+          <div className="w-full max-w-md rounded-[1.5rem] border border-white/10 bg-slate-950 p-4 shadow-[0_30px_100px_rgba(0,0,0,0.45)] sm:p-6 md:rounded-[1.75rem]">
             <h3 className="text-xl font-semibold text-white">Confirmar exclusao</h3>
             <p className="mt-2 text-sm text-slate-400">Digite a senha do administrador para excluir este cliente permanentemente.</p>
             <input
@@ -624,7 +730,7 @@ export default function AdminDashboardClient() {
               className="mt-4 w-full rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-white"
               placeholder="Senha do administrador"
             />
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 grid gap-2 sm:flex sm:justify-end">
               <button
                 onClick={() => {
                   setConfirmDeleteClientId(null);

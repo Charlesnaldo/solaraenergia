@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase
       .from('faturamento')
-      .select('id, valor, data_vencimento, boleto_url, linha_digitavel, pix_url, clientes!inner(nome, telefone, whatsapp)')
+      .select('id, valor, data_vencimento, boleto_url, linha_digitavel, pix_url, pix_qr_code, clientes!inner(nome, telefone, whatsapp)')
       .eq('id', faturamentoId)
       .single();
 
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       `Valor: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(data.valor))}`,
       `Vencimento: ${data.data_vencimento}`,
       data.linha_digitavel ? `Linha digitavel: ${data.linha_digitavel}` : null,
-      data.pix_url ? `Pix: ${data.pix_url}` : null,
+      data.pix_url || data.pix_qr_code ? `Pix: ${data.pix_url ?? data.pix_qr_code}` : null,
       data.boleto_url ? `Link: ${data.boleto_url}` : null,
     ].filter(Boolean).join('\n');
 

@@ -9,13 +9,18 @@ import '../../globals.css';
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/clientes', label: 'Clientes', icon: Users },
-  { href: '/admin/faturas', label: 'Boletos e Itaú', icon: FileText },
+  { href: '/admin/faturas', label: 'Boletos e Itau', icon: FileText },
   { href: '/admin/testes', label: 'Testes', icon: FlaskConical },
 ];
+
+function isActivePath(pathname: string, href: string) {
+  return href === '/admin' ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const activeItem = navItems.find((item) => isActivePath(pathname, item.href));
 
   const logout = async () => {
     try {
@@ -39,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <nav className="mt-10 space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const active = isActivePath(pathname, item.href);
               return (
                 <Link key={item.href} href={item.href} className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${active ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300' : 'border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white'}`}>
                   <Icon className="h-4 w-4" />
@@ -49,26 +54,53 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             })}
           </nav>
           <div className="mt-auto space-y-2 pt-8">
-            <Link href="/admin/settings" className="flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/5 hover:text-white"><Settings className="h-4 w-4" />Configurações</Link>
+            <Link href="/admin/settings" className="flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/5 hover:text-white"><Settings className="h-4 w-4" />Configuracoes</Link>
             <button onClick={() => void logout()} className="flex w-full items-center gap-3 rounded-2xl border border-red-500/20 px-4 py-3 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 hover:text-red-200"><LogOut className="h-4 w-4" />Sair</button>
           </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/70 px-5 py-4 backdrop-blur-xl md:px-8">
-            <div className="flex items-center justify-between gap-4">
-              <div>
+          <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/85 px-4 py-3 backdrop-blur-xl sm:px-5 md:px-8 md:py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Painel interno</p>
-                <h2 className="mt-1 text-lg font-semibold text-white">Dashboard administrativo</h2>
+                <h2 className="mt-1 truncate text-base font-semibold text-white sm:text-lg">{activeItem?.label ?? 'Dashboard administrativo'}</h2>
               </div>
-              <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-2">
-                <div className="text-right"><p className="text-xs text-slate-400">Olá, administrador</p><p className="text-sm font-semibold text-white">Acesso principal</p></div>
-                <div className="grid h-10 w-10 place-items-center rounded-full bg-slate-800 ring-1 ring-white/10"><span className="text-sm font-bold text-yellow-300">A</span></div>
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="hidden items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-2 sm:flex">
+                  <div className="text-right"><p className="text-xs text-slate-400">Ola, administrador</p><p className="text-sm font-semibold text-white">Acesso principal</p></div>
+                  <div className="grid h-10 w-10 place-items-center rounded-full bg-slate-800 ring-1 ring-white/10"><span className="text-sm font-bold text-yellow-300">A</span></div>
+                </div>
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-slate-800 ring-1 ring-white/10 sm:hidden"><span className="text-sm font-bold text-yellow-300">A</span></div>
+                <button
+                  onClick={() => void logout()}
+                  aria-label="Sair"
+                  className="grid h-10 w-10 place-items-center rounded-full border border-red-500/25 bg-red-500/10 text-red-200 md:hidden"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
               </div>
             </div>
+
+            <nav className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActivePath(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition ${active ? 'border-yellow-500/40 bg-yellow-500/15 text-yellow-200' : 'border-white/10 bg-white/5 text-slate-300'}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
           </header>
 
-          <main className="flex-1 p-5 md:p-8">{children}</main>
+          <main className="min-w-0 flex-1 p-4 sm:p-5 md:p-8">{children}</main>
         </div>
       </div>
     </div>

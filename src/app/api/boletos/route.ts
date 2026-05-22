@@ -54,8 +54,17 @@ export async function POST(req: Request) {
       dataVencimento,
       simulacao,
     });
+    const faturamentoId = (faturamento as { id?: unknown }).id;
+    const adminPdfUrl =
+      !simulacao && typeof faturamentoId === 'string'
+        ? `/api/admin/clientes/${clienteId}/pdf?${new URLSearchParams({
+            valor: String(valor),
+            dueDate: dataVencimento,
+            faturamentoId,
+          }).toString()}`
+        : null;
 
-    return NextResponse.json({ faturamento }, { status: simulacao ? 200 : 201 });
+    return NextResponse.json({ faturamento, admin_pdf_url: adminPdfUrl }, { status: simulacao ? 200 : 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno ao gerar boleto.';
     return NextResponse.json({ error: message }, { status: 500 });
