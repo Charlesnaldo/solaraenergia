@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ClienteStatus, DashboardOverview, FaturamentoStatus } from '@/lib/dashboard/types';
 
+type GeneratedBilling = NonNullable<DashboardOverview['clientes'][number]['ultimoFaturamento']>;
+
 function money(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
@@ -106,9 +108,9 @@ export default function AdminFaturasPage() {
     }
   };
 
-  const buildPdfUrl = (clienteId: string, download = false) => {
-    const valor = parseMoneyInput(billingValues[clienteId] ?? '');
-    const dueDate = dueDates[clienteId];
+  const buildPdfUrl = (clienteId: string, download = false, faturamento?: GeneratedBilling | null) => {
+    const valor = faturamento ? Number(faturamento.valor ?? 0) : parseMoneyInput(billingValues[clienteId] ?? '');
+    const dueDate = faturamento?.data_vencimento ?? dueDates[clienteId];
     if (valor <= 0 || !dueDate) {
       alert('Informe valor e vencimento antes de gerar o PDF.');
       return null;
@@ -119,6 +121,10 @@ export default function AdminFaturasPage() {
       dueDate,
     });
 
+    if (faturamento?.id) {
+      params.set('faturamentoId', faturamento.id);
+    }
+
     if (download) {
       params.set('download', '1');
     }
@@ -126,8 +132,8 @@ export default function AdminFaturasPage() {
     return `/api/admin/clientes/${clienteId}/pdf?${params.toString()}`;
   };
 
-  const openPdf = (clienteId: string, download = false) => {
-    const url = buildPdfUrl(clienteId, download);
+  const openPdf = (clienteId: string, download = false, faturamento?: GeneratedBilling | null) => {
+    const url = buildPdfUrl(clienteId, download, faturamento);
     if (!url) return;
 
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -352,16 +358,16 @@ export default function AdminFaturasPage() {
                   {busyId === cliente.id ? 'Gerando...' : 'Gerar boleto'}
                 </button>
                 <button
-                  onClick={() => openPdf(cliente.id)}
+                  onClick={() => openPdf(cliente.id, false, cliente.ultimoFaturamento)}
                   className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white"
                 >
-                  Visualizar PDF
+                  Ver boleto
                 </button>
                 <button
-                  onClick={() => openPdf(cliente.id, true)}
+                  onClick={() => openPdf(cliente.id, true, cliente.ultimoFaturamento)}
                   className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200"
                 >
-                  Baixar PDF
+                  Baixar boleto
                 </button>
                 {cliente.ultimoFaturamento?.boleto_url ? (
                   <a
@@ -487,16 +493,16 @@ export default function AdminFaturasPage() {
                         {busyId === cliente.id ? 'Gerando...' : 'Gerar boleto'}
                       </button>
                       <button
-                        onClick={() => openPdf(cliente.id)}
+                        onClick={() => openPdf(cliente.id, false, cliente.ultimoFaturamento)}
                         className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white"
                       >
-                        Visualizar PDF
+                        Ver boleto
                       </button>
                       <button
-                        onClick={() => openPdf(cliente.id, true)}
+                        onClick={() => openPdf(cliente.id, true, cliente.ultimoFaturamento)}
                         className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200"
                       >
-                        Baixar PDF
+                        Baixar boleto
                       </button>
                       {cliente.ultimoFaturamento?.boleto_url ? (
                         <a

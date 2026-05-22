@@ -6,6 +6,8 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { ClienteStatus, DashboardOverview } from '@/lib/dashboard/types';
 
+type GeneratedBilling = NonNullable<DashboardOverview['clientes'][number]['ultimoFaturamento']>;
+
 interface ClientForm {
   nome: string;
   cpf_cnpj: string;
@@ -55,6 +57,24 @@ function nextDueDate(day: number) {
   const date = new Date(now.getFullYear(), now.getMonth(), day);
   if (date < now) date.setMonth(date.getMonth() + 1);
   return date.toISOString().slice(0, 10);
+}
+
+function buildGeneratedBillingPdfUrl(clienteId: string, faturamento: GeneratedBilling, download = false) {
+  const params = new URLSearchParams({
+    valor: String(Number(faturamento.valor ?? 0)),
+    dueDate: faturamento.data_vencimento,
+    faturamentoId: faturamento.id,
+  });
+
+  if (download) {
+    params.set('download', '1');
+  }
+
+  return `/api/admin/clientes/${clienteId}/pdf?${params.toString()}`;
+}
+
+function openGeneratedBillingPdf(clienteId: string, faturamento: GeneratedBilling, download = false) {
+  window.open(buildGeneratedBillingPdfUrl(clienteId, faturamento, download), '_blank', 'noopener,noreferrer');
 }
 
 function formFromClient(cliente?: DashboardOverview['clientes'][number] | null): ClientForm {
@@ -423,6 +443,21 @@ export default function AdminDashboardClient() {
                   <a href={cliente.ultimoFaturamento.boleto_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm text-yellow-400 underline">
                     Baixar
                   </a>
+                ) : cliente.ultimoFaturamento?.id ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => openGeneratedBillingPdf(cliente.id, cliente.ultimoFaturamento!)}
+                      className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white"
+                    >
+                      Ver boleto
+                    </button>
+                    <button
+                      onClick={() => openGeneratedBillingPdf(cliente.id, cliente.ultimoFaturamento!, true)}
+                      className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200"
+                    >
+                      Baixar boleto
+                    </button>
+                  </div>
                 ) : (
                   <p className="mt-1 text-sm text-slate-300">-</p>
                 )}
@@ -533,6 +568,21 @@ export default function AdminDashboardClient() {
                       <a href={cliente.ultimoFaturamento.boleto_url} target="_blank" rel="noreferrer" className="text-yellow-400 underline">
                         Baixar
                       </a>
+                    ) : cliente.ultimoFaturamento?.id ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => openGeneratedBillingPdf(cliente.id, cliente.ultimoFaturamento!)}
+                          className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white"
+                        >
+                          Ver
+                        </button>
+                        <button
+                          onClick={() => openGeneratedBillingPdf(cliente.id, cliente.ultimoFaturamento!, true)}
+                          className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200"
+                        >
+                          Baixar
+                        </button>
+                      </div>
                     ) : (
                       '-'
                     )}

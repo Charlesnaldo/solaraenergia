@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { DashboardOverview, ClienteStatus } from '@/lib/dashboard/types';
 
+type GeneratedBilling = NonNullable<DashboardOverview['clientes'][number]['ultimoFaturamento']>;
+
 function nextDueDate(day: number) {
   const now = new Date();
   const date = new Date(now.getFullYear(), now.getMonth(), day);
@@ -65,9 +67,9 @@ export default function AdminClientesPage() {
     });
   }, [overview, query, statusFilter]);
 
-  const buildPdfUrl = (clienteId: string, download = false) => {
-    const valor = parseMoneyInput(billingValues[clienteId] ?? '');
-    const dueDate = dueDates[clienteId];
+  const buildPdfUrl = (clienteId: string, download = false, faturamento?: GeneratedBilling | null) => {
+    const valor = faturamento ? Number(faturamento.valor ?? 0) : parseMoneyInput(billingValues[clienteId] ?? '');
+    const dueDate = faturamento?.data_vencimento ?? dueDates[clienteId];
     if (valor <= 0 || !dueDate) {
       alert('Informe valor e vencimento antes de gerar o PDF.');
       return null;
@@ -78,6 +80,10 @@ export default function AdminClientesPage() {
       dueDate,
     });
 
+    if (faturamento?.id) {
+      params.set('faturamentoId', faturamento.id);
+    }
+
     if (download) {
       params.set('download', '1');
     }
@@ -85,8 +91,8 @@ export default function AdminClientesPage() {
     return `/api/admin/clientes/${clienteId}/pdf?${params.toString()}`;
   };
 
-  const openPdf = (clienteId: string, download = false) => {
-    const url = buildPdfUrl(clienteId, download);
+  const openPdf = (clienteId: string, download = false, faturamento?: GeneratedBilling | null) => {
+    const url = buildPdfUrl(clienteId, download, faturamento);
     if (!url) return;
 
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -252,17 +258,19 @@ export default function AdminClientesPage() {
                   <a href={cliente.ultimoFaturamento.boleto_url} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm text-yellow-400 underline">
                     Abrir boleto
                   </a>
+                ) : cliente.ultimoFaturamento?.id ? (
+                  <p className="mt-1 text-sm text-slate-300">Boleto gerado</p>
                 ) : (
                   <p className="mt-1 text-sm text-slate-300">-</p>
                 )}
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
-                <button onClick={() => openPdf(cliente.id)} className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white">
-                  Visualizar PDF
+                <button onClick={() => openPdf(cliente.id, false, cliente.ultimoFaturamento)} className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white">
+                  Ver boleto
                 </button>
-                <button onClick={() => openPdf(cliente.id, true)} className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200">
-                  Baixar PDF
+                <button onClick={() => openPdf(cliente.id, true, cliente.ultimoFaturamento)} className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200">
+                  Baixar boleto
                 </button>
                 {cliente.ultimoFaturamento?.boleto_url ? (
                   <a
@@ -349,17 +357,19 @@ export default function AdminClientesPage() {
                       <a href={cliente.ultimoFaturamento.boleto_url} target="_blank" rel="noreferrer" className="text-yellow-400 underline">
                         Abrir boleto
                       </a>
+                    ) : cliente.ultimoFaturamento?.id ? (
+                      <span className="text-slate-300">Boleto gerado</span>
                     ) : (
                       '-'
                     )}
                   </td>
                   <td className="px-2 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => openPdf(cliente.id)} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white">
-                        Visualizar PDF
+                      <button onClick={() => openPdf(cliente.id, false, cliente.ultimoFaturamento)} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white">
+                        Ver boleto
                       </button>
-                      <button onClick={() => openPdf(cliente.id, true)} className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200">
-                        Baixar PDF
+                      <button onClick={() => openPdf(cliente.id, true, cliente.ultimoFaturamento)} className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200">
+                        Baixar boleto
                       </button>
                       {cliente.ultimoFaturamento?.boleto_url ? (
                         <a
