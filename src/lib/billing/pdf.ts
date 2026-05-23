@@ -174,6 +174,10 @@ function drawStrokeRect(x: number, y: number, width: number, height: number, col
   return `${color} RG ${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re S`;
 }
 
+function drawLine(x1: number, y1: number, x2: number, y2: number, color = '0.85 0.88 0.92', width = 0.5) {
+  return `${width} w ${color} RG ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S`;
+}
+
 function drawRoundRect(x: number, y: number, width: number, height: number, radius: number, fill = '1 1 1', stroke?: string) {
   const r = Math.min(radius, width / 2, height / 2);
   const c = r * 0.5522847498;
@@ -578,20 +582,38 @@ export function createBoletoPdfBuffer(input: {
   const status = clean(input.status || 'gerado').toUpperCase();
   const description = input.description || 'Servicos de energia solar / faturamento mensal';
   const installationAddress = clean(input.installationAddress || input.clientAddress);
-  const brandYellow = '0.98 0.80 0.08';
-  const brandGreen = '0.06 0.55 0.38';
-  const slate950 = '0.01 0.02 0.06';
-  const slate800 = '0.12 0.16 0.24';
-  const slate600 = '0.28 0.33 0.41';
-  const slate500 = '0.39 0.45 0.55';
-  const slate50 = '0.98 0.99 1';
-  const border = '0.85 0.88 0.92';
-  const softYellow = '1 0.97 0.83';
-  const softGreen = '0.88 0.97 0.93';
+
+  // ── Palette ─────────────────────────────────────────────────────────────
+  const brandYellow  = '0.98 0.80 0.08';
+  const brandOrange  = '1 0.68 0.20';
+  const brandGreen   = '0.06 0.55 0.38';
+  const slate950     = '0.01 0.02 0.06';
+  const slate800     = '0.12 0.16 0.24';
+  const slate600     = '0.28 0.33 0.41';
+  const slate400     = '0.55 0.60 0.69';
+  const slate100     = '0.94 0.95 0.97';
+  const white        = '1 1 1';
+  const borderColor  = '0.88 0.91 0.94';
+  const softYellow   = '1 0.97 0.83';
+  const softGreen    = '0.88 0.97 0.93';
+  const greenBorder  = '0.54 0.85 0.68';
+  const yellowBorder = '0.96 0.80 0.20';
+
+  const M = 40; // horizontal margin
+  const W = 595 - M * 2; // content width = 515
+
   const parts: string[] = [];
 
+  // ── Helpers ─────────────────────────────────────────────────────────────
+
+  function sectionLabel(x: number, y: number, text: string) {
+    // small ALL-CAPS label with a left accent bar
+    parts.push(drawRect(x, y - 1, 2.5, 11, brandOrange));
+    parts.push(drawText(x + 7, y, text.toUpperCase(), 7.5, slate400, 'F2'));
+  }
+
   function addLabelValue(x: number, y: number, label: string, value: string, maxLength = 34) {
-    parts.push(drawText(x, y, label.toUpperCase(), 7, slate500, 'F2'));
+    parts.push(drawText(x, y, label.toUpperCase(), 6.5, slate400, 'F2'));
     wrap(clean(value), maxLength).slice(0, 2).forEach((line, index) => {
       parts.push(drawText(x, y - 13 - index * 11, line, 9, slate800));
     });
@@ -603,65 +625,188 @@ export function createBoletoPdfBuffer(input: {
     });
   }
 
-  parts.push(drawRect(0, 0, 595, 842, '1 1 1'));
+  // ════════════════════════════════════════════════════════════════════════
+  // PAGE BACKGROUND
+  // ════════════════════════════════════════════════════════════════════════
+  parts.push(drawRect(0, 0, 595, 842, white));
+
+  // ════════════════════════════════════════════════════════════════════════
+  // HEADER  (y 750–842)
+  // ════════════════════════════════════════════════════════════════════════
   parts.push(drawRect(0, 750, 595, 92, slate950));
-  parts.push(drawRect(0, 750, 595, 7, brandYellow));
-  parts.push(...drawSolaraLogo(46, 779, 0.85));
-  parts.push(drawText(47, 763, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 8, '0.78 0.83 0.90'));
-  parts.push(drawText(382, 804, 'Resumo de Faturamento', 15, '1 1 1', 'F2'));
-  parts.push(drawText(384, 786, `Emitido em ${issueDate}`, 8, '0.78 0.83 0.90'));
+  // top accent stripe – thicker, gradient-like via two stacked rects
+  parts.push(drawRect(0, 838, 595, 4, brandYellow));
+  parts.push(drawRect(0, 834, 595, 4, brandOrange));
 
-  parts.push(drawRoundRect(48, 648, 310, 78, 10, slate50, border));
-  parts.push(drawText(70, 704, 'VALOR DO FATURAMENTO', 8, slate500, 'F2'));
-  parts.push(drawText(70, 674, formatCurrencyBRL(input.amount), 26, slate950, 'F2'));
-  parts.push(drawText(72, 658, description, 8, slate600));
+  // logo
+  parts.push(...drawSolaraLogo(M, 776, 0.85));
 
-  parts.push(drawRoundRect(374, 648, 173, 78, 10, softYellow, '0.96 0.80 0.20'));
-  parts.push(drawText(394, 704, 'VENCIMENTO', 8, slate600, 'F2'));
-  parts.push(drawText(394, 681, dueDate, 17, slate950, 'F2'));
-  parts.push(drawRoundRect(394, 657, 86, 18, 9, softGreen, '0.54 0.85 0.68'));
-  parts.push(drawText(409, 662, status, 7, brandGreen, 'F2'));
+  // vertical divider between logo and header info
+  parts.push(drawLine(340, 758, 340, 838, '0.20 0.22 0.30', 0.5));
 
-  parts.push(drawRoundRect(48, 528, 238, 96, 10, '1 1 1', border));
-  parts.push(drawText(68, 602, 'Dados do cliente', 12, slate950, 'F2'));
-  addLabelValue(68, 581, 'Cliente', input.clientName, 28);
-  addLabelValue(68, 542, 'CPF/CNPJ', maskCpfCnpj(input.clientDocument), 35);
+  // right block: document type + meta
+  parts.push(drawText(355, 814, 'RESUMO DE FATURAMENTO', 11, white, 'F2'));
+  parts.push(drawLine(355, 809, 547, 809, '0.30 0.34 0.44', 0.4));
+  parts.push(drawText(355, 796, `Emitido em ${issueDate}`, 8, '0.65 0.70 0.80'));
+  parts.push(drawText(355, 783, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 8, '0.50 0.55 0.65'));
 
-  parts.push(drawRoundRect(307, 528, 240, 96, 10, '1 1 1', border));
-  parts.push(drawText(327, 602, 'Instalacao / unidade consumidora', 12, slate950, 'F2'));
-  addSmallLines(327, 581, installationAddress, 34, 8, slate600, 5);
+  // CNPJ subtext on left
+  parts.push(drawText(M, 762, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 7.5, '0.50 0.55 0.65'));
 
-  parts.push(drawRoundRect(48, 448, 499, 58, 10, '1 1 1', border));
-  parts.push(drawText(68, 486, 'Detalhamento da cobranca', 12, slate950, 'F2'));
-  addLabelValue(68, 466, 'Descricao', description, 58);
-  addLabelValue(333, 466, 'Faturamento ID', clean(input.faturamentoId), 38);
+  // ════════════════════════════════════════════════════════════════════════
+  // HERO VALUE BAND  (y 640–742)
+  // ════════════════════════════════════════════════════════════════════════
+  // light background strip
+  parts.push(drawRect(0, 640, 595, 102, slate100));
+  parts.push(drawLine(0, 640, 595, 640, borderColor, 0.5));
+  parts.push(drawLine(0, 742, 595, 742, borderColor, 0.5));
 
-  parts.push(drawRoundRect(48, 158, 499, 276, 12, '1 1 1', border));
-  parts.push(drawRoundRect(68, 396, 190, 24, 12, brandYellow));
-  parts.push(drawText(88, 403, 'Pague com Pix ou Boleto', 10, slate950, 'F2'));
-  parts.push(drawText(68, 374, 'Linha digitavel', 10, slate950, 'F2'));
-  addSmallLines(68, 358, clean(input.linhaDigitavel), 62, 8, slate800, 3);
-  parts.push(drawText(68, 314, 'Pix copia e cola', 10, slate950, 'F2'));
-  addSmallLines(68, 298, pixCopyPasteText, 56, 7, slate600, 4);
-  parts.push(drawText(397, 374, 'QR Code Pix', 10, slate950, 'F2'));
-  parts.push(...drawQrCode(qrValue, 397, 252, 108));
-  parts.push(drawText(68, 231, 'Codigo de barras', 10, slate950, 'F2'));
-  parts.push(...drawBarcode(input.codigoBarras, 68, 177, 455, 42));
-  parts.push(drawText(68, 163, clean(input.codigoBarras), 7, slate600));
+  // Value block (left 2/3)
+  parts.push(drawText(M, 718, 'VALOR DO FATURAMENTO', 7.5, slate600, 'F2'));
+  parts.push(drawText(M, 688, formatCurrencyBRL(input.amount), 30, slate950, 'F2'));
+  parts.push(drawText(M, 671, description, 8, slate600));
 
-  parts.push(drawRoundRect(48, 96, 499, 46, 10, '1 0.99 0.93', '0.95 0.83 0.34'));
-  parts.push(drawText(68, 122, 'Observacao', 9, slate950, 'F2'));
-  parts.push(drawText(68, 108, 'Apos o pagamento, a compensacao podera ocorrer conforme o prazo da instituicao financeira.', 8, slate600));
+  // vertical divider
+  parts.push(drawLine(380, 650, 380, 732, borderColor, 0.5));
 
-  parts.push(drawRect(0, 0, 595, 82, slate950));
-  parts.push(drawText(48, 54, 'Atendimento', 9, '1 1 1', 'F2'));
-  parts.push(drawText(48, 39, supportEmail, 8, '0.78 0.83 0.90'));
-  parts.push(drawText(220, 54, 'WhatsApp', 9, '1 1 1', 'F2'));
-  parts.push(drawText(220, 39, supportWhatsapp, 8, '0.78 0.83 0.90'));
-  parts.push(drawText(392, 54, 'Site', 9, '1 1 1', 'F2'));
-  parts.push(drawText(392, 39, siteUrl.replace(/^https?:\/\//, ''), 8, '0.78 0.83 0.90'));
-  parts.push(drawText(48, 18, 'Solara Energia: transparencia, economia e confianca na sua jornada de energia solar.', 8, '0.78 0.83 0.90'));
+  // Due-date block (right 1/3)
+  parts.push(drawText(397, 718, 'VENCIMENTO', 7.5, slate600, 'F2'));
+  parts.push(drawText(397, 696, dueDate, 19, slate800, 'F2'));
 
+  // Status badge
+  const badgeFill = status === 'PAGO' ? softGreen : softYellow;
+  const badgeBorder = status === 'PAGO' ? greenBorder : yellowBorder;
+  const badgeTextColor = status === 'PAGO' ? brandGreen : '0.60 0.42 0.02';
+  parts.push(drawRoundRect(397, 671, 92, 17, 8, badgeFill, badgeBorder));
+  parts.push(drawText(413, 676, status, 7.5, badgeTextColor, 'F2'));
+
+  // ════════════════════════════════════════════════════════════════════════
+  // INFO CARDS  (y 540–630)
+  // ════════════════════════════════════════════════════════════════════════
+  const cardY = 540;
+  const cardH = 84;
+  const cardGap = 10;
+  const cardW = (W - cardGap) / 2;
+
+  // Card: Cliente
+  parts.push(drawRoundRect(M, cardY, cardW, cardH, 8, white, borderColor));
+  // top accent line on card
+  parts.push(drawRect(M, cardY + cardH - 4, cardW, 4, '0.06 0.55 0.38')); // green top
+  // clip workaround: just draw a rounded top – skip, use label instead
+  sectionLabel(M + 14, cardY + cardH - 14, 'Dados do cliente');
+  addLabelValue(M + 14, cardY + cardH - 34, 'Nome', input.clientName, 30);
+  addLabelValue(M + 14, cardY + cardH - 57, 'CPF / CNPJ', maskCpfCnpj(input.clientDocument), 35);
+
+  // Card: Instalação
+  const card2X = M + cardW + cardGap;
+  parts.push(drawRoundRect(card2X, cardY, cardW, cardH, 8, white, borderColor));
+  parts.push(drawRect(card2X, cardY + cardH - 4, cardW, 4, brandOrange));
+  sectionLabel(card2X + 14, cardY + cardH - 14, 'Instalacao / Unidade consumidora');
+  addSmallLines(card2X + 14, cardY + cardH - 34, installationAddress, 34, 8, slate600, 4);
+
+  // ════════════════════════════════════════════════════════════════════════
+  // DETALHAMENTO  (y 462–532)
+  // ════════════════════════════════════════════════════════════════════════
+  const detY = 462;
+  const detH = 64;
+  parts.push(drawRoundRect(M, detY, W, detH, 8, white, borderColor));
+  parts.push(drawRect(M, detY + detH - 4, W, 4, slate950));
+  sectionLabel(M + 14, detY + detH - 14, 'Detalhamento da cobranca');
+  addLabelValue(M + 14, detY + detH - 32, 'Descricao', description, 52);
+  addLabelValue(M + 14 + 290, detY + detH - 32, 'Faturamento ID', clean(input.faturamentoId), 28);
+
+  // ════════════════════════════════════════════════════════════════════════
+  // PAYMENT SECTION  (y 148–454)
+  // ════════════════════════════════════════════════════════════════════════
+  const payY = 148;
+  const payH = 298;
+  parts.push(drawRoundRect(M, payY, W, payH, 10, white, borderColor));
+
+  // Section header band
+  parts.push(drawRect(M, payY + payH - 36, W, 36, slate950));
+  // rounded top corners for the band — just use the full rect since it's at the top of the card
+  parts.push(drawText(M + 14, payY + payH - 22, 'Pague com Pix ou Boleto', 11, white, 'F2'));
+  // small pill badge
+  parts.push(drawRoundRect(M + 14 + 178, payY + payH - 29, 60, 16, 8, brandYellow));
+  parts.push(drawText(M + 14 + 183, payY + payH - 24, 'INSTANTANEO', 6.5, slate950, 'F2'));
+
+  const innerY = payY + payH - 44; // baseline just below the header
+
+  // ── Left column ─────────────────────────────────────────────────────────
+  const lx = M + 14;
+
+  // Linha Digitável
+  parts.push(drawLine(lx, innerY - 4, lx + 300, innerY - 4, borderColor, 0.4));
+  parts.push(drawText(lx, innerY - 18, 'Linha digitavel', 9, slate800, 'F2'));
+  addSmallLines(lx, innerY - 33, clean(input.linhaDigitavel), 60, 7.5, slate600, 3);
+
+  // separator
+  parts.push(drawLine(lx, innerY - 82, lx + 300, innerY - 82, borderColor, 0.4));
+
+  // Pix Copia e Cola
+  parts.push(drawText(lx, innerY - 96, 'Pix copia e cola', 9, slate800, 'F2'));
+  addSmallLines(lx, innerY - 111, pixCopyPasteText, 54, 7, slate600, 4);
+
+  // ── Right column: QR code ────────────────────────────────────────────────
+  const qrSize = 114;
+  const qrX = M + W - qrSize - 14;
+  const qrTopY = innerY - 18;
+
+  parts.push(drawText(qrX, qrTopY, 'QR Code Pix', 9, slate800, 'F2'));
+  parts.push(...drawQrCode(qrValue, qrX, qrTopY - qrSize - 8, qrSize));
+
+  // vertical divider between columns
+  parts.push(drawLine(qrX - 14, innerY - 4, qrX - 14, payY + 10, borderColor, 0.4));
+
+  // ── Barcode area ────────────────────────────────────────────────────────
+  const bcAreaY = payY + 10;
+  const bcH = 44;
+  parts.push(drawLine(lx, bcAreaY + bcH + 14, lx + W - 28, bcAreaY + bcH + 14, borderColor, 0.4));
+  parts.push(drawText(lx, bcAreaY + bcH + 8, 'Codigo de barras', 9, slate800, 'F2'));
+  parts.push(...drawBarcode(input.codigoBarras, lx, bcAreaY - 4, W - 28, bcH));
+  parts.push(drawText(lx, bcAreaY - 10, clean(input.codigoBarras), 6.5, slate400));
+
+  // ════════════════════════════════════════════════════════════════════════
+  // NOTICE BAR  (y 96–140)
+  // ════════════════════════════════════════════════════════════════════════
+  parts.push(drawRoundRect(M, 96, W, 44, 8, softYellow, yellowBorder));
+  // left icon dot
+  parts.push(drawCircle(M + 20, 96 + 22, 6, brandYellow));
+  parts.push(drawText(M + 17, 96 + 19.5, '!', 9, slate950, 'F2'));
+  parts.push(drawText(M + 34, 96 + 29, 'Observacao', 8.5, slate800, 'F2'));
+  parts.push(drawText(M + 34, 96 + 16, 'Apos o pagamento, a compensacao podera ocorrer conforme o prazo da instituicao financeira.', 7.5, slate600));
+
+  // ════════════════════════════════════════════════════════════════════════
+  // FOOTER  (y 0–88)
+  // ════════════════════════════════════════════════════════════════════════
+  parts.push(drawRect(0, 0, 595, 88, slate950));
+  parts.push(drawRect(0, 84, 595, 4, brandYellow));
+
+  // three columns
+  const col1 = M;
+  const col2 = M + 170;
+  const col3 = M + 340;
+
+  // column labels + values
+  parts.push(drawText(col1, 62, 'Atendimento', 7.5, '0.65 0.70 0.80', 'F2'));
+  parts.push(drawLine(col1, 58, col1 + 130, 58, '0.20 0.22 0.30', 0.4));
+  parts.push(drawText(col1, 46, supportEmail, 8, '0.90 0.92 0.95'));
+
+  parts.push(drawText(col2, 62, 'WhatsApp', 7.5, '0.65 0.70 0.80', 'F2'));
+  parts.push(drawLine(col2, 58, col2 + 130, 58, '0.20 0.22 0.30', 0.4));
+  parts.push(drawText(col2, 46, supportWhatsapp, 8, '0.90 0.92 0.95'));
+
+  parts.push(drawText(col3, 62, 'Site', 7.5, '0.65 0.70 0.80', 'F2'));
+  parts.push(drawLine(col3, 58, col3 + 130, 58, '0.20 0.22 0.30', 0.4));
+  parts.push(drawText(col3, 46, siteUrl.replace(/^https?:\/\//, ''), 8, '0.90 0.92 0.95'));
+
+  // tagline
+  parts.push(drawLine(M, 34, 595 - M, 34, '0.15 0.17 0.25', 0.4));
+  parts.push(drawText(M, 20, 'Solara Energia: transparencia, economia e confianca na sua jornada de energia solar.', 7.5, '0.45 0.50 0.60'));
+
+  // ════════════════════════════════════════════════════════════════════════
+  // BUILD PDF BYTES  (unchanged)
+  // ════════════════════════════════════════════════════════════════════════
   const content = parts.join('\n');
   const objects = [
     '%PDF-1.4\n',
