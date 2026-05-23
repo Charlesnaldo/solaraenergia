@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { getConfiguredItauWebhookSecret } from '@/lib/itau/webhook';
 import { sendPaymentConfirmedEmail } from '@/lib/notifications/email';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 
@@ -73,10 +74,6 @@ function safeEqual(a: string, b: string) {
   return left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
-function getConfiguredWebhookSecret() {
-  return process.env.ITAU_WEBHOOK_SECRET?.trim() || process.env.ITAU_WEBHOOK_TOKEN?.trim() || '';
-}
-
 function getIncomingWebhookSecrets(req: Request) {
   const url = new URL(req.url);
   const authorization = req.headers.get('authorization') ?? '';
@@ -93,9 +90,9 @@ function getIncomingWebhookSecrets(req: Request) {
 }
 
 function verifyWebhookSecret(req: Request) {
-  const configured = getConfiguredWebhookSecret();
+  const configured = getConfiguredItauWebhookSecret();
   if (!configured) {
-    console.error('[itau-webhook] Configure ITAU_WEBHOOK_SECRET para habilitar o webhook em producao.');
+    console.error('[itau-webhook] Configure ITAU_WEBHOOK_SECRET ou token/secret em ITAU_BOLETOS_NOTIFICACOES_URL para habilitar o webhook em producao.');
     return process.env.NODE_ENV !== 'production';
   }
 

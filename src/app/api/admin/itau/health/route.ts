@@ -3,6 +3,7 @@ import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 import { getItauAccessToken, getItauCachedTokenDiagnostics, getItauCachedTokenExpiresIn } from '@/lib/itau/auth';
 import { describeBolecodeEndpoint } from '@/lib/itau/bolecode';
 import { getItauMtlsStatus } from '@/lib/itau/http';
+import { hasConfiguredItauWebhookSecret } from '@/lib/itau/webhook';
 
 export const runtime = 'nodejs';
 
@@ -46,7 +47,7 @@ export async function GET() {
   const mtls = getItauMtlsStatus();
   const idBeneficiarioOk = hasEnv('ITAU_ID_BENEFICIARIO');
   const webhookUrlConfigured = isValidUrl(process.env.ITAU_BOLETOS_NOTIFICACOES_URL);
-  const webhookSecretConfigured = hasEnv('ITAU_WEBHOOK_SECRET') || hasEnv('ITAU_WEBHOOK_TOKEN');
+  const webhookSecretConfigured = hasConfiguredItauWebhookSecret();
   const apiUrlOk = isValidUrl(process.env.ITAU_API_URL);
   const boletoUrlOk = isValidUrl(process.env.ITAU_BOLETO_URL);
   const authEnvOk =
