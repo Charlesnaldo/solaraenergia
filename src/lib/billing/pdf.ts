@@ -570,7 +570,10 @@ export function createBoletoPdfBuffer(input: {
   pixUrl?: string | null;
   pixQrCode?: string | null;
 }) {
-  const qrValue = [input.pixQrCode, input.pixUrl].find(isPixPaymentPayload) ?? null;
+  const qrValue =
+    [input.pixQrCode, input.pixUrl].find(isPixPaymentPayload) ??
+    [input.pixQrCode, input.pixUrl].find((v) => typeof v === 'string' && v.trim().length > 0) ??
+    null;
   const pixCopyPasteText =
     qrValue ?? 'Payload Pix nao retornado pelo Itau. Use a linha digitavel ou o codigo de barras.';
   const companyCnpj = input.companyCnpj || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null;
@@ -748,12 +751,15 @@ export function createBoletoPdfBuffer(input: {
   addSmallLines(lx, innerY - 111, pixCopyPasteText, 54, 7, slate600, 4);
 
   // ── Right column: QR code ────────────────────────────────────────────────
+  // Anchor from the top of the payment section downward for predictable placement
   const qrSize = 114;
   const qrX = M + W - qrSize - 14;
-  const qrTopY = innerY - 18;
+  // label sits just below the header band; QR renders below the label
+  const qrLabelY = innerY - 18;      // y of the "QR Code Pix" label text
+  const qrBaseY  = qrLabelY - 8 - qrSize; // bottom-left corner of the QR square
 
-  parts.push(drawText(qrX, qrTopY, 'QR Code Pix', 9, slate800, 'F2'));
-  parts.push(...drawQrCode(qrValue, qrX, qrTopY - qrSize - 8, qrSize));
+  parts.push(drawText(qrX, qrLabelY, 'QR Code Pix', 9, slate800, 'F2'));
+  parts.push(...drawQrCode(qrValue, qrX, qrBaseY, qrSize));
 
   // vertical divider between columns
   parts.push(drawLine(qrX - 14, innerY - 4, qrX - 14, payY + 10, borderColor, 0.4));
