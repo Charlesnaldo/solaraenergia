@@ -14,15 +14,9 @@ export function money(value: number) {
 }
 
 export function formatDateBR(value: string | Date | null | undefined) {
-  if (!value) {
-    return 'Nao informado';
-  }
-
+  if (!value) return 'Nao informado';
   const date = value instanceof Date ? value : new Date(`${String(value).slice(0, 10)}T00:00:00`);
-  if (Number.isNaN(date.getTime())) {
-    return 'Nao informado';
-  }
-
+  if (Number.isNaN(date.getTime())) return 'Nao informado';
   return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(date);
 }
 
@@ -32,15 +26,10 @@ function onlyDigits(value: string) {
 
 export function maskCpfCnpj(value: string | null | undefined) {
   const digits = onlyDigits(value ?? '');
-
-  if (digits.length === 11) {
+  if (digits.length === 11)
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-  }
-
-  if (digits.length === 14) {
+  if (digits.length === 14)
     return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
-  }
-
   return clean(value);
 }
 
@@ -48,104 +37,38 @@ type Matrix = boolean[][];
 
 const ECC_CODEWORDS_PER_BLOCK = [
   [-1, -1, -1, -1],
-  [7, 10, 13, 17],
-  [10, 16, 22, 28],
-  [15, 26, 36, 44],
-  [20, 36, 52, 64],
-  [26, 48, 72, 88],
-  [18, 64, 96, 112],
-  [20, 72, 108, 130],
-  [24, 88, 132, 156],
-  [30, 110, 160, 192],
-  [18, 130, 192, 224],
-  [20, 150, 224, 264],
-  [24, 176, 260, 308],
-  [26, 198, 288, 352],
-  [30, 216, 320, 384],
-  [22, 240, 360, 432],
-  [24, 280, 408, 480],
-  [28, 308, 448, 532],
-  [30, 338, 504, 588],
-  [28, 364, 546, 650],
-  [28, 416, 600, 700],
-  [28, 442, 644, 750],
-  [28, 476, 690, 816],
-  [30, 504, 750, 900],
-  [30, 560, 810, 960],
-  [26, 588, 870, 1050],
-  [28, 644, 952, 1110],
-  [30, 700, 1020, 1200],
-  [30, 728, 1050, 1260],
-  [30, 784, 1140, 1350],
-  [30, 812, 1200, 1440],
-  [30, 868, 1290, 1530],
-  [30, 924, 1350, 1620],
-  [30, 980, 1440, 1710],
-  [30, 1036, 1530, 1800],
-  [30, 1064, 1590, 1890],
-  [30, 1120, 1680, 1980],
-  [30, 1204, 1770, 2100],
-  [30, 1260, 1860, 2220],
-  [30, 1316, 1950, 2310],
-  [30, 1372, 2040, 2430],
+  [7, 10, 13, 17], [10, 16, 22, 28], [15, 26, 36, 44], [20, 36, 52, 64],
+  [26, 48, 72, 88], [18, 64, 96, 112], [20, 72, 108, 130], [24, 88, 132, 156],
+  [30, 110, 160, 192], [18, 130, 192, 224], [20, 150, 224, 264], [24, 176, 260, 308],
+  [26, 198, 288, 352], [30, 216, 320, 384], [22, 240, 360, 432], [24, 280, 408, 480],
+  [28, 308, 448, 532], [30, 338, 504, 588], [28, 364, 546, 650], [28, 416, 600, 700],
+  [28, 442, 644, 750], [28, 476, 690, 816], [30, 504, 750, 900], [30, 560, 810, 960],
+  [26, 588, 870, 1050], [28, 644, 952, 1110], [30, 700, 1020, 1200], [30, 728, 1050, 1260],
+  [30, 784, 1140, 1350], [30, 812, 1200, 1440], [30, 868, 1290, 1530], [30, 924, 1350, 1620],
+  [30, 980, 1440, 1710], [30, 1036, 1530, 1800], [30, 1064, 1590, 1890], [30, 1120, 1680, 1980],
+  [30, 1204, 1770, 2100], [30, 1260, 1860, 2220], [30, 1316, 1950, 2310], [30, 1372, 2040, 2430],
 ];
 
 const NUM_ERROR_CORRECTION_BLOCKS = [
   [-1, -1, -1, -1],
-  [1, 1, 1, 1],
-  [1, 1, 1, 1],
-  [1, 1, 2, 2],
-  [1, 2, 2, 4],
-  [1, 2, 4, 4],
-  [2, 4, 4, 4],
-  [2, 4, 6, 5],
-  [2, 4, 6, 6],
-  [2, 5, 8, 8],
-  [4, 5, 8, 8],
-  [4, 5, 8, 11],
-  [4, 8, 10, 11],
-  [4, 9, 12, 16],
-  [4, 9, 16, 16],
-  [6, 10, 12, 18],
-  [6, 10, 17, 16],
-  [6, 11, 16, 19],
-  [6, 13, 18, 21],
-  [7, 14, 21, 25],
-  [8, 16, 20, 25],
-  [8, 17, 23, 25],
-  [9, 17, 23, 34],
-  [9, 18, 25, 30],
-  [10, 20, 27, 32],
-  [12, 21, 29, 35],
-  [12, 23, 34, 37],
-  [12, 25, 34, 40],
-  [13, 26, 35, 42],
-  [14, 28, 38, 45],
-  [15, 29, 40, 48],
-  [16, 31, 43, 51],
-  [17, 33, 45, 54],
-  [18, 35, 48, 57],
-  [19, 37, 51, 60],
-  [19, 38, 53, 63],
-  [20, 40, 56, 66],
-  [21, 43, 59, 70],
-  [22, 45, 62, 74],
-  [24, 47, 65, 77],
-  [25, 49, 68, 81],
+  [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 2, 2], [1, 2, 2, 4],
+  [1, 2, 4, 4], [2, 4, 4, 4], [2, 4, 6, 5], [2, 4, 6, 6],
+  [2, 5, 8, 8], [4, 5, 8, 8], [4, 5, 8, 11], [4, 8, 10, 11],
+  [4, 9, 12, 16], [4, 9, 16, 16], [6, 10, 12, 18], [6, 10, 17, 16],
+  [6, 11, 16, 19], [6, 13, 18, 21], [7, 14, 21, 25], [8, 16, 20, 25],
+  [8, 17, 23, 25], [9, 17, 23, 34], [9, 18, 25, 30], [10, 20, 27, 32],
+  [12, 21, 29, 35], [12, 23, 34, 37], [12, 25, 34, 40], [13, 26, 35, 42],
+  [14, 28, 38, 45], [15, 29, 40, 48], [16, 31, 43, 51], [17, 33, 45, 54],
+  [18, 35, 48, 57], [19, 37, 51, 60], [19, 38, 53, 63], [20, 40, 56, 66],
+  [21, 43, 59, 70], [22, 45, 62, 74], [24, 47, 65, 77], [25, 49, 68, 81],
 ];
 
 const ITF_PATTERNS: Record<string, string> = {
-  '0': '00110',
-  '1': '10001',
-  '2': '01001',
-  '3': '11000',
-  '4': '00101',
-  '5': '10100',
-  '6': '01100',
-  '7': '00011',
-  '8': '10010',
-  '9': '01010',
+  '0': '00110', '1': '10001', '2': '01001', '3': '11000', '4': '00101',
+  '5': '10100', '6': '01100', '7': '00011', '8': '10010', '9': '01010',
 };
+
+// ─── PDF Primitives ────────────────────────────────────────────────────────────
 
 function escapePdfText(value: string) {
   return value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
@@ -158,117 +81,246 @@ function clean(value: string | null | undefined) {
 function wrap(value: string, maxLength: number) {
   const text = value.trim();
   if (text.length <= maxLength) return [text];
-
   const lines: string[] = [];
-  for (let i = 0; i < text.length; i += maxLength) {
-    lines.push(text.slice(i, i + maxLength));
-  }
-
+  for (let i = 0; i < text.length; i += maxLength) lines.push(text.slice(i, i + maxLength));
   return lines;
 }
 
-function drawText(x: number, y: number, text: string, size = 10, color = '0 0 0', font = 'F1') {
+function tx(x: number, y: number, text: string, size = 10, color = '0 0 0', font = 'F1') {
   return `BT ${color} rg /${font} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${escapePdfText(text)}) Tj ET`;
 }
 
-function drawRect(x: number, y: number, width: number, height: number, color = '0 0 0') {
-  return `${color} rg ${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re f`;
+function rect(x: number, y: number, w: number, h: number, color = '0 0 0') {
+  return `${color} rg ${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f`;
 }
 
-function drawStrokeRect(x: number, y: number, width: number, height: number, color = '0 0 0') {
-  return `${color} RG ${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re S`;
+function strokeRect(x: number, y: number, w: number, h: number, color = '0 0 0', lw = 0.5) {
+  return `${lw} w ${color} RG ${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re S`;
 }
 
-function drawLine(x1: number, y1: number, x2: number, y2: number, color = '0.85 0.88 0.92', width = 0.5) {
-  return `${width} w ${color} RG ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S`;
+function line(x1: number, y1: number, x2: number, y2: number, color = '0.88 0.91 0.94', lw = 0.5) {
+  return `${lw} w ${color} RG ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S`;
 }
 
-function drawRoundRect(x: number, y: number, width: number, height: number, radius: number, fill = '1 1 1', stroke?: string) {
-  const r = Math.min(radius, width / 2, height / 2);
+function rrect(x: number, y: number, w: number, h: number, r: number, fill = '1 1 1', stroke?: string, lw = 0.5) {
+  r = Math.min(r, w / 2, h / 2);
   const c = r * 0.5522847498;
-  const path = [
+  return [
     `${fill} rg`,
-    ...(stroke ? [`${stroke} RG`] : []),
+    ...(stroke ? [`${lw} w ${stroke} RG`] : []),
     `${(x + r).toFixed(2)} ${y.toFixed(2)} m`,
-    `${(x + width - r).toFixed(2)} ${y.toFixed(2)} l`,
-    `${(x + width - r + c).toFixed(2)} ${y.toFixed(2)} ${(x + width).toFixed(2)} ${(y + r - c).toFixed(2)} ${(x + width).toFixed(2)} ${(y + r).toFixed(2)} c`,
-    `${(x + width).toFixed(2)} ${(y + height - r).toFixed(2)} l`,
-    `${(x + width).toFixed(2)} ${(y + height - r + c).toFixed(2)} ${(x + width - r + c).toFixed(2)} ${(y + height).toFixed(2)} ${(x + width - r).toFixed(2)} ${(y + height).toFixed(2)} c`,
-    `${(x + r).toFixed(2)} ${(y + height).toFixed(2)} l`,
-    `${(x + r - c).toFixed(2)} ${(y + height).toFixed(2)} ${x.toFixed(2)} ${(y + height - r + c).toFixed(2)} ${x.toFixed(2)} ${(y + height - r).toFixed(2)} c`,
+    `${(x + w - r).toFixed(2)} ${y.toFixed(2)} l`,
+    `${(x + w - r + c).toFixed(2)} ${y.toFixed(2)} ${(x + w).toFixed(2)} ${(y + r - c).toFixed(2)} ${(x + w).toFixed(2)} ${(y + r).toFixed(2)} c`,
+    `${(x + w).toFixed(2)} ${(y + h - r).toFixed(2)} l`,
+    `${(x + w).toFixed(2)} ${(y + h - r + c).toFixed(2)} ${(x + w - r + c).toFixed(2)} ${(y + h).toFixed(2)} ${(x + w - r).toFixed(2)} ${(y + h).toFixed(2)} c`,
+    `${(x + r).toFixed(2)} ${(y + h).toFixed(2)} l`,
+    `${(x + r - c).toFixed(2)} ${(y + h).toFixed(2)} ${x.toFixed(2)} ${(y + h - r + c).toFixed(2)} ${x.toFixed(2)} ${(y + h - r).toFixed(2)} c`,
     `${x.toFixed(2)} ${(y + r).toFixed(2)} l`,
     `${x.toFixed(2)} ${(y + r - c).toFixed(2)} ${(x + r - c).toFixed(2)} ${y.toFixed(2)} ${(x + r).toFixed(2)} ${y.toFixed(2)} c`,
     stroke ? 'B' : 'f',
+  ].join(' ');
+}
+
+function circle(cx: number, cy: number, r: number, color: string) {
+  const c = r * 0.5522847498;
+  return [
+    `${color} rg`,
+    `${(cx + r).toFixed(2)} ${cy.toFixed(2)} m`,
+    `${(cx + r).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx + c).toFixed(2)} ${(cy + r).toFixed(2)} ${cx.toFixed(2)} ${(cy + r).toFixed(2)} c`,
+    `${(cx - c).toFixed(2)} ${(cy + r).toFixed(2)} ${(cx - r).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx - r).toFixed(2)} ${cy.toFixed(2)} c`,
+    `${(cx - r).toFixed(2)} ${(cy - c).toFixed(2)} ${(cx - c).toFixed(2)} ${(cy - r).toFixed(2)} ${cx.toFixed(2)} ${(cy - r).toFixed(2)} c`,
+    `${(cx + c).toFixed(2)} ${(cy - r).toFixed(2)} ${(cx + r).toFixed(2)} ${(cy - c).toFixed(2)} ${(cx + r).toFixed(2)} ${cy.toFixed(2)} c f`,
+  ].join(' ');
+}
+
+function diamond(cx: number, cy: number, w: number, h: number, color: string) {
+  return [
+    `${color} rg`,
+    `${cx.toFixed(2)} ${(cy + h / 2).toFixed(2)} m`,
+    `${(cx + w / 2).toFixed(2)} ${cy.toFixed(2)} l`,
+    `${cx.toFixed(2)} ${(cy - h / 2).toFixed(2)} l`,
+    `${(cx - w / 2).toFixed(2)} ${cy.toFixed(2)} l f`,
+  ].join(' ');
+}
+
+// ─── PDF Vector Icons (12×12 at origin, translate via caller) ─────────────────
+// Each returns PDF path operators. All icons drawn at ~12pt baseline.
+
+/** Person / user icon */
+function iconPerson(x: number, y: number, color: string, s = 1): string[] {
+  const cx = x + 6 * s;
+  return [
+    circle(cx, y + 8.5 * s, 2.8 * s, color),
+    // body arc approximated as rounded rect
+    rrect(x + 1.5 * s, y + 0.5 * s, 9 * s, 5.5 * s, 3 * s, color),
   ];
-
-  return path.join(' ');
 }
 
-function drawCircle(cx: number, cy: number, radius: number, color: string) {
-  const c = radius * 0.5522847498;
-
-  return [
+/** Location pin icon */
+function iconPin(x: number, y: number, color: string, s = 1): string[] {
+  const cx = x + 6 * s;
+  const cy = y + 6 * s;
+  const c = 3.5 * s * 0.5522847498;
+  const r = 3.5 * s;
+  // circle top
+  const circ = [
     `${color} rg`,
-    `${(cx + radius).toFixed(2)} ${cy.toFixed(2)} m`,
-    `${(cx + radius).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx + c).toFixed(2)} ${(cy + radius).toFixed(2)} ${cx.toFixed(2)} ${(cy + radius).toFixed(2)} c`,
-    `${(cx - c).toFixed(2)} ${(cy + radius).toFixed(2)} ${(cx - radius).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx - radius).toFixed(2)} ${cy.toFixed(2)} c`,
-    `${(cx - radius).toFixed(2)} ${(cy - c).toFixed(2)} ${(cx - c).toFixed(2)} ${(cy - radius).toFixed(2)} ${cx.toFixed(2)} ${(cy - radius).toFixed(2)} c`,
-    `${(cx + c).toFixed(2)} ${(cy - radius).toFixed(2)} ${(cx + radius).toFixed(2)} ${(cy - c).toFixed(2)} ${(cx + radius).toFixed(2)} ${cy.toFixed(2)} c`,
-    'f',
+    `${(cx + r).toFixed(2)} ${cy.toFixed(2)} m`,
+    `${(cx + r).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx + c).toFixed(2)} ${(cy + r).toFixed(2)} ${cx.toFixed(2)} ${(cy + r).toFixed(2)} c`,
+    `${(cx - c).toFixed(2)} ${(cy + r).toFixed(2)} ${(cx - r).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx - r).toFixed(2)} ${cy.toFixed(2)} c`,
+    // taper to point at bottom
+    `${(cx - r).toFixed(2)} ${(cy - c * 0.5).toFixed(2)} ${cx.toFixed(2)} ${(y + 0.5 * s).toFixed(2)} ${cx.toFixed(2)} ${(y + 0.5 * s).toFixed(2)} c`,
+    `${cx.toFixed(2)} ${(y + 0.5 * s).toFixed(2)} ${(cx + r).toFixed(2)} ${(cy - c * 0.5).toFixed(2)} ${(cx + r).toFixed(2)} ${cy.toFixed(2)} c f`,
   ].join(' ');
+  return [circ, circle(cx, cy + 1.5 * s, 1.6 * s, '1 1 1')];
 }
 
-function drawDiamond(cx: number, cy: number, width: number, height: number, color: string) {
+/** Receipt / document icon */
+function iconReceipt(x: number, y: number, color: string, s = 1): string[] {
   return [
-    `${color} rg`,
-    `${cx.toFixed(2)} ${(cy + height / 2).toFixed(2)} m`,
-    `${(cx + width / 2).toFixed(2)} ${cy.toFixed(2)} l`,
-    `${cx.toFixed(2)} ${(cy - height / 2).toFixed(2)} l`,
-    `${(cx - width / 2).toFixed(2)} ${cy.toFixed(2)} l`,
-    'f',
-  ].join(' ');
+    rrect(x + 1.5 * s, y + 0.5 * s, 9 * s, 11 * s, 1.5 * s, color),
+    rect(x + 3.5 * s, y + 8.5 * s, 5 * s, 1 * s, '1 1 1'),
+    rect(x + 3.5 * s, y + 6.5 * s, 5 * s, 1 * s, '1 1 1'),
+    rect(x + 3.5 * s, y + 4.5 * s, 3 * s, 1 * s, '1 1 1'),
+  ];
 }
 
-function drawSolaraLogo(x: number, y: number, scale = 1) {
+/** Barcode icon */
+function iconBarcode(x: number, y: number, color: string, s = 1): string[] {
+  const bars = [0, 2, 3.5, 5, 6.5, 8, 9.5];
+  return bars.map((bx) => rect(x + bx * s, y + 1 * s, 1 * s, 10 * s, color));
+}
+
+/** Pix bolt / lightning icon */
+function iconPix(x: number, y: number, color: string, s = 1): string[] {
+  return [
+    [
+      `${color} rg`,
+      `${(x + 7 * s).toFixed(2)} ${(y + 11.5 * s).toFixed(2)} m`,
+      `${(x + 3.5 * s).toFixed(2)} ${(y + 6.5 * s).toFixed(2)} l`,
+      `${(x + 6 * s).toFixed(2)} ${(y + 6.5 * s).toFixed(2)} l`,
+      `${(x + 5 * s).toFixed(2)} ${(y + 0.5 * s).toFixed(2)} l`,
+      `${(x + 8.5 * s).toFixed(2)} ${(y + 5.5 * s).toFixed(2)} l`,
+      `${(x + 6 * s).toFixed(2)} ${(y + 5.5 * s).toFixed(2)} l f`,
+    ].join(' '),
+  ];
+}
+
+/** Calendar icon */
+function iconCalendar(x: number, y: number, color: string, s = 1): string[] {
+  return [
+    rrect(x + 0.5 * s, y + 0.5 * s, 11 * s, 11 * s, 1.5 * s, color),
+    rect(x + 0.5 * s, y + 6 * s, 11 * s, 5.5 * s, '1 1 1'),
+    // dots grid
+    ...([3, 5.5, 8] as number[]).flatMap((bx) =>
+      ([2, 4] as number[]).map((by) => circle(x + bx * s, y + by * s, 0.9 * s, color)),
+    ),
+  ];
+}
+
+/** Check circle icon */
+function iconCheck(x: number, y: number, color: string, s = 1): string[] {
+  return [
+    circle(x + 6 * s, y + 6 * s, 5.5 * s, color),
+    [
+      `1 1 1 rg`,
+      `${(x + 3 * s).toFixed(2)} ${(y + 6 * s).toFixed(2)} m`,
+      `${(x + 5 * s).toFixed(2)} ${(y + 4 * s).toFixed(2)} l`,
+      `${(x + 9 * s).toFixed(2)} ${(y + 8.5 * s).toFixed(2)} l`,
+      `${(x + 8 * s).toFixed(2)} ${(y + 9.5 * s).toFixed(2)} l`,
+      `${(x + 5 * s).toFixed(2)} ${(y + 6 * s).toFixed(2)} l`,
+      `${(x + 4 * s).toFixed(2)} ${(y + 7 * s).toFixed(2)} l f`,
+    ].join(' '),
+  ];
+}
+
+/** Info circle icon */
+function iconInfo(x: number, y: number, color: string, s = 1): string[] {
+  return [
+    circle(x + 6 * s, y + 6 * s, 5.5 * s, color),
+    rect(x + 5.2 * s, y + 2.5 * s, 1.6 * s, 4.5 * s, '1 1 1'),
+    circle(x + 6 * s, y + 8.5 * s, 1 * s, '1 1 1'),
+  ];
+}
+
+/** Phone / WhatsApp icon */
+function iconPhone(x: number, y: number, color: string, s = 1): string[] {
+  return [
+    rrect(x + 2 * s, y + 0.5 * s, 8 * s, 11 * s, 2 * s, color),
+    circle(x + 6 * s, y + 2 * s, 0.8 * s, '1 1 1'),
+    rect(x + 3.5 * s, y + 3.5 * s, 5 * s, 6 * s, '1 1 1'),
+  ];
+}
+
+/** Globe / site icon */
+function iconGlobe(x: number, y: number, color: string, s = 1): string[] {
+  const cx = x + 6 * s;
+  const cy = y + 6 * s;
+  const c2 = 5 * s * 0.5522847498;
+  const globe = [
+    `${color} rg`,
+    `${(cx + 5 * s).toFixed(2)} ${cy.toFixed(2)} m`,
+    `${(cx + 5 * s).toFixed(2)} ${(cy + c2).toFixed(2)} ${(cx + c2).toFixed(2)} ${(cy + 5 * s).toFixed(2)} ${cx.toFixed(2)} ${(cy + 5 * s).toFixed(2)} c`,
+    `${(cx - c2).toFixed(2)} ${(cy + 5 * s).toFixed(2)} ${(cx - 5 * s).toFixed(2)} ${(cy + c2).toFixed(2)} ${(cx - 5 * s).toFixed(2)} ${cy.toFixed(2)} c`,
+    `${(cx - 5 * s).toFixed(2)} ${(cy - c2).toFixed(2)} ${(cx - c2).toFixed(2)} ${(cy - 5 * s).toFixed(2)} ${cx.toFixed(2)} ${(cy - 5 * s).toFixed(2)} c`,
+    `${(cx + c2).toFixed(2)} ${(cy - 5 * s).toFixed(2)} ${(cx + 5 * s).toFixed(2)} ${(cy - c2).toFixed(2)} ${(cx + 5 * s).toFixed(2)} ${cy.toFixed(2)} c f`,
+  ].join(' ');
+  // meridian oval
+  const mer = rrect(cx - 2 * s, cy - 5 * s, 4 * s, 10 * s, 2 * s, '1 1 1');
+  // equator line
+  const eq = rect(cx - 5 * s, cy - 0.6 * s, 10 * s, 1.2 * s, '1 1 1');
+  return [globe, mer, eq];
+}
+
+/** Email icon */
+function iconEmail(x: number, y: number, color: string, s = 1): string[] {
+  return [
+    rrect(x + 0.5 * s, y + 2.5 * s, 11 * s, 8 * s, 1.5 * s, color),
+    [
+      `1 1 1 rg`,
+      `${(x + 0.5 * s).toFixed(2)} ${(y + 10.5 * s).toFixed(2)} m`,
+      `${(x + 6 * s).toFixed(2)} ${(y + 5.5 * s).toFixed(2)} l`,
+      `${(x + 11.5 * s).toFixed(2)} ${(y + 10.5 * s).toFixed(2)} l f`,
+    ].join(' '),
+    line(x + 0.5 * s, y + 2.5 * s, x + 6 * s, y + 7.5 * s, '1 1 1', 1),
+    line(x + 11.5 * s, y + 2.5 * s, x + 6 * s, y + 7.5 * s, '1 1 1', 1),
+  ];
+}
+
+// ─── Solara Logo ───────────────────────────────────────────────────────────────
+
+function solaraLogo(x: number, y: number, scale = 1): string[] {
+  const orange = '1 0.68 0.20';
   const yellow = '0.98 0.65 0.15';
   const white = '1 1 1';
-  const parts = [
-    drawText(x, y + 15 * scale, 'Solara', 24 * scale, white, 'F2'),
-    drawText(x + 75 * scale, y + 15 * scale, 'ENERGIA', 9 * scale, yellow, 'F2'),
+  const cx = x + 20 * scale;
+  const cy = y + 20 * scale;
+  return [
+    diamond(cx, cy + 20 * scale, 8 * scale, 18 * scale, orange),
+    diamond(cx, cy - 20 * scale, 8 * scale, 18 * scale, orange),
+    diamond(cx - 20 * scale, cy, 18 * scale, 8 * scale, orange),
+    diamond(cx + 20 * scale, cy, 18 * scale, 8 * scale, orange),
+    diamond(cx - 14 * scale, cy + 14 * scale, 10 * scale, 16 * scale, orange),
+    diamond(cx + 14 * scale, cy + 14 * scale, 10 * scale, 16 * scale, orange),
+    diamond(cx - 14 * scale, cy - 14 * scale, 10 * scale, 16 * scale, orange),
+    diamond(cx + 14 * scale, cy - 14 * scale, 10 * scale, 16 * scale, orange),
+    circle(cx, cy, 9 * scale, white),
+    circle(cx, cy, 4 * scale, orange),
+    tx(x + 54 * scale, y + 25 * scale, 'Solara', 25 * scale, white, 'F2'),
+    tx(x + 94 * scale, y + 7 * scale, 'ENERGIA', 8 * scale, yellow, 'F2'),
   ];
-
-  return parts;
 }
 
-function drawShadowedRoundRect(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number,
-  fill: string,
-  stroke?: string,
-  shadowOffset = 3,
-) {
-  const shadow = drawRoundRect(x + shadowOffset, y - shadowOffset, width, height, radius, '0.92 0.94 0.97');
-  const card = drawRoundRect(x, y, width, height, radius, fill, stroke);
-  return [shadow, card];
-}
-
-function drawChip(x: number, y: number, width: number, label: string, fill: string, textColor: string) {
-  return [drawRoundRect(x, y, width, 16, 8, fill), drawText(x + 8, y + 5, label, 6.5, textColor, 'F2')];
-}
+// ─── Barcode ───────────────────────────────────────────────────────────────────
 
 function drawBarcode(codigoBarras: string | null | undefined, x: number, y: number, maxWidth: number, height: number) {
   const digits = codigoBarras?.replace(/\D/g, '') ?? '';
-  if (digits.length < 2) return [drawText(x, y + 18, 'Codigo de barras nao informado', 9, '0.5 0.5 0.5')];
+  if (digits.length < 2) return [tx(x, y + 18, 'Codigo de barras nao informado', 9, '0.5 0.5 0.5')];
 
   const normalized = digits.length % 2 === 0 ? digits : `0${digits}`;
   const segments: Array<{ black: boolean; width: number }> = [
-    { black: true, width: 1 },
-    { black: false, width: 1 },
-    { black: true, width: 1 },
-    { black: false, width: 1 },
+    { black: true, width: 1 }, { black: false, width: 1 },
+    { black: true, width: 1 }, { black: false, width: 1 },
   ];
 
   for (let i = 0; i < normalized.length; i += 2) {
@@ -281,21 +333,21 @@ function drawBarcode(codigoBarras: string | null | undefined, x: number, y: numb
   }
 
   segments.push({ black: true, width: 3 }, { black: false, width: 1 }, { black: true, width: 1 });
-  const total = segments.reduce((sum, segment) => sum + segment.width, 0);
+  const total = segments.reduce((sum, s) => sum + s.width, 0);
   const unit = Math.min(1.4, maxWidth / total);
   const parts: string[] = [];
   let cursor = x;
 
-  for (const segment of segments) {
-    const segmentWidth = segment.width * unit;
-    if (segment.black) {
-      parts.push(drawRect(cursor, y, segmentWidth, height));
-    }
-    cursor += segmentWidth;
+  for (const s of segments) {
+    const sw = s.width * unit;
+    if (s.black) parts.push(rect(cursor, y, sw, height));
+    cursor += sw;
   }
 
   return parts;
 }
+
+// ─── QR Code ───────────────────────────────────────────────────────────────────
 
 function getNumRawDataCodewords(version: number) {
   let result = (16 * version + 128) * version + 64;
@@ -304,26 +356,20 @@ function getNumRawDataCodewords(version: number) {
     result -= (25 * numAlign - 10) * numAlign - 55;
     if (version >= 7) result -= 36;
   }
-
   return Math.floor(result / 8);
 }
 
 function appendBits(bits: number[], value: number, length: number) {
-  for (let i = length - 1; i >= 0; i -= 1) {
-    bits.push((value >>> i) & 1);
-  }
+  for (let i = length - 1; i >= 0; i -= 1) bits.push((value >>> i) & 1);
 }
 
 function bitsToBytes(bits: number[]) {
   const result: number[] = [];
   for (let i = 0; i < bits.length; i += 8) {
-    let value = 0;
-    for (let j = 0; j < 8; j += 1) {
-      value = (value << 1) | (bits[i + j] ?? 0);
-    }
-    result.push(value);
+    let v = 0;
+    for (let j = 0; j < 8; j += 1) v = (v << 1) | (bits[i + j] ?? 0);
+    result.push(v);
   }
-
   return result;
 }
 
@@ -333,23 +379,18 @@ function gfMultiply(x: number, y: number) {
     result = (result << 1) ^ ((result >>> 7) * 0x11d);
     result ^= ((y >>> i) & 1) * x;
   }
-
   return result & 0xff;
 }
 
 function gfPow(x: number, power: number) {
   let result = 1;
-  for (let i = 0; i < power; i += 1) {
-    result = gfMultiply(result, x);
-  }
-
+  for (let i = 0; i < power; i += 1) result = gfMultiply(result, x);
   return result;
 }
 
 function reedSolomonDivisor(degree: number) {
   const result = Array<number>(degree).fill(0);
   result[degree - 1] = 1;
-
   for (let i = 0; i < degree; i += 1) {
     const root = gfPow(2, i);
     for (let j = 0; j < degree; j += 1) {
@@ -357,21 +398,16 @@ function reedSolomonDivisor(degree: number) {
       if (j + 1 < degree) result[j] ^= result[j + 1];
     }
   }
-
   return result;
 }
 
 function reedSolomonRemainder(data: number[], divisor: number[]) {
   const result = Array<number>(divisor.length).fill(0);
-
   for (const byte of data) {
     const factor = byte ^ result.shift()!;
     result.push(0);
-    divisor.forEach((coefficient, index) => {
-      result[index] ^= gfMultiply(coefficient, factor);
-    });
+    divisor.forEach((coeff, index) => { result[index] ^= gfMultiply(coeff, factor); });
   }
-
   return result;
 }
 
@@ -398,12 +434,9 @@ function addEccAndInterleave(data: number[], version: number) {
   const result: number[] = [];
   for (let i = 0; i < blocks[0].length; i += 1) {
     blocks.forEach((block, j) => {
-      if (i !== shortBlockLen - blockEccLen || j >= numShortBlocks) {
-        result.push(block[i]);
-      }
+      if (i !== shortBlockLen - blockEccLen || j >= numShortBlocks) result.push(block[i]);
     });
   }
-
   return result;
 }
 
@@ -414,7 +447,6 @@ function chooseQrVersion(byteLength: number) {
     const usedBits = 4 + countBits + byteLength * 8;
     if (Math.ceil(usedBits / 8) <= dataCapacity) return version;
   }
-
   return 40;
 }
 
@@ -432,39 +464,31 @@ function encodeQrCode(text: string): Matrix {
   while (bits.length % 8 !== 0) bits.push(0);
 
   const data = bitsToBytes(bits);
-  for (let padByte = 0xec; data.length < dataCapacity; padByte ^= 0xec ^ 0x11) {
-    data.push(padByte);
-  }
+  for (let padByte = 0xec; data.length < dataCapacity; padByte ^= 0xec ^ 0x11) data.push(padByte);
 
   const codewords = addEccAndInterleave(data, version);
   const modules = Array.from({ length: size }, () => Array<boolean>(size).fill(false));
   const isFunction = Array.from({ length: size }, () => Array<boolean>(size).fill(false));
 
-  const setFunction = (x: number, y: number, dark: boolean) => {
-    modules[y][x] = dark;
-    isFunction[y][x] = true;
-  };
+  const setFn = (x: number, y: number, dark: boolean) => { modules[y][x] = dark; isFunction[y][x] = true; };
+
   const drawFinder = (x: number, y: number) => {
-    for (let dy = -4; dy <= 4; dy += 1) {
-      for (let dx = -4; dx <= 4; dx += 1) {
-        const xx = x + dx;
-        const yy = y + dy;
-        if (xx >= 0 && xx < size && yy >= 0 && yy < size) {
-          const dist = Math.max(Math.abs(dx), Math.abs(dy));
-          setFunction(xx, yy, dist !== 2 && dist !== 4);
-        }
+    for (let dy = -4; dy <= 4; dy += 1) for (let dx = -4; dx <= 4; dx += 1) {
+      const xx = x + dx; const yy = y + dy;
+      if (xx >= 0 && xx < size && yy >= 0 && yy < size) {
+        const dist = Math.max(Math.abs(dx), Math.abs(dy));
+        setFn(xx, yy, dist !== 2 && dist !== 4);
       }
     }
   };
+
   const drawAlignment = (x: number, y: number) => {
-    for (let dy = -2; dy <= 2; dy += 1) {
-      for (let dx = -2; dx <= 2; dx += 1) {
-        setFunction(x + dx, y + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
-      }
-    }
+    for (let dy = -2; dy <= 2; dy += 1) for (let dx = -2; dx <= 2; dx += 1)
+      setFn(x + dx, y + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
   };
-  const alignmentPositions = () => {
-    if (version === 1) return [] as number[];
+
+  const alignmentPositions = (): number[] => {
+    if (version === 1) return [];
     const result: number[] = [];
     const numAlign = Math.floor(version / 7) + 2;
     const step = version === 32 ? 26 : Math.ceil((version * 4 + 4) / (numAlign * 2 - 2)) * 2;
@@ -472,21 +496,22 @@ function encodeQrCode(text: string): Matrix {
     result.push(6);
     return result.reverse();
   };
+
   const drawFormatBits = () => {
     const dataBits = (1 << 3) | 0;
     let rem = dataBits;
     for (let i = 0; i < 10; i += 1) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
     const bitsValue = ((dataBits << 10) | rem) ^ 0x5412;
-
-    for (let i = 0; i <= 5; i += 1) setFunction(8, i, ((bitsValue >>> i) & 1) !== 0);
-    setFunction(8, 7, ((bitsValue >>> 6) & 1) !== 0);
-    setFunction(8, 8, ((bitsValue >>> 7) & 1) !== 0);
-    setFunction(7, 8, ((bitsValue >>> 8) & 1) !== 0);
-    for (let i = 9; i < 15; i += 1) setFunction(14 - i, 8, ((bitsValue >>> i) & 1) !== 0);
-    for (let i = 0; i < 8; i += 1) setFunction(size - 1 - i, 8, ((bitsValue >>> i) & 1) !== 0);
-    for (let i = 8; i < 15; i += 1) setFunction(8, size - 15 + i, ((bitsValue >>> i) & 1) !== 0);
-    setFunction(8, size - 8, true);
+    for (let i = 0; i <= 5; i += 1) setFn(8, i, ((bitsValue >>> i) & 1) !== 0);
+    setFn(8, 7, ((bitsValue >>> 6) & 1) !== 0);
+    setFn(8, 8, ((bitsValue >>> 7) & 1) !== 0);
+    setFn(7, 8, ((bitsValue >>> 8) & 1) !== 0);
+    for (let i = 9; i < 15; i += 1) setFn(14 - i, 8, ((bitsValue >>> i) & 1) !== 0);
+    for (let i = 0; i < 8; i += 1) setFn(size - 1 - i, 8, ((bitsValue >>> i) & 1) !== 0);
+    for (let i = 8; i < 15; i += 1) setFn(8, size - 15 + i, ((bitsValue >>> i) & 1) !== 0);
+    setFn(8, size - 8, true);
   };
+
   const drawVersion = () => {
     if (version < 7) return;
     let rem = version;
@@ -494,28 +519,19 @@ function encodeQrCode(text: string): Matrix {
     const bitsValue = (version << 12) | rem;
     for (let i = 0; i < 18; i += 1) {
       const bit = ((bitsValue >>> i) & 1) !== 0;
-      const a = size - 11 + (i % 3);
-      const b = Math.floor(i / 3);
-      setFunction(a, b, bit);
-      setFunction(b, a, bit);
+      const a = size - 11 + (i % 3); const b = Math.floor(i / 3);
+      setFn(a, b, bit); setFn(b, a, bit);
     }
   };
 
-  drawFinder(3, 3);
-  drawFinder(size - 4, 3);
-  drawFinder(3, size - 4);
+  drawFinder(3, 3); drawFinder(size - 4, 3); drawFinder(3, size - 4);
   for (let i = 0; i < size; i += 1) {
-    if (!isFunction[i][6]) setFunction(6, i, i % 2 === 0);
-    if (!isFunction[6][i]) setFunction(i, 6, i % 2 === 0);
+    if (!isFunction[i][6]) setFn(6, i, i % 2 === 0);
+    if (!isFunction[6][i]) setFn(i, 6, i % 2 === 0);
   }
   const align = alignmentPositions();
-  align.forEach((x) => {
-    align.forEach((y) => {
-      if (!isFunction[y][x]) drawAlignment(x, y);
-    });
-  });
-  drawFormatBits();
-  drawVersion();
+  align.forEach((ax) => align.forEach((ay) => { if (!isFunction[ay][ax]) drawAlignment(ax, ay); }));
+  drawFormatBits(); drawVersion();
 
   let bitIndex = 0;
   for (let right = size - 1; right >= 1; right -= 2) {
@@ -533,99 +549,63 @@ function encodeQrCode(text: string): Matrix {
       }
     }
   }
-
   drawFormatBits();
   return modules;
 }
 
+// ─── QR Helpers ────────────────────────────────────────────────────────────────
+
 function previewPixValue(value: string) {
   const trimmed = normalizePixPayload(value) ?? '';
-  if (trimmed.length <= 24) {
-    return trimmed;
-  }
-
-  return `${trimmed.slice(0, 12)}...${trimmed.slice(-6)}`;
+  return trimmed.length <= 24 ? trimmed : `${trimmed.slice(0, 12)}...${trimmed.slice(-6)}`;
 }
 
 function logInvalidPixPayload(source: string, value: string | null | undefined) {
   const text = normalizePixPayload(value);
-  if (!text || validatePixPayload(text)) {
-    return;
-  }
-
+  if (!text || validatePixPayload(text)) return;
   console.error(
-    `[billing-pdf] Payload Pix invalido em ${source}. QR Pix nao sera gerado. length=${text.length}; preview=${previewPixValue(text)}`,
+    `[billing-pdf] Payload Pix invalido em ${source}. length=${text.length}; preview=${previewPixValue(text)}`,
   );
 }
 
 function isHttpUrlText(value: string | null | undefined) {
   const text = value?.trim();
-  if (!text) {
-    return false;
-  }
-
+  if (!text) return false;
   try {
     const url = new URL(text);
     return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-function drawUnavailablePixQrCode(x: number, y: number, size: number, title = 'Pix indisponivel') {
+function drawUnavailableQr(x: number, y: number, size: number): string[] {
   return [
-    drawRect(x, y, size, size, '1 1 1'),
-    drawStrokeRect(x, y, size, size, '0.7 0.7 0.7'),
-    drawText(x + 14, y + size / 2 + 8, title, 8, '0.5 0.5 0.5', 'F2'),
-    drawText(x + 14, y + size / 2 - 6, 'Utilize boleto', 7, '0.5 0.5 0.5'),
+    rect(x, y, size, size, '0.97 0.97 0.98'),
+    strokeRect(x, y, size, size, '0.85 0.88 0.92', 0.5),
+    tx(x + size / 2 - 28, y + size / 2 + 6, 'Pix indisponivel', 8, '0.55 0.60 0.69', 'F2'),
+    tx(x + size / 2 - 22, y + size / 2 - 8, 'Use o boleto', 7, '0.70 0.74 0.80'),
   ];
 }
 
-function drawQrCode(value: string | null | undefined, x: number, y: number, size: number) {
-  const payload = extractPixPayload(value);
-  if (!payload) {
-    if (value?.trim()) {
-      logInvalidPixPayload('drawQrCode', value);
-    }
-
-    throw new Error('Payload Pix invalido');
-  }
-
-  console.log('PIX PAYLOAD:', payload);
-
+function drawQrCode(payload: string, x: number, y: number, size: number): string[] {
   const byteLength = Buffer.byteLength(payload, 'utf8');
   const maxVersion = 40;
-  const maxCapacity =
-    getNumRawDataCodewords(maxVersion) -
-    ECC_CODEWORDS_PER_BLOCK[maxVersion][0] * NUM_ERROR_CORRECTION_BLOCKS[maxVersion][0];
-  const maxUsedBits = 4 + 16 + byteLength * 8;
-  if (Math.ceil(maxUsedBits / 8) > maxCapacity) {
-    console.error(`[billing-pdf] Payload Pix excede a capacidade do QR Code. length=${byteLength}`);
-    throw new Error('Payload Pix excede a capacidade do QR Code');
-  }
+  const maxCapacity = getNumRawDataCodewords(maxVersion) - ECC_CODEWORDS_PER_BLOCK[maxVersion][0] * NUM_ERROR_CORRECTION_BLOCKS[maxVersion][0];
+  if (Math.ceil((4 + 16 + byteLength * 8) / 8) > maxCapacity) throw new Error('Payload Pix excede capacidade do QR Code');
 
-  let matrix: Matrix;
-  try {
-    matrix = encodeQrCode(payload);
-  } catch (error) {
-    console.error('[billing-pdf] Erro ao gerar QR Code Pix.', error);
-    throw new Error('Erro ao gerar QR Code Pix');
-  }
-
+  const matrix = encodeQrCode(payload);
   const quiet = 4;
   const moduleSize = size / (matrix.length + quiet * 2);
-  const parts = [drawRect(x, y, size, size, '1 1 1'), drawStrokeRect(x, y, size, size, '0.85 0.85 0.85')];
+  const parts = [rect(x, y, size, size, '1 1 1'), strokeRect(x, y, size, size, '0.85 0.85 0.85', 0.5)];
 
-  matrix.forEach((row, rowIndex) => {
-    row.forEach((dark, columnIndex) => {
-      if (dark) {
-        parts.push(drawRect(x + (columnIndex + quiet) * moduleSize, y + size - (rowIndex + quiet + 1) * moduleSize, moduleSize, moduleSize));
-      }
+  matrix.forEach((row, ri) => {
+    row.forEach((dark, ci) => {
+      if (dark) parts.push(rect(x + (ci + quiet) * moduleSize, y + size - (ri + quiet + 1) * moduleSize, moduleSize, moduleSize));
     });
   });
-
   return parts;
 }
+
+// ─── Public interface ──────────────────────────────────────────────────────────
 
 export interface BoletoPdfInput {
   clientName: string;
@@ -652,281 +632,333 @@ export interface BoletoPdfInput {
   pixQrCode?: string | null;
 }
 
+// ─── Layout constants ──────────────────────────────────────────────────────────
+
+const PAGE_W = 595;
+const PAGE_H = 842;
+const ML = 40;       // margin left
+const MR = 40;       // margin right
+const CW = PAGE_W - ML - MR; // content width = 515
+const GAP = 10;      // gap between cards
+
 export function createBoletoPdfBuffer(input: BoletoPdfInput) {
+
+  // ── Resolve Pix ────────────────────────────────────────────────────────
   const pixPayload =
     extractPixPayload(input.pixPayload) ??
     extractPixPayload(input.pixCopiaCola) ??
     extractPixPayload(input.pixQrCode) ??
     null;
   const pixFallbackUrl = isHttpUrlText(input.pixUrl) ? input.pixUrl!.trim() : null;
-  const pixUnavailableText = pixFallbackUrl
-    ? `Pix indisponivel. Utilize boleto. Link Itau: ${pixFallbackUrl}`
-    : 'Pix indisponivel. Utilize boleto.';
-  const pixCopyPasteLabel = pixPayload ? 'Pix copia e cola' : pixFallbackUrl ? 'Link Pix Itau' : 'Pix indisponivel';
-  const pixCopyPasteText =
-    pixPayload ?? pixUnavailableText;
+  const pixCopyLabel = pixPayload ? 'Pix Copia e Cola' : pixFallbackUrl ? 'Link Pix Itau' : 'Pix indisponivel';
+  const pixCopyText = pixPayload ?? (pixFallbackUrl ? `Pix indisponivel. Link: ${pixFallbackUrl}` : 'Pix indisponivel. Utilize o boleto.');
 
   logInvalidPixPayload('pixPayload', input.pixPayload);
   logInvalidPixPayload('pixCopiaCola', input.pixCopiaCola);
   logInvalidPixPayload('pixQrCode', input.pixQrCode);
-  if (!pixPayload) {
-    console.warn('[billing-pdf] Payload Pix EMV nao encontrado. QR Pix nao sera gerado.');
+  if (!pixPayload) console.warn('[billing-pdf] Payload Pix EMV nao encontrado. QR nao sera gerado.');
+
+  // ── Resolve env ────────────────────────────────────────────────────────
+  const companyCnpj     = input.companyCnpj     || process.env.SOLARA_CNPJ              || process.env.COMPANY_CNPJ   || null;
+  const companyAddress  = input.companyAddress  || process.env.SOLARA_ADDRESS            || process.env.COMPANY_ADDRESS || null;
+  const supportEmail    = input.supportEmail    || process.env.BILLING_SUPPORT_EMAIL     || 'financeiro@solaraenergia.com.br';
+  const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP  || process.env.NEXT_PUBLIC_WHATSAPP || '';
+  const siteUrl         = input.siteUrl         || process.env.NEXT_PUBLIC_SITE_URL      || 'solaraenergia.com.br';
+  const siteDisplay     = siteUrl.replace(/^https?:\/\//, '');
+  const issueDate       = formatDateBR(input.issueDate ?? new Date());
+  const dueDate         = formatDateBR(input.dueDate);
+  const status          = clean(input.status || 'gerado').toUpperCase();
+  const description     = input.description || 'Servicos de Energia Solar / Faturamento Mensal';
+  const installAddr     = clean(input.installationAddress || input.clientAddress);
+  const isPago          = status === 'PAGO';
+
+  // ── Palette ────────────────────────────────────────────────────────────
+  const yellow   = '0.98 0.80 0.08';
+  const orange   = '1 0.68 0.20';
+  const green    = '0.06 0.55 0.38';
+  const ink      = '0.01 0.02 0.06';   // slate-950
+  const ink800   = '0.12 0.16 0.24';   // slate-800
+  const ink600   = '0.28 0.33 0.41';   // slate-600
+  const ink400   = '0.55 0.60 0.69';   // slate-400
+  const ink100   = '0.94 0.95 0.97';   // slate-100
+  const white    = '1 1 1';
+  const border   = '0.88 0.91 0.94';
+  const sYellow  = '1 0.97 0.83';
+  const sGreen   = '0.88 0.97 0.93';
+  const yBorder  = '0.93 0.78 0.20';
+  const gBorder  = '0.54 0.85 0.68';
+
+  const p: string[] = [];
+
+  // ── Layout helpers ─────────────────────────────────────────────────────
+
+  /** Thin ALL-CAPS label with left orange bar */
+  function sLabel(x: number, y: number, text: string) {
+    p.push(rect(x, y, 2, 10, orange));
+    p.push(tx(x + 6, y + 1, text.toUpperCase(), 7, ink400, 'F2'));
   }
 
-  const companyCnpj = input.companyCnpj || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null;
-  const companyAddress = input.companyAddress || process.env.SOLARA_ADDRESS || process.env.COMPANY_ADDRESS || null;
-  const supportEmail = input.supportEmail || process.env.BILLING_SUPPORT_EMAIL || 'financeiro@solaraenergia.com.br';
-  const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP || process.env.NEXT_PUBLIC_WHATSAPP || 'Atendimento Solara';
-  const siteUrl = input.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'solaraenergia.com.br';
-  const siteDisplay = siteUrl.replace(/^https?:\/\//, '');
-  const issueDate = input.issueDate ? formatDateBR(input.issueDate) : formatDateBR(new Date());
-  const dueDate = formatDateBR(input.dueDate);
-  const status = clean(input.status || 'gerado').toUpperCase();
-  const description = input.description || 'Servicos de Energia Solar / Faturamento Mensal';
-  const installationAddress = clean(input.installationAddress || input.clientAddress);
-  const statusLabel = status === 'PAGO' ? 'PAGO' : 'GERADO';
-
-  // ── Palette ─────────────────────────────────────────────────────────────
-  const brandYellow  = '0.98 0.80 0.08';
-  const brandOrange  = '1 0.68 0.20';
-  const brandGreen   = '0.06 0.55 0.38';
-  const slate950     = '0.01 0.02 0.06';
-  const slate800     = '0.12 0.16 0.24';
-  const slate600     = '0.28 0.33 0.41';
-  const slate400     = '0.55 0.60 0.69';
-  const white        = '1 1 1';
-  const borderColor  = '0.88 0.91 0.94';
-  const softYellow   = '1 0.97 0.83';
-  const softGreen    = '0.88 0.97 0.93';
-  const yellowBorder = '0.96 0.80 0.20';
-  const badgeFill = status === 'PAGO' ? softGreen : softYellow;
-  const badgeTextColor = status === 'PAGO' ? brandGreen : '0.60 0.42 0.02';
-
-  const M = 40; // horizontal margin
-  const W = 595 - M * 2; // content width = 515
-
-  const parts: string[] = [];
-
-  // ── Helpers ─────────────────────────────────────────────────────────────
-
-  function sectionLabel(x: number, y: number, text: string) {
-    // small ALL-CAPS label with a left accent bar
-    parts.push(drawRect(x, y - 1, 2.5, 11, brandOrange));
-    parts.push(drawText(x + 7, y, text.toUpperCase(), 7.5, slate400, 'F2'));
-  }
-
-  function addLabelValue(x: number, y: number, label: string, value: string, maxLength = 34) {
-    parts.push(drawText(x, y, label.toUpperCase(), 6.5, slate400, 'F2'));
-    wrap(clean(value), maxLength).slice(0, 2).forEach((line, index) => {
-      parts.push(drawText(x, y - 13 - index * 11, line, 9, slate800));
+  /** Label above + value below */
+  function lv(x: number, y: number, label: string, value: string, maxLen = 34) {
+    p.push(tx(x, y, label.toUpperCase(), 6.5, ink400, 'F2'));
+    wrap(clean(value), maxLen).slice(0, 2).forEach((ln, i) => {
+      p.push(tx(x, y - 13 - i * 11, ln, 9, ink800));
     });
   }
 
-  function addSmallLines(x: number, y: number, value: string, maxLength: number, size = 8, color = slate600, limit = 3) {
-    wrap(clean(value), maxLength).slice(0, limit).forEach((line, index) => {
-      parts.push(drawText(x, y - index * (size + 3), line, size, color));
+  /** Small multiline text */
+  function sLines(x: number, y: number, value: string, maxLen: number, size = 8, color = ink600, limit = 3) {
+    wrap(clean(value), maxLen).slice(0, limit).forEach((ln, i) => {
+      p.push(tx(x, y - i * (size + 3), ln, size, color));
+    });
+  }
+
+  /** Pill / badge */
+  function badge(x: number, y: number, w: number, label: string, fill: string, tc: string) {
+    p.push(rrect(x, y, w, 16, 8, fill));
+    p.push(tx(x + 7, y + 5, label, 6.5, tc, 'F2'));
+  }
+
+  /** Section divider line full content width */
+  function divider(y: number) {
+    p.push(line(ML, y, ML + CW, y, border, 0.4));
+  }
+
+  /** Icon + label row (label to the right of icon) */
+  function iconLabel(x: number, y: number, icon: string[][], label: string, value: string, size = 8, maxLen = 38) {
+    p.push(...icon.flat());
+    p.push(tx(x + 16, y + 8, label.toUpperCase(), 6.5, ink400, 'F2'));
+    wrap(clean(value), maxLen).slice(0, 2).forEach((ln, i) => {
+      p.push(tx(x + 16, y + 8 - 13 - i * 11, ln, size, ink800));
     });
   }
 
   // ════════════════════════════════════════════════════════════════════════
-  // PAGE BACKGROUND
+  // 1. PAGE BACKGROUND
   // ════════════════════════════════════════════════════════════════════════
-  parts.push(drawRect(0, 0, 595, 842, white));
+  p.push(rect(0, 0, PAGE_W, PAGE_H, white));
 
   // ════════════════════════════════════════════════════════════════════════
-  // HEADER  (y 750–842)
+  // 2. HEADER  y 750–842
   // ════════════════════════════════════════════════════════════════════════
-  parts.push(drawRect(0, 750, 595, 92, slate950));
-  // top accent stripe – thicker, gradient-like via two stacked rects
-  parts.push(drawRect(0, 838, 595, 4, brandYellow));
-  parts.push(drawRect(0, 834, 595, 4, brandOrange));
+  const HDR_Y = 750;
+  const HDR_H = 92;
+  p.push(rect(0, HDR_Y, PAGE_W, HDR_H, ink));
+  // top accent bars
+  p.push(rect(0, PAGE_H - 4, PAGE_W, 4, yellow));
+  p.push(rect(0, PAGE_H - 8, PAGE_W, 4, orange));
 
-  // logo - raised slightly
-  parts.push(...drawSolaraLogo(M, 786, 0.85));
+  // Logo left
+  p.push(...solaraLogo(ML, 776, 0.82));
 
-  // vertical divider between logo and header info
-  parts.push(drawLine(330, 758, 330, 828, '0.20 0.22 0.30', 0.5));
+  // Vertical separator
+  p.push(line(320, HDR_Y + 10, 320, PAGE_H - 10, '0.18 0.20 0.30', 0.5));
 
-  // right block: document type + meta
-  parts.push(drawText(340, 814, 'RESUMO DE FATURAMENTO', 11, white, 'F2'));
-  parts.push(drawLine(340, 809, 548, 809, '0.30 0.34 0.44', 0.4));
-  parts.push(drawText(340, 798, `Emitido em ${issueDate}`, 8, '0.72 0.76 0.86'));
-  parts.push(drawText(340, 788, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 8, '0.60 0.66 0.76'));
+  // Right block
+  const RX = 334;
+  p.push(tx(RX, 818, 'RESUMO DE FATURAMENTO', 10.5, white, 'F2'));
+  p.push(line(RX, 814, PAGE_W - ML, 814, '0.25 0.28 0.38', 0.4));
+  p.push(tx(RX, 803, `Emitido em ${issueDate}`, 7.5, '0.72 0.76 0.86'));
+  p.push(tx(RX, 792, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 7.5, '0.60 0.66 0.76'));
   if (companyAddress) {
-    addSmallLines(340, 778, companyAddress, 45, 7, '0.52 0.58 0.67', 2);
+    sLines(RX, 781, companyAddress, 44, 7, '0.52 0.58 0.67', 2);
   } else {
-    parts.push(drawText(340, 778, 'Cobrança mensal premium e segura', 7.2, '0.52 0.58 0.67'));
+    p.push(tx(RX, 781, 'Cobranca mensal de energia solar', 7, '0.52 0.58 0.67'));
   }
-  parts.push(drawText(340, 768, `Site ${siteDisplay}`, 7.2, '0.52 0.58 0.67'));
-  parts.push(drawText(340, 758, supportWhatsapp ? `WhatsApp ${supportWhatsapp}` : `Contato ${supportEmail}`, 7.2, '0.52 0.58 0.67'));
-  
-  // badges
-  parts.push(...drawChip(480, 778, 84, statusLabel, status === 'PAGO' ? softGreen : brandYellow, status === 'PAGO' ? brandGreen : slate950));
-  parts.push(...drawChip(480, 758, 84, 'EMISSAO', '0.13 0.18 0.28', white));
+  // status + issue badges in header
+  badge(PAGE_W - ML - 76, 786, 76, isPago ? 'PAGO' : 'GERADO', isPago ? sGreen : yellow, isPago ? green : ink);
+  badge(PAGE_W - ML - 76, 768, 76, 'EMISSAO', '0.10 0.14 0.24', white);
 
-  // CNPJ subtext on left
-  parts.push(drawText(M, 765, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 7.5, '0.50 0.55 0.65'));
+  // CNPJ tiny on logo side bottom
+  p.push(tx(ML, HDR_Y + 8, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : '', 7, '0.42 0.48 0.58'));
 
   // ════════════════════════════════════════════════════════════════════════
-  // HERO VALUE BAND  (y 640–742)
+  // 3. HERO VALUE BAND  y 640–742
   // ════════════════════════════════════════════════════════════════════════
-  // light background strip
-  parts.push(...drawShadowedRoundRect(0, 640, 595, 102, 10, white, borderColor, 4));
-  parts.push(drawRect(0, 738, 595, 4, brandOrange));
-  parts.push(drawRect(0, 734, 595, 4, brandYellow));
+  const HERO_Y = 640;
+  const HERO_H = 102;
+  p.push(rect(0, HERO_Y, PAGE_W, HERO_H, ink100));
+  p.push(line(0, HERO_Y, PAGE_W, HERO_Y, border, 0.5));
+  p.push(line(0, HERO_Y + HERO_H, PAGE_W, HERO_Y + HERO_H, border, 0.5));
+  // left accent strip
+  p.push(rect(0, HERO_Y, 4, HERO_H, orange));
 
-  // Value block (left 2/3)
-  parts.push(drawText(M, 718, 'VALOR DO FATURAMENTO', 7.5, slate600, 'F2'));
-  parts.push(drawText(M, 686, formatCurrencyBRL(input.amount), 32, slate950, 'F2'));
-  parts.push(drawText(M, 668, description, 8, slate600));
+  // Value
+  p.push(tx(ML + 8, HERO_Y + HERO_H - 18, 'VALOR DO FATURAMENTO', 7.5, ink600, 'F2'));
+  p.push(tx(ML + 8, HERO_Y + HERO_H - 52, formatCurrencyBRL(input.amount), 32, ink, 'F2'));
+  p.push(tx(ML + 8, HERO_Y + 10, description, 8, ink600));
 
   // vertical divider
-  parts.push(drawLine(382, 650, 382, 732, borderColor, 0.5));
+  p.push(line(390, HERO_Y + 12, 390, HERO_Y + HERO_H - 12, border, 0.5));
 
-  // Due-date block (right 1/3)
-  parts.push(drawText(400, 718, 'VENCIMENTO', 7.5, slate600, 'F2'));
-  parts.push(drawText(400, 694, dueDate, 20, slate800, 'F2'));
-  parts.push(...drawChip(400, 668, 70, statusLabel, badgeFill, badgeTextColor));
-  parts.push(drawText(400, 650, `Emissao ${issueDate}`, 7.2, slate600));
-
-  // ════════════════════════════════════════════════════════════════════════
-  // INFO CARDS  (y 540–630)
-  // ════════════════════════════════════════════════════════════════════════
-  const cardY = 530;
-  const cardH = 94;
-  const cardGap = 10;
-  const cardW = (W - cardGap) / 2;
-
-  // Card: Cliente
-  parts.push(...drawShadowedRoundRect(M, cardY, cardW, cardH, 8, white, borderColor, 3));
-  parts.push(drawRect(M, cardY + cardH - 4, cardW, 4, '0.06 0.55 0.38'));
-  sectionLabel(M + 14, cardY + cardH - 14, 'Dados do cliente');
-  addLabelValue(M + 14, cardY + cardH - 34, 'Nome', input.clientName, 30);
-  addLabelValue(M + 14, cardY + cardH - 57, 'CPF / CNPJ', maskCpfCnpj(input.clientDocument), 35);
-
-  // Card: Instalação
-  const card2X = M + cardW + cardGap;
-  parts.push(...drawShadowedRoundRect(card2X, cardY, cardW, cardH, 8, white, borderColor, 3));
-  parts.push(drawRect(card2X, cardY + cardH - 4, cardW, 4, brandOrange));
-  sectionLabel(card2X + 14, cardY + cardH - 14, 'Unidade consumidora');
-  addSmallLines(card2X + 14, cardY + cardH - 34, installationAddress, 34, 8, slate600, 4);
+  // Due date block
+  const DX = 404;
+  // calendar icon
+  p.push(...iconCalendar(DX, HERO_Y + HERO_H - 20, ink600, 0.85));
+  p.push(tx(DX + 14, HERO_Y + HERO_H - 14, 'VENCIMENTO', 7, ink600, 'F2'));
+  p.push(tx(DX, HERO_Y + HERO_H - 40, dueDate, 19, ink, 'F2'));
+  badge(DX, HERO_Y + 28, 72, isPago ? 'PAGO' : 'A VENCER', isPago ? sGreen : sYellow, isPago ? green : '0.60 0.42 0.02');
+  p.push(tx(DX, HERO_Y + 13, `Emissao ${issueDate}`, 7, ink400));
 
   // ════════════════════════════════════════════════════════════════════════
-  // DETALHAMENTO  (y 462–532)
+  // 4. INFO CARDS  y 528–632
   // ════════════════════════════════════════════════════════════════════════
-  const detY = 450;
-  const detH = 70;
-  parts.push(...drawShadowedRoundRect(M, detY, W, detH, 8, white, borderColor, 3));
-  parts.push(drawRect(M, detY + detH - 4, W, 4, slate950));
-  sectionLabel(M + 14, detY + detH - 14, 'Detalhamento da cobranca');
-  addLabelValue(M + 14, detY + detH - 32, 'Descricao', description, 52);
-  addLabelValue(M + 14 + 290, detY + detH - 32, 'Faturamento ID', clean(input.faturamentoId), 28);
+  const CARD_Y = 528;
+  const CARD_H = 96;
+  const CARD_W = (CW - GAP) / 2;
+
+  // ── Card: Cliente ──────────────────────────────────────────────────────
+  p.push(rrect(ML, CARD_Y, CARD_W, CARD_H, 8, white, border));
+  // green top bar
+  p.push(rect(ML, CARD_Y + CARD_H - 4, CARD_W, 4, green));
+  sLabel(ML + 14, CARD_Y + CARD_H - 16, 'Dados do cliente');
+
+  // person icon + name
+  const nameY = CARD_Y + CARD_H - 38;
+  p.push(...iconPerson(ML + 14, nameY - 4, green, 0.8));
+  lv(ML + 27, nameY, 'Nome', input.clientName, 28);
+
+  // document icon + cpf/cnpj
+  const docY = CARD_Y + CARD_H - 64;
+  p.push(...iconReceipt(ML + 14, docY - 4, ink400, 0.8));
+  lv(ML + 27, docY, 'CPF / CNPJ', maskCpfCnpj(input.clientDocument), 30);
+
+  // ── Card: Instalação ───────────────────────────────────────────────────
+  const C2X = ML + CARD_W + GAP;
+  p.push(rrect(C2X, CARD_Y, CARD_W, CARD_H, 8, white, border));
+  p.push(rect(C2X, CARD_Y + CARD_H - 4, CARD_W, 4, orange));
+  sLabel(C2X + 14, CARD_Y + CARD_H - 16, 'Unidade consumidora');
+
+  // pin icon + address lines
+  p.push(...iconPin(C2X + 14, CARD_Y + CARD_H - 46, orange, 0.9));
+  sLines(C2X + 28, CARD_Y + CARD_H - 30, installAddr, 32, 8, ink600, 4);
 
   // ════════════════════════════════════════════════════════════════════════
-  // PAYMENT SECTION  (y 148–454)
+  // 5. DETALHAMENTO  y 448–520
   // ════════════════════════════════════════════════════════════════════════
-  const payY = 148;
-  const payH = 292;
-  parts.push(...drawShadowedRoundRect(M, payY, W, payH, 10, white, borderColor, 3));
+  const DET_Y = 448;
+  const DET_H = 72;
+  p.push(rrect(ML, DET_Y, CW, DET_H, 8, white, border));
+  p.push(rect(ML, DET_Y + DET_H - 4, CW, 4, ink));
+  sLabel(ML + 14, DET_Y + DET_H - 16, 'Detalhamento da cobranca');
 
-  // Section header band
-  parts.push(drawRect(M, payY + payH - 42, W, 42, slate950));
-  // rounded top corners for the band — just use the full rect since it's at the top of the card
-  parts.push(drawText(M + 14, payY + payH - 24, 'PAGUE COM PIX OU BOLETO', 11, white, 'F2'));
-  // small pill badge
-  parts.push(...drawChip(M + 14 + 182, payY + payH - 30, 76, 'INSTANTANEO', brandYellow, slate950));
+  // receipt icon + description
+  p.push(...iconReceipt(ML + 14, DET_Y + DET_H - 42, ink, 0.85));
+  lv(ML + 28, DET_Y + DET_H - 30, 'Descricao', description, 48);
 
-  const innerY = payY + payH - 52; // baseline just below the header
+  // vertical mini-divider
+  p.push(line(ML + CW / 2, DET_Y + 10, ML + CW / 2, DET_Y + DET_H - 24, border, 0.4));
 
-  // ── Left column ─────────────────────────────────────────────────────────
-  const lx = M + 16;
+  // faturamento id
+  p.push(...iconReceipt(ML + CW / 2 + 10, DET_Y + DET_H - 42, ink400, 0.85));
+  lv(ML + CW / 2 + 24, DET_Y + DET_H - 30, 'Faturamento ID', clean(input.faturamentoId), 24);
+
+  // ════════════════════════════════════════════════════════════════════════
+  // 6. PAYMENT SECTION  y 148–440
+  // ════════════════════════════════════════════════════════════════════════
+  const PAY_Y = 148;
+  const PAY_H = 292;
+  p.push(rrect(ML, PAY_Y, CW, PAY_H, 10, white, border));
+
+  // dark header band
+  const BAND_H = 40;
+  const BAND_Y = PAY_Y + PAY_H - BAND_H;
+  p.push(rect(ML, BAND_Y, CW, BAND_H, ink));
+  // pix icon in band
+  p.push(...iconPix(ML + 14, BAND_Y + 14, yellow, 0.9));
+  p.push(tx(ML + 28, BAND_Y + BAND_H - 14, 'PAGUE COM PIX OU BOLETO', 10.5, white, 'F2'));
+  badge(ML + CW - 96, BAND_Y + 12, 82, 'INSTANTANEO', yellow, ink);
+
+  const INNER_Y = BAND_Y - 8; // baseline below header
+
+  // ── Left column ────────────────────────────────────────────────────────
+  const LX = ML + 16;
+  const RIGHT_DIVIDER_X = ML + CW - 152;
 
   // Linha Digitável
-  parts.push(drawText(lx, innerY - 12, 'Linha digitavel', 9, slate800, 'F2'));
-  addSmallLines(lx, innerY - 28, clean(input.linhaDigitavel), 60, 7.5, slate600, 3);
+  p.push(tx(LX, INNER_Y - 10, 'Linha digitavel', 9, ink800, 'F2'));
+  sLines(LX, INNER_Y - 26, clean(input.linhaDigitavel), 56, 7.5, ink600, 3);
+  p.push(line(LX, INNER_Y - 66, RIGHT_DIVIDER_X - 10, INNER_Y - 66, border, 0.4));
 
-  // separator
-  parts.push(drawLine(lx, innerY - 64, lx + 300, innerY - 64, borderColor, 0.4));
+  // Pix copia e cola
+  p.push(...iconPix(LX, INNER_Y - 82, green, 0.8));
+  p.push(tx(LX + 13, INNER_Y - 76, pixCopyLabel, 9, ink800, 'F2'));
+  sLines(LX, INNER_Y - 92, pixCopyText, 54, 7, ink600, 4);
 
-  // Pix Copia e Cola
-  parts.push(drawText(lx, innerY - 78, pixCopyPasteLabel, 9, slate800, 'F2'));
-  addSmallLines(lx, innerY - 94, pixCopyPasteText, 58, 7, slate600, 4);
+  // ── QR code column ────────────────────────────────────────────────────
+  const QR_SIZE = 124;
+  const QR_X = ML + CW - QR_SIZE - 14;
+  const QR_LABEL_Y = INNER_Y - 10;
+  const QR_BASE_Y = QR_LABEL_Y - 10 - QR_SIZE;
 
-  // ── Right column: QR code ────────────────────────────────────────────────
-  // Anchor from the top of the payment section downward for predictable placement
-  const qrSize = 124;
-  const qrX = M + W - qrSize - 16;
-  // label sits just below the header band; QR renders below the label
-  const qrLabelY = innerY - 14;      // y of the "QR Code Pix" label text
-  const qrBaseY  = qrLabelY - 8 - qrSize; // bottom-left corner of the QR square
-
-  parts.push(drawText(qrX, qrLabelY, 'QR Code Pix', 9, slate800, 'F2'));
+  p.push(tx(QR_X, QR_LABEL_Y, 'QR Code Pix', 9, ink800, 'F2'));
   if (pixPayload) {
     try {
-      parts.push(...drawQrCode(pixPayload, qrX, qrBaseY, qrSize));
-    } catch (error) {
-      console.error('[billing-pdf] QR Pix indisponivel no PDF.', error);
-      parts.push(...drawUnavailablePixQrCode(qrX, qrBaseY, qrSize));
+      p.push(...drawQrCode(pixPayload, QR_X, QR_BASE_Y, QR_SIZE));
+    } catch (err) {
+      console.error('[billing-pdf] QR Pix indisponivel.', err);
+      p.push(...drawUnavailableQr(QR_X, QR_BASE_Y, QR_SIZE));
     }
   } else {
-    parts.push(...drawUnavailablePixQrCode(qrX, qrBaseY, qrSize));
+    p.push(...drawUnavailableQr(QR_X, QR_BASE_Y, QR_SIZE));
   }
 
+  // hint below QR
+  p.push(tx(QR_X, QR_BASE_Y - 6, 'Abra no app do banco', 6.5, ink400));
+
   // vertical divider between columns
-  parts.push(drawLine(qrX - 16, innerY - 6, qrX - 16, payY + 28, borderColor, 0.4));
-  parts.push(drawText(qrX - 16, payY + 44, 'Abra no app do banco e confirme o pagamento', 7.2, slate600));
+  p.push(line(RIGHT_DIVIDER_X, INNER_Y - 6, RIGHT_DIVIDER_X, PAY_Y + 58, border, 0.4));
 
-  // ── Barcode area ────────────────────────────────────────────────────────
-  const bcAreaY = payY + 8;
-  const bcH = 40;
-  parts.push(drawLine(lx, bcAreaY + bcH + 12, lx + W - 36, bcAreaY + bcH + 12, borderColor, 0.4));
-  parts.push(drawText(lx, bcAreaY + bcH + 6, 'Codigo de barras', 8, slate800, 'F2'));
-  parts.push(...drawBarcode(input.codigoBarras, lx, bcAreaY, W - 36, bcH));
-  parts.push(drawText(lx, bcAreaY - 8, clean(input.codigoBarras), 6.5, slate400));
-
-  // ════════════════════════════════════════════════════════════════════════
-  // NOTICE BAR  (y 96–140)
-  // ════════════════════════════════════════════════════════════════════════
-  parts.push(drawRoundRect(M, 96, W, 44, 8, softYellow, yellowBorder));
-  // left icon dot
-  parts.push(drawCircle(M + 20, 96 + 22, 6, brandYellow));
-  parts.push(drawText(M + 17, 96 + 19.5, '!', 9, slate950, 'F2'));
-  parts.push(drawText(M + 34, 96 + 29, 'Observacao', 8.5, slate800, 'F2'));
-  parts.push(drawText(M + 34, 96 + 16, 'Apos o pagamento, a compensacao podera ocorrer conforme o prazo da instituicao financeira.', 7.5, slate600));
+  // ── Barcode ────────────────────────────────────────────────────────────
+  const BC_Y = PAY_Y + 8;
+  const BC_H = 38;
+  p.push(line(LX, BC_Y + BC_H + 10, LX + CW - 30, BC_Y + BC_H + 10, border, 0.4));
+  p.push(...iconBarcode(LX, BC_Y + BC_H + 2, ink400, 0.7));
+  p.push(tx(LX + 11, BC_Y + BC_H + 6, 'Codigo de barras', 8, ink800, 'F2'));
+  p.push(...drawBarcode(input.codigoBarras, LX, BC_Y, CW - 36, BC_H));
+  p.push(tx(LX, BC_Y - 8, clean(input.codigoBarras), 6, ink400));
 
   // ════════════════════════════════════════════════════════════════════════
-  // FOOTER  (y 0–88)
+  // 7. NOTICE BAR  y 94–140
   // ════════════════════════════════════════════════════════════════════════
-  parts.push(drawRect(0, 0, 595, 88, slate950));
-  parts.push(drawRect(0, 84, 595, 4, brandYellow));
-  parts.push(...drawSolaraLogo(470, 12, 0.46));
-
-  // three columns
-  const col1 = M;
-  const col2 = M + 170;
-  const col3 = M + 340;
-
-  // column labels + values
-  parts.push(drawText(col1, 62, 'Atendimento', 7.5, '0.65 0.70 0.80', 'F2'));
-  parts.push(drawLine(col1, 58, col1 + 130, 58, '0.20 0.22 0.30', 0.4));
-  parts.push(drawText(col1, 46, supportEmail, 8, '0.90 0.92 0.95'));
-
-  parts.push(drawText(col2, 62, 'WhatsApp', 7.5, '0.65 0.70 0.80', 'F2'));
-  parts.push(drawLine(col2, 58, col2 + 130, 58, '0.20 0.22 0.30', 0.4));
-  parts.push(drawText(col2, 46, supportWhatsapp, 8, '0.90 0.92 0.95'));
-
-  parts.push(drawText(col3, 62, 'Site', 7.5, '0.65 0.70 0.80', 'F2'));
-  parts.push(drawLine(col3, 58, col3 + 130, 58, '0.20 0.22 0.30', 0.4));
-  parts.push(drawText(col3, 46, siteDisplay, 8, '0.90 0.92 0.95'));
-
-  // tagline
-  parts.push(drawLine(M, 34, 595 - M, 34, '0.15 0.17 0.25', 0.4));
-  parts.push(drawText(M, 20, 'Solara Energia: transparencia, economia e confianca na sua jornada de energia solar.', 7.5, '0.45 0.50 0.60'));
+  const NB_Y = 94;
+  const NB_H = 44;
+  p.push(rrect(ML, NB_Y, CW, NB_H, 8, sYellow, yBorder));
+  p.push(...iconInfo(ML + 12, NB_Y + NB_H / 2 - 6, yellow, 0.9));
+  p.push(tx(ML + 30, NB_Y + 31, 'Observacao', 8.5, ink800, 'F2'));
+  p.push(tx(ML + 30, NB_Y + 18, 'Apos o pagamento, a compensacao podera ocorrer conforme o prazo da instituicao financeira.', 7.5, ink600));
 
   // ════════════════════════════════════════════════════════════════════════
-  // BUILD PDF BYTES  (unchanged)
+  // 8. FOOTER  y 0–86
   // ════════════════════════════════════════════════════════════════════════
-  const content = parts.join('\n');
+  const FTR_H = 86;
+  p.push(rect(0, 0, PAGE_W, FTR_H, ink));
+  p.push(rect(0, FTR_H - 4, PAGE_W, 4, yellow));
+
+  // Three equal contact columns
+  const COL_W = CW / 3;
+  const cols = [
+    { icon: iconEmail(ML + 6, 50, yellow, 0.82), label: 'Email', value: supportEmail },
+    { icon: iconPhone(ML + COL_W + 6, 50, yellow, 0.82), label: 'WhatsApp', value: supportWhatsapp || 'Atendimento Solara' },
+    { icon: iconGlobe(ML + COL_W * 2 + 6, 50, yellow, 0.82), label: 'Site', value: siteDisplay },
+  ];
+
+  cols.forEach(({ icon, label, value }, i) => {
+    const cx = ML + COL_W * i;
+    p.push(...icon);
+    p.push(tx(cx + 18, 62, label.toUpperCase(), 7, '0.65 0.70 0.80', 'F2'));
+    p.push(line(cx + 18, 58, cx + COL_W - 4, 58, '0.18 0.22 0.32', 0.4));
+    p.push(tx(cx + 18, 46, value, 7.5, '0.88 0.91 0.96'));
+  });
+
+  // Tagline + logo watermark
+  p.push(line(ML, 32, PAGE_W - MR, 32, '0.14 0.16 0.24', 0.4));
+  p.push(tx(ML, 18, 'Solara Energia: transparencia, economia e confianca na sua jornada de energia solar.', 7.5, '0.42 0.48 0.58'));
+
+  // ════════════════════════════════════════════════════════════════════════
+  // 9. BUILD PDF BYTES
+  // ════════════════════════════════════════════════════════════════════════
+  const content = p.join('\n');
   const objects = [
     '%PDF-1.4\n',
     '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n',
