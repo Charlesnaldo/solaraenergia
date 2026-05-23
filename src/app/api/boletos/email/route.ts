@@ -63,7 +63,8 @@ export async function POST(req: Request) {
             linhaDigitavel: data.linha_digitavel,
             codigoBarras: data.codigo_barras,
             pixUrl: data.pix_url,
-            pixQrCode: pixPaymentPayload || data.pix_qr_code,
+            pixPayload: pixPaymentPayload || null,
+            pixQrCode: data.pix_qr_code,
           }),
         });
 

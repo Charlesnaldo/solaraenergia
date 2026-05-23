@@ -343,6 +343,10 @@ function readFirstString(records: Array<Record<string, unknown> | null | undefin
 }
 
 const PIX_EMV_FIELD_NAMES = [
+  'pixPayload',
+  'pix_payload',
+  'pixCopiaCola',
+  'pix_copia_cola',
   'emv',
   'emv_qrcode',
   'emv_qr_code',
@@ -366,6 +370,8 @@ const PIX_EMV_FIELD_NAMES = [
   'texto_qr_code',
 ];
 
+const PIX_MIN_PAYLOAD_LENGTH = 80;
+
 function isHttpUrl(value: string) {
   try {
     const url = new URL(value);
@@ -375,62 +381,94 @@ function isHttpUrl(value: string) {
   }
 }
 
-export function isPixPaymentPayload(value: string | null | undefined) {
-  const text = value?.trim();
+function normalizePixPayload(value: string | null | undefined) {
+  return value?.replace(/\s+/g, '').trim() ?? '';
+}
+
+function sliceEmbeddedPixPayload(value: string) {
+  const normalized = normalizePixPayload(value);
+  const start = normalized.indexOf('000201');
+  if (start < 0) {
+    return normalized;
+  }
+
+  const candidate = normalized.slice(start);
+  const crcMatches = [...candidate.matchAll(/6304[0-9A-Fa-f]{4}/g)];
+  const crcMatch = crcMatches[crcMatches.length - 1];
+  return crcMatch?.index === undefined ? candidate : candidate.slice(0, crcMatch.index + 8);
+}
+
+export function validatePixPayload(value: string | null | undefined) {
+  const text = sliceEmbeddedPixPayload(value ?? '');
   if (!text) {
     return false;
   }
 
+  if (isHttpUrl(text) || text.length < PIX_MIN_PAYLOAD_LENGTH) {
+    return false;
+  }
+
   const normalized = text.toUpperCase();
-  return normalized.startsWith('000201') && normalized.includes('BR.GOV.BCB.PIX');
+  return (
+    normalized.startsWith('000201') &&
+    normalized.includes('BR.GOV.BCB.PIX') &&
+    normalized.includes('5802BR') &&
+    /6304[0-9A-F]{4}$/i.test(text)
+  );
 }
 
-function findPixPaymentPayload(value: unknown, seen = new WeakSet<object>()): string {
+export const isPixPaymentPayload = validatePixPayload;
+
+export function extractPixPayload(value: unknown, seen = new WeakSet<object>()): string | null {
   if (typeof value === 'string') {
-    return isPixPaymentPayload(value) ? value.trim() : '';
+    const payload = sliceEmbeddedPixPayload(value);
+    return validatePixPayload(payload) ? payload : null;
   }
 
   if (!value || typeof value !== 'object') {
-    return '';
+    return null;
   }
 
   if (seen.has(value)) {
-    return '';
+    return null;
   }
   seen.add(value);
 
   if (Array.isArray(value)) {
     for (const item of value) {
-      const found = findPixPaymentPayload(item, seen);
+      const found = extractPixPayload(item, seen);
       if (found) {
         return found;
       }
     }
 
-    return '';
+    return null;
   }
 
   const record = value as Record<string, unknown>;
   for (const name of PIX_EMV_FIELD_NAMES) {
     const direct = record[name];
-    if (typeof direct === 'string' && isPixPaymentPayload(direct)) {
-      return direct.trim();
+    if (typeof direct === 'string') {
+      const payload = extractPixPayload(direct, seen);
+      if (payload) {
+        return payload;
+      }
     }
   }
 
   for (const nested of Object.values(record)) {
-    const found = findPixPaymentPayload(nested, seen);
+    const found = extractPixPayload(nested, seen);
     if (found) {
       return found;
     }
   }
 
-  return '';
+  return null;
 }
 
 export function getPixPaymentPayload(...values: unknown[]) {
   for (const value of values) {
-    const found = findPixPaymentPayload(value);
+    const found = extractPixPayload(value);
     if (found) {
       return found;
     }

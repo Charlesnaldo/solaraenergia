@@ -1,4 +1,4 @@
-import { isPixPaymentPayload } from '@/lib/itau/bolecode';
+import { extractPixPayload, validatePixPayload } from '@/lib/itau/bolecode';
 
 export function formatCurrencyBRL(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -397,14 +397,14 @@ function addEccAndInterleave(data: number[], version: number) {
 }
 
 function chooseQrVersion(byteLength: number) {
-  for (let version = 1; version <= 20; version += 1) {
+  for (let version = 1; version <= 40; version += 1) {
     const dataCapacity = getNumRawDataCodewords(version) - ECC_CODEWORDS_PER_BLOCK[version][0] * NUM_ERROR_CORRECTION_BLOCKS[version][0];
     const countBits = version <= 9 ? 8 : 16;
     const usedBits = 4 + countBits + byteLength * 8;
     if (Math.ceil(usedBits / 8) <= dataCapacity) return version;
   }
 
-  return 20;
+  return 40;
 }
 
 function encodeQrCode(text: string): Matrix {
@@ -527,13 +527,84 @@ function encodeQrCode(text: string): Matrix {
   return modules;
 }
 
-function drawQrCode(value: string | null | undefined, x: number, y: number, size: number) {
-  const text = value?.trim();
-  if (!text) {
-    return [drawStrokeRect(x, y, size, size, '0.7 0.7 0.7'), drawText(x + 15, y + size / 2, 'QR Pix nao informado', 8, '0.5 0.5 0.5')];
+function previewPixValue(value: string) {
+  const trimmed = value.trim();
+  if (trimmed.length <= 24) {
+    return trimmed;
   }
 
-  const matrix = encodeQrCode(text);
+  return `${trimmed.slice(0, 12)}...${trimmed.slice(-6)}`;
+}
+
+function logInvalidPixPayload(source: string, value: string | null | undefined) {
+  const text = value?.trim();
+  if (!text || validatePixPayload(text)) {
+    return;
+  }
+
+  console.error(
+    `[billing-pdf] Payload Pix invalido em ${source}. QR Pix nao sera gerado. length=${text.length}; preview=${previewPixValue(text)}`,
+  );
+}
+
+function isHttpUrlText(value: string | null | undefined) {
+  const text = value?.trim();
+  if (!text) {
+    return false;
+  }
+
+  try {
+    const url = new URL(text);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function drawQrCode(value: string | null | undefined, x: number, y: number, size: number) {
+  const payload = extractPixPayload(value);
+  if (!payload) {
+    if (value?.trim()) {
+      logInvalidPixPayload('drawQrCode', value);
+    }
+
+    return [
+      drawRect(x, y, size, size, '1 1 1'),
+      drawStrokeRect(x, y, size, size, '0.7 0.7 0.7'),
+      drawText(x + 14, y + size / 2 + 8, 'Pix indisponivel', 8, '0.5 0.5 0.5', 'F2'),
+      drawText(x + 14, y + size / 2 - 6, 'Use boleto', 7, '0.5 0.5 0.5'),
+    ];
+  }
+
+  const byteLength = Buffer.byteLength(payload, 'utf8');
+  const maxVersion = 40;
+  const maxCapacity =
+    getNumRawDataCodewords(maxVersion) -
+    ECC_CODEWORDS_PER_BLOCK[maxVersion][0] * NUM_ERROR_CORRECTION_BLOCKS[maxVersion][0];
+  const maxUsedBits = 4 + 16 + byteLength * 8;
+  if (Math.ceil(maxUsedBits / 8) > maxCapacity) {
+    console.error(`[billing-pdf] Payload Pix excede a capacidade do QR Code. length=${byteLength}`);
+    return [
+      drawRect(x, y, size, size, '1 1 1'),
+      drawStrokeRect(x, y, size, size, '0.7 0.7 0.7'),
+      drawText(x + 12, y + size / 2 + 8, 'Pix muito longo', 8, '0.5 0.5 0.5', 'F2'),
+      drawText(x + 12, y + size / 2 - 6, 'Use boleto', 7, '0.5 0.5 0.5'),
+    ];
+  }
+
+  let matrix: Matrix;
+  try {
+    matrix = encodeQrCode(payload);
+  } catch (error) {
+    console.error('[billing-pdf] Erro ao gerar QR Code Pix.', error);
+    return [
+      drawRect(x, y, size, size, '1 1 1'),
+      drawStrokeRect(x, y, size, size, '0.7 0.7 0.7'),
+      drawText(x + 12, y + size / 2 + 8, 'Erro no QR Pix', 8, '0.5 0.5 0.5', 'F2'),
+      drawText(x + 12, y + size / 2 - 6, 'Use boleto', 7, '0.5 0.5 0.5'),
+    ];
+  }
+
   const quiet = 4;
   const moduleSize = size / (matrix.length + quiet * 2);
   const parts = [drawRect(x, y, size, size, '1 1 1'), drawStrokeRect(x, y, size, size, '0.85 0.85 0.85')];
@@ -549,7 +620,7 @@ function drawQrCode(value: string | null | undefined, x: number, y: number, size
   return parts;
 }
 
-export function createBoletoPdfBuffer(input: {
+export interface BoletoPdfInput {
   clientName: string;
   clientDocument: string;
   amount: number;
@@ -568,14 +639,28 @@ export function createBoletoPdfBuffer(input: {
   linhaDigitavel?: string | null;
   codigoBarras?: string | null;
   pixUrl?: string | null;
+  pixPayload?: string | null;
+  pixCopiaCola?: string | null;
   pixQrCode?: string | null;
-}) {
-  const qrValue =
-    [input.pixQrCode, input.pixUrl].find(isPixPaymentPayload) ??
-    [input.pixQrCode, input.pixUrl].find((v) => typeof v === 'string' && v.trim().length > 0) ??
-    null;
+}
+
+export function createBoletoPdfBuffer(input: BoletoPdfInput) {
+  const pixPayload =
+    extractPixPayload(input.pixPayload) ??
+    extractPixPayload(input.pixCopiaCola) ??
+    extractPixPayload(input.pixQrCode);
+  const pixFallbackUrl = isHttpUrlText(input.pixUrl) ? input.pixUrl!.trim() : null;
+  const pixCopyPasteLabel = pixPayload ? 'Pix copia e cola' : pixFallbackUrl ? 'Link Pix Itau' : 'Pix indisponivel';
   const pixCopyPasteText =
-    qrValue ?? 'Payload Pix nao retornado pelo Itau. Use a linha digitavel ou o codigo de barras.';
+    pixPayload ?? pixFallbackUrl ?? 'Payload Pix nao retornado pelo Itau. Use a linha digitavel ou o codigo de barras.';
+
+  logInvalidPixPayload('pixPayload', input.pixPayload);
+  logInvalidPixPayload('pixCopiaCola', input.pixCopiaCola);
+  logInvalidPixPayload('pixQrCode', input.pixQrCode);
+  if (!pixPayload && pixFallbackUrl) {
+    console.warn('[billing-pdf] pixUrl recebido sem payload EMV. A URL sera exibida apenas como fallback visual.');
+  }
+
   const companyCnpj = input.companyCnpj || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null;
   const supportEmail = input.supportEmail || process.env.BILLING_SUPPORT_EMAIL || 'financeiro@solaraenergia.com.br';
   const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP || process.env.NEXT_PUBLIC_WHATSAPP || 'Atendimento Solara';
@@ -583,7 +668,7 @@ export function createBoletoPdfBuffer(input: {
   const issueDate = input.issueDate ? formatDateBR(input.issueDate) : formatDateBR(new Date());
   const dueDate = formatDateBR(input.dueDate);
   const status = clean(input.status || 'gerado').toUpperCase();
-  const description = input.description || 'Servicos de energia solar / faturamento mensal';
+  const description = input.description || 'Servicos de Energia Solar / Faturamento Mensal';
   const installationAddress = clean(input.installationAddress || input.clientAddress);
 
   // ── Palette ─────────────────────────────────────────────────────────────
@@ -747,7 +832,7 @@ export function createBoletoPdfBuffer(input: {
   parts.push(drawLine(lx, innerY - 82, lx + 300, innerY - 82, borderColor, 0.4));
 
   // Pix Copia e Cola
-  parts.push(drawText(lx, innerY - 96, 'Pix copia e cola', 9, slate800, 'F2'));
+  parts.push(drawText(lx, innerY - 96, pixCopyPasteLabel, 9, slate800, 'F2'));
   addSmallLines(lx, innerY - 111, pixCopyPasteText, 54, 7, slate600, 4);
 
   // ── Right column: QR code ────────────────────────────────────────────────
@@ -759,7 +844,7 @@ export function createBoletoPdfBuffer(input: {
   const qrBaseY  = qrLabelY - 8 - qrSize; // bottom-left corner of the QR square
 
   parts.push(drawText(qrX, qrLabelY, 'QR Code Pix', 9, slate800, 'F2'));
-  parts.push(...drawQrCode(qrValue, qrX, qrBaseY, qrSize));
+  parts.push(...drawQrCode(pixPayload, qrX, qrBaseY, qrSize));
 
   // vertical divider between columns
   parts.push(drawLine(qrX - 14, innerY - 4, qrX - 14, payY + 10, borderColor, 0.4));

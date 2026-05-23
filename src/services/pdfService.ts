@@ -40,7 +40,8 @@ export function createFaturamentoPdf(record: FaturamentoPdfRecord) {
     linhaDigitavel: record.linha_digitavel,
     codigoBarras: record.codigo_barras,
     pixUrl: record.pix_url,
-    pixQrCode: pixPaymentPayload || record.pix_qr_code,
+    pixPayload: pixPaymentPayload || null,
+    pixQrCode: record.pix_qr_code,
   });
 }
 
