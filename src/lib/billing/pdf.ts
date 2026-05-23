@@ -687,8 +687,8 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const companyCnpj     = input.companyCnpj     || process.env.SOLARA_CNPJ              || process.env.COMPANY_CNPJ   || null;
   const companyAddress  = input.companyAddress  || process.env.SOLARA_ADDRESS            || process.env.COMPANY_ADDRESS || null;
   const supportEmail    = input.supportEmail    || process.env.BILLING_SUPPORT_EMAIL     || 'financeiro@solaraenergia.com.br';
-  const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP  || process.env.NEXT_PUBLIC_WHATSAPP || '';
-  const siteUrl         = input.siteUrl         || process.env.NEXT_PUBLIC_SITE_URL      || 'solaraenergia.com.br';
+  const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP  || process.env.NEXT_PUBLIC_WHATSAPP || '(85) 99999-9999';
+  const siteUrl         = input.siteUrl         || process.env.NEXT_PUBLIC_SITE_URL      || 'www.solaraenergia.com.br';
   const siteDisplay     = siteUrl.replace(/^https?:\/\/(www\.)?/, 'www.');
   const issueDate       = formatDateBR(input.issueDate ?? new Date());
   const dueDate         = formatDateBR(input.dueDate);
@@ -961,20 +961,20 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   p.push(rect(0, FTR_H - 4, PAGE_W, 4, yellow));
 
   // Three equal contact columns
-  const COL_W = CW / 3;
-  const cols = [
-    { icon: iconEmail(ML + 6, 50, yellow, 0.82), label: 'Email', value: supportEmail },
-    { icon: iconPhone(ML + COL_W + 6, 50, yellow, 0.82), label: 'WhatsApp', value: supportWhatsapp || 'Atendimento Solara' },
-    { icon: iconGlobe(ML + COL_W * 2 + 6, 50, yellow, 0.82), label: 'Site', value: siteDisplay },
-  ];
+ const COL_W = CW / 3;
+const footerCols = [
+  { iconFn: iconEmail,  label: 'Email',     value: supportEmail },
+  { iconFn: iconPhone,  label: 'WhatsApp',  value: supportWhatsapp || 'Atendimento Solara' },
+  { iconFn: iconGlobe,  label: 'Site',      value: siteDisplay },
+];
 
-  cols.forEach(({ icon, label, value }, i) => {
-    const cx = ML + COL_W * i;
-    p.push(...icon);
-    p.push(tx(cx + 18, 62, label.toUpperCase(), 7, '0.65 0.70 0.80', 'F2'));
-    p.push(line(cx + 18, 58, cx + COL_W - 4, 58, '0.18 0.22 0.32', 0.4));
-    p.push(tx(cx + 18, 46, value, 7.5, '0.88 0.91 0.96'));
-  });
+footerCols.forEach(({ iconFn, label, value }, i) => {
+  const cx = ML + COL_W * i;
+  p.push(...iconFn(cx, 46, yellow, 0.82));
+  p.push(tx(cx + 16, 62, label.toUpperCase(), 7, '0.65 0.70 0.80', 'F2'));
+  p.push(line(cx + 16, 58, cx + COL_W - 4, 58, '0.18 0.22 0.32', 0.4));
+  p.push(tx(cx + 16, 47, value, 7.5, '0.88 0.91 0.96'));
+});
 
   // Tagline + logo watermark
   p.push(line(ML, 32, PAGE_W - MR, 32, '0.14 0.16 0.24', 0.4));
