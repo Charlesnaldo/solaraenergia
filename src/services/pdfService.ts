@@ -33,6 +33,7 @@ export function createFaturamentoPdf(record: FaturamentoPdfRecord) {
     clientAddress: address,
     installationAddress: address,
     companyCnpj: process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null,
+    companyAddress: process.env.SOLARA_ADDRESS || process.env.COMPANY_ADDRESS || null,
     supportEmail: process.env.BILLING_SUPPORT_EMAIL || null,
     supportWhatsapp: process.env.BILLING_SUPPORT_WHATSAPP || process.env.NEXT_PUBLIC_WHATSAPP || null,
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || null,

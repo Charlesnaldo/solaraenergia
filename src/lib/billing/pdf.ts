@@ -230,27 +230,33 @@ function drawDiamond(cx: number, cy: number, width: number, height: number, colo
 }
 
 function drawSolaraLogo(x: number, y: number, scale = 1) {
-  const orange = '1 0.68 0.20';
   const yellow = '0.98 0.65 0.15';
   const white = '1 1 1';
-  const cx = x + 20 * scale;
-  const cy = y + 20 * scale;
   const parts = [
-    drawDiamond(cx, cy + 20 * scale, 8 * scale, 18 * scale, orange),
-    drawDiamond(cx, cy - 20 * scale, 8 * scale, 18 * scale, orange),
-    drawDiamond(cx - 20 * scale, cy, 18 * scale, 8 * scale, orange),
-    drawDiamond(cx + 20 * scale, cy, 18 * scale, 8 * scale, orange),
-    drawDiamond(cx - 14 * scale, cy + 14 * scale, 10 * scale, 16 * scale, orange),
-    drawDiamond(cx + 14 * scale, cy + 14 * scale, 10 * scale, 16 * scale, orange),
-    drawDiamond(cx - 14 * scale, cy - 14 * scale, 10 * scale, 16 * scale, orange),
-    drawDiamond(cx + 14 * scale, cy - 14 * scale, 10 * scale, 16 * scale, orange),
-    drawCircle(cx, cy, 9 * scale, white),
-    drawCircle(cx, cy, 4 * scale, orange),
-    drawText(x + 54 * scale, y + 25 * scale, 'Solara', 25 * scale, white, 'F2'),
-    drawText(x + 94 * scale, y + 7 * scale, 'ENERGIA', 8 * scale, yellow, 'F2'),
+    drawText(x, y + 15 * scale, 'Solara', 24 * scale, white, 'F2'),
+    drawText(x + 75 * scale, y + 15 * scale, 'ENERGIA', 9 * scale, yellow, 'F2'),
   ];
 
   return parts;
+}
+
+function drawShadowedRoundRect(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+  fill: string,
+  stroke?: string,
+  shadowOffset = 3,
+) {
+  const shadow = drawRoundRect(x + shadowOffset, y - shadowOffset, width, height, radius, '0.92 0.94 0.97');
+  const card = drawRoundRect(x, y, width, height, radius, fill, stroke);
+  return [shadow, card];
+}
+
+function drawChip(x: number, y: number, width: number, label: string, fill: string, textColor: string) {
+  return [drawRoundRect(x, y, width, 16, 8, fill), drawText(x + 8, y + 5, label, 6.5, textColor, 'F2')];
 }
 
 function drawBarcode(codigoBarras: string | null | undefined, x: number, y: number, maxWidth: number, height: number) {
@@ -633,6 +639,7 @@ export interface BoletoPdfInput {
   clientAddress?: string | null;
   installationAddress?: string | null;
   companyCnpj?: string | null;
+  companyAddress?: string | null;
   supportEmail?: string | null;
   supportWhatsapp?: string | null;
   siteUrl?: string | null;
@@ -667,14 +674,17 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   }
 
   const companyCnpj = input.companyCnpj || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null;
+  const companyAddress = input.companyAddress || process.env.SOLARA_ADDRESS || process.env.COMPANY_ADDRESS || null;
   const supportEmail = input.supportEmail || process.env.BILLING_SUPPORT_EMAIL || 'financeiro@solaraenergia.com.br';
   const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP || process.env.NEXT_PUBLIC_WHATSAPP || 'Atendimento Solara';
   const siteUrl = input.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'solaraenergia.com.br';
+  const siteDisplay = siteUrl.replace(/^https?:\/\//, '');
   const issueDate = input.issueDate ? formatDateBR(input.issueDate) : formatDateBR(new Date());
   const dueDate = formatDateBR(input.dueDate);
   const status = clean(input.status || 'gerado').toUpperCase();
   const description = input.description || 'Servicos de Energia Solar / Faturamento Mensal';
   const installationAddress = clean(input.installationAddress || input.clientAddress);
+  const statusLabel = status === 'PAGO' ? 'PAGO' : 'GERADO';
 
   // ── Palette ─────────────────────────────────────────────────────────────
   const brandYellow  = '0.98 0.80 0.08';
@@ -684,13 +694,13 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const slate800     = '0.12 0.16 0.24';
   const slate600     = '0.28 0.33 0.41';
   const slate400     = '0.55 0.60 0.69';
-  const slate100     = '0.94 0.95 0.97';
   const white        = '1 1 1';
   const borderColor  = '0.88 0.91 0.94';
   const softYellow   = '1 0.97 0.83';
   const softGreen    = '0.88 0.97 0.93';
-  const greenBorder  = '0.54 0.85 0.68';
   const yellowBorder = '0.96 0.80 0.20';
+  const badgeFill = status === 'PAGO' ? softGreen : softYellow;
+  const badgeTextColor = status === 'PAGO' ? brandGreen : '0.60 0.42 0.02';
 
   const M = 40; // horizontal margin
   const W = 595 - M * 2; // content width = 515
@@ -738,10 +748,19 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   parts.push(drawLine(340, 758, 340, 838, '0.20 0.22 0.30', 0.5));
 
   // right block: document type + meta
-  parts.push(drawText(355, 814, 'RESUMO DE FATURAMENTO', 11, white, 'F2'));
-  parts.push(drawLine(355, 809, 547, 809, '0.30 0.34 0.44', 0.4));
-  parts.push(drawText(355, 796, `Emitido em ${issueDate}`, 8, '0.65 0.70 0.80'));
-  parts.push(drawText(355, 783, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 8, '0.50 0.55 0.65'));
+  parts.push(drawText(350, 814, 'RESUMO DE FATURAMENTO', 11, white, 'F2'));
+  parts.push(drawLine(350, 809, 548, 809, '0.30 0.34 0.44', 0.4));
+  parts.push(drawText(350, 796, `Emitido em ${issueDate}`, 8, '0.72 0.76 0.86'));
+  parts.push(drawText(350, 783, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 8, '0.60 0.66 0.76'));
+  if (companyAddress) {
+    addSmallLines(350, 772, companyAddress, 42, 7.2, '0.52 0.58 0.67', 2);
+  } else {
+    parts.push(drawText(350, 770, 'Cobrança mensal premium e segura', 7.2, '0.52 0.58 0.67'));
+  }
+  parts.push(drawText(350, 758, `Site ${siteDisplay}`, 7.2, '0.52 0.58 0.67'));
+  parts.push(drawText(350, 746, supportWhatsapp ? `WhatsApp ${supportWhatsapp}` : `Contato ${supportEmail}`, 7.2, '0.52 0.58 0.67'));
+  parts.push(...drawChip(480, 773, 84, statusLabel, status === 'PAGO' ? softGreen : brandYellow, status === 'PAGO' ? brandGreen : slate950));
+  parts.push(...drawChip(480, 749, 84, 'EMISSAO', '0.13 0.18 0.28', white));
 
   // CNPJ subtext on left
   parts.push(drawText(M, 762, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 7.5, '0.50 0.55 0.65'));
@@ -750,59 +769,52 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   // HERO VALUE BAND  (y 640–742)
   // ════════════════════════════════════════════════════════════════════════
   // light background strip
-  parts.push(drawRect(0, 640, 595, 102, slate100));
-  parts.push(drawLine(0, 640, 595, 640, borderColor, 0.5));
-  parts.push(drawLine(0, 742, 595, 742, borderColor, 0.5));
+  parts.push(...drawShadowedRoundRect(0, 640, 595, 102, 10, white, borderColor, 4));
+  parts.push(drawRect(0, 738, 595, 4, brandOrange));
+  parts.push(drawRect(0, 734, 595, 4, brandYellow));
 
   // Value block (left 2/3)
   parts.push(drawText(M, 718, 'VALOR DO FATURAMENTO', 7.5, slate600, 'F2'));
-  parts.push(drawText(M, 688, formatCurrencyBRL(input.amount), 30, slate950, 'F2'));
-  parts.push(drawText(M, 671, description, 8, slate600));
+  parts.push(drawText(M, 686, formatCurrencyBRL(input.amount), 32, slate950, 'F2'));
+  parts.push(drawText(M, 668, description, 8, slate600));
 
   // vertical divider
-  parts.push(drawLine(380, 650, 380, 732, borderColor, 0.5));
+  parts.push(drawLine(382, 650, 382, 732, borderColor, 0.5));
 
   // Due-date block (right 1/3)
-  parts.push(drawText(397, 718, 'VENCIMENTO', 7.5, slate600, 'F2'));
-  parts.push(drawText(397, 696, dueDate, 19, slate800, 'F2'));
-
-  // Status badge
-  const badgeFill = status === 'PAGO' ? softGreen : softYellow;
-  const badgeBorder = status === 'PAGO' ? greenBorder : yellowBorder;
-  const badgeTextColor = status === 'PAGO' ? brandGreen : '0.60 0.42 0.02';
-  parts.push(drawRoundRect(397, 671, 92, 17, 8, badgeFill, badgeBorder));
-  parts.push(drawText(413, 676, status, 7.5, badgeTextColor, 'F2'));
+  parts.push(drawText(400, 718, 'VENCIMENTO', 7.5, slate600, 'F2'));
+  parts.push(drawText(400, 694, dueDate, 20, slate800, 'F2'));
+  parts.push(...drawChip(400, 668, 70, statusLabel, badgeFill, badgeTextColor));
+  parts.push(drawText(400, 650, `Emissao ${issueDate}`, 7.2, slate600));
 
   // ════════════════════════════════════════════════════════════════════════
   // INFO CARDS  (y 540–630)
   // ════════════════════════════════════════════════════════════════════════
-  const cardY = 540;
-  const cardH = 84;
+  const cardY = 530;
+  const cardH = 94;
   const cardGap = 10;
   const cardW = (W - cardGap) / 2;
 
   // Card: Cliente
-  parts.push(drawRoundRect(M, cardY, cardW, cardH, 8, white, borderColor));
-  // top accent line on card
-  parts.push(drawRect(M, cardY + cardH - 4, cardW, 4, '0.06 0.55 0.38')); // green top
-  // clip workaround: just draw a rounded top – skip, use label instead
+  parts.push(...drawShadowedRoundRect(M, cardY, cardW, cardH, 8, white, borderColor, 3));
+  parts.push(drawRect(M, cardY + cardH - 4, cardW, 4, '0.06 0.55 0.38'));
   sectionLabel(M + 14, cardY + cardH - 14, 'Dados do cliente');
   addLabelValue(M + 14, cardY + cardH - 34, 'Nome', input.clientName, 30);
   addLabelValue(M + 14, cardY + cardH - 57, 'CPF / CNPJ', maskCpfCnpj(input.clientDocument), 35);
 
   // Card: Instalação
   const card2X = M + cardW + cardGap;
-  parts.push(drawRoundRect(card2X, cardY, cardW, cardH, 8, white, borderColor));
+  parts.push(...drawShadowedRoundRect(card2X, cardY, cardW, cardH, 8, white, borderColor, 3));
   parts.push(drawRect(card2X, cardY + cardH - 4, cardW, 4, brandOrange));
-  sectionLabel(card2X + 14, cardY + cardH - 14, 'Instalacao / Unidade consumidora');
+  sectionLabel(card2X + 14, cardY + cardH - 14, 'Unidade consumidora');
   addSmallLines(card2X + 14, cardY + cardH - 34, installationAddress, 34, 8, slate600, 4);
 
   // ════════════════════════════════════════════════════════════════════════
   // DETALHAMENTO  (y 462–532)
   // ════════════════════════════════════════════════════════════════════════
-  const detY = 462;
-  const detH = 64;
-  parts.push(drawRoundRect(M, detY, W, detH, 8, white, borderColor));
+  const detY = 450;
+  const detH = 70;
+  parts.push(...drawShadowedRoundRect(M, detY, W, detH, 8, white, borderColor, 3));
   parts.push(drawRect(M, detY + detH - 4, W, 4, slate950));
   sectionLabel(M + 14, detY + detH - 14, 'Detalhamento da cobranca');
   addLabelValue(M + 14, detY + detH - 32, 'Descricao', description, 52);
@@ -812,40 +824,38 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   // PAYMENT SECTION  (y 148–454)
   // ════════════════════════════════════════════════════════════════════════
   const payY = 148;
-  const payH = 298;
-  parts.push(drawRoundRect(M, payY, W, payH, 10, white, borderColor));
+  const payH = 292;
+  parts.push(...drawShadowedRoundRect(M, payY, W, payH, 10, white, borderColor, 3));
 
   // Section header band
-  parts.push(drawRect(M, payY + payH - 36, W, 36, slate950));
+  parts.push(drawRect(M, payY + payH - 42, W, 42, slate950));
   // rounded top corners for the band — just use the full rect since it's at the top of the card
-  parts.push(drawText(M + 14, payY + payH - 22, 'Pague com Pix ou Boleto', 11, white, 'F2'));
+  parts.push(drawText(M + 14, payY + payH - 24, 'PAGUE COM PIX OU BOLETO', 11, white, 'F2'));
   // small pill badge
-  parts.push(drawRoundRect(M + 14 + 178, payY + payH - 29, 60, 16, 8, brandYellow));
-  parts.push(drawText(M + 14 + 183, payY + payH - 24, 'INSTANTANEO', 6.5, slate950, 'F2'));
+  parts.push(...drawChip(M + 14 + 182, payY + payH - 30, 76, 'INSTANTANEO', brandYellow, slate950));
 
-  const innerY = payY + payH - 44; // baseline just below the header
+  const innerY = payY + payH - 52; // baseline just below the header
 
   // ── Left column ─────────────────────────────────────────────────────────
-  const lx = M + 14;
+  const lx = M + 16;
 
   // Linha Digitável
-  parts.push(drawLine(lx, innerY - 4, lx + 300, innerY - 4, borderColor, 0.4));
-  parts.push(drawText(lx, innerY - 18, 'Linha digitavel', 9, slate800, 'F2'));
-  addSmallLines(lx, innerY - 33, clean(input.linhaDigitavel), 60, 7.5, slate600, 3);
+  parts.push(drawText(lx, innerY - 12, 'Linha digitavel', 9, slate800, 'F2'));
+  addSmallLines(lx, innerY - 28, clean(input.linhaDigitavel), 60, 7.5, slate600, 3);
 
   // separator
-  parts.push(drawLine(lx, innerY - 82, lx + 300, innerY - 82, borderColor, 0.4));
+  parts.push(drawLine(lx, innerY - 64, lx + 300, innerY - 64, borderColor, 0.4));
 
   // Pix Copia e Cola
-  parts.push(drawText(lx, innerY - 96, pixCopyPasteLabel, 9, slate800, 'F2'));
-  addSmallLines(lx, innerY - 111, pixCopyPasteText, 54, 7, slate600, 4);
+  parts.push(drawText(lx, innerY - 78, pixCopyPasteLabel, 9, slate800, 'F2'));
+  addSmallLines(lx, innerY - 94, pixCopyPasteText, 58, 7, slate600, 4);
 
   // ── Right column: QR code ────────────────────────────────────────────────
   // Anchor from the top of the payment section downward for predictable placement
-  const qrSize = 114;
-  const qrX = M + W - qrSize - 14;
+  const qrSize = 124;
+  const qrX = M + W - qrSize - 16;
   // label sits just below the header band; QR renders below the label
-  const qrLabelY = innerY - 18;      // y of the "QR Code Pix" label text
+  const qrLabelY = innerY - 14;      // y of the "QR Code Pix" label text
   const qrBaseY  = qrLabelY - 8 - qrSize; // bottom-left corner of the QR square
 
   parts.push(drawText(qrX, qrLabelY, 'QR Code Pix', 9, slate800, 'F2'));
@@ -861,14 +871,15 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   }
 
   // vertical divider between columns
-  parts.push(drawLine(qrX - 14, innerY - 4, qrX - 14, payY + 10, borderColor, 0.4));
+  parts.push(drawLine(qrX - 16, innerY - 6, qrX - 16, payY + 12, borderColor, 0.4));
+  parts.push(drawText(qrX - 16, payY + 14, 'Abra no app do banco e confirme o pagamento', 7.2, slate600));
 
   // ── Barcode area ────────────────────────────────────────────────────────
-  const bcAreaY = payY + 10;
-  const bcH = 44;
-  parts.push(drawLine(lx, bcAreaY + bcH + 14, lx + W - 28, bcAreaY + bcH + 14, borderColor, 0.4));
+  const bcAreaY = payY + 12;
+  const bcH = 50;
+  parts.push(drawLine(lx, bcAreaY + bcH + 14, lx + W - 36, bcAreaY + bcH + 14, borderColor, 0.4));
   parts.push(drawText(lx, bcAreaY + bcH + 8, 'Codigo de barras', 9, slate800, 'F2'));
-  parts.push(...drawBarcode(input.codigoBarras, lx, bcAreaY - 4, W - 28, bcH));
+  parts.push(...drawBarcode(input.codigoBarras, lx, bcAreaY - 2, W - 36, bcH));
   parts.push(drawText(lx, bcAreaY - 10, clean(input.codigoBarras), 6.5, slate400));
 
   // ════════════════════════════════════════════════════════════════════════
@@ -886,6 +897,7 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   // ════════════════════════════════════════════════════════════════════════
   parts.push(drawRect(0, 0, 595, 88, slate950));
   parts.push(drawRect(0, 84, 595, 4, brandYellow));
+  parts.push(...drawSolaraLogo(470, 12, 0.46));
 
   // three columns
   const col1 = M;
@@ -903,7 +915,7 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
 
   parts.push(drawText(col3, 62, 'Site', 7.5, '0.65 0.70 0.80', 'F2'));
   parts.push(drawLine(col3, 58, col3 + 130, 58, '0.20 0.22 0.30', 0.4));
-  parts.push(drawText(col3, 46, siteUrl.replace(/^https?:\/\//, ''), 8, '0.90 0.92 0.95'));
+  parts.push(drawText(col3, 46, siteDisplay, 8, '0.90 0.92 0.95'));
 
   // tagline
   parts.push(drawLine(M, 34, 595 - M, 34, '0.15 0.17 0.25', 0.4));

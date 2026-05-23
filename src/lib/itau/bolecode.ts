@@ -368,9 +368,11 @@ const PIX_EMV_FIELD_NAMES = [
   'codigo_qr_code',
   'texto_qrcode',
   'texto_qr_code',
+  'base64',
+  'qr_code_base64',
 ];
 
-const PIX_MIN_PAYLOAD_LENGTH = 80;
+const PIX_MIN_PAYLOAD_LENGTH = 40;
 const PIX_GUI = 'BR.GOV.BCB.PIX';
 
 function isHttpUrl(value: string) {
@@ -382,9 +384,27 @@ function isHttpUrl(value: string) {
   }
 }
 
+function tryBase64Decode(value: string) {
+  try {
+    const decoded = Buffer.from(value, 'base64').toString('utf8');
+    if (decoded.startsWith('000201')) {
+      return decoded;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export function normalizePixPayload(value?: string | null) {
   if (!value) {
     return null;
+  }
+
+  // Se parecer base64, tenta decodificar
+  const base64Decoded = tryBase64Decode(value);
+  if (base64Decoded) {
+    return base64Decoded.trim();
   }
 
   return value
@@ -398,8 +418,10 @@ function compactPixPayload(value?: string | null) {
     return null;
   }
 
-  return value
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+  const normalized = normalizePixPayload(value);
+  if (!normalized) return null;
+
+  return normalized
     .replace(/\s+/g, '')
     .trim();
 }
