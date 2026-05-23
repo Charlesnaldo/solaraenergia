@@ -46,6 +46,7 @@ export async function GET() {
   const mtls = getItauMtlsStatus();
   const idBeneficiarioOk = hasEnv('ITAU_ID_BENEFICIARIO');
   const webhookUrlConfigured = isValidUrl(process.env.ITAU_BOLETOS_NOTIFICACOES_URL);
+  const webhookSecretConfigured = hasEnv('ITAU_WEBHOOK_SECRET') || hasEnv('ITAU_WEBHOOK_TOKEN');
   const apiUrlOk = isValidUrl(process.env.ITAU_API_URL);
   const boletoUrlOk = isValidUrl(process.env.ITAU_BOLETO_URL);
   const authEnvOk =
@@ -59,7 +60,8 @@ export async function GET() {
     authEnvOk &&
     (apiUrlOk || boletoUrlOk) &&
     idBeneficiarioOk &&
-    webhookUrlConfigured;
+    webhookUrlConfigured &&
+    webhookSecretConfigured;
 
   let tokenOk = false;
   let tokenExpiresIn = 0;
@@ -89,6 +91,7 @@ export async function GET() {
       bolecode_endpoint: describeBolecodeEndpoint(),
       id_beneficiario_ok: idBeneficiarioOk,
       webhook_url_configured: webhookUrlConfigured,
+      webhook_secret_configured: webhookSecretConfigured,
     },
     { headers: { 'Cache-Control': 'no-store' } },
   );

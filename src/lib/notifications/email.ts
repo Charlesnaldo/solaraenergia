@@ -16,6 +16,15 @@ interface SendBoletoPdfEmailInput {
   pdfBuffer: Buffer;
 }
 
+interface SendPaymentConfirmedEmailInput {
+  to: string;
+  clientName: string;
+  dueDate: string;
+  amount: number;
+  paidAt: string;
+  faturamentoId: string;
+}
+
 function money(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
@@ -36,6 +45,19 @@ function requireHttpUrl(value: string) {
   }
 
   return url.toString();
+}
+
+function formatDateBR(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
 }
 
 export async function sendBoletoEmail(input: SendBoletoEmailInput) {
@@ -76,6 +98,51 @@ export async function sendBoletoEmail(input: SendBoletoEmailInput) {
 
   if (error) {
     throw new Error(`Falha ao enviar e-mail: ${error.message}`);
+  }
+
+  return { ok: true, id: data?.id, mocked: false };
+}
+
+export async function sendPaymentConfirmedEmail(input: SendPaymentConfirmedEmailInput) {
+  const resendKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.BILLING_FROM_EMAIL ?? 'Solara <financeiro@solaraenergia.com.br>';
+  const mockMode = process.env.EMAIL_MOCK === 'true';
+
+  const subject = `Pagamento confirmado - Solara`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
+      <h2>Pagamento confirmado</h2>
+      <p>Olá, ${escapeHtml(input.clientName)}.</p>
+      <p>Recebemos a confirmação de pagamento do seu boleto Solara.</p>
+      <p><strong>Valor:</strong> ${money(input.amount)}</p>
+      <p><strong>Vencimento:</strong> ${escapeHtml(input.dueDate)}</p>
+      <p><strong>Confirmado em:</strong> ${escapeHtml(formatDateBR(input.paidAt))}</p>
+      <p><strong>Faturamento:</strong> ${escapeHtml(input.faturamentoId)}</p>
+      <p>Obrigado por escolher a Solara Energia.</p>
+      <p>Atenciosamente,<br/>Equipe Solara</p>
+    </div>
+  `;
+
+  if (mockMode || !resendKey) {
+    return {
+      ok: true,
+      mocked: true,
+      reason: !resendKey
+        ? 'RESEND_API_KEY não configurada. Use EMAIL_MOCK=true para testes explícitos.'
+        : 'EMAIL_MOCK=true',
+    };
+  }
+
+  const resend = new Resend(resendKey);
+  const { data, error } = await resend.emails.send({
+    from: fromEmail,
+    to: input.to,
+    subject,
+    html,
+  });
+
+  if (error) {
+    throw new Error(`Falha ao enviar e-mail de pagamento confirmado: ${error.message}`);
   }
 
   return { ok: true, id: data?.id, mocked: false };
