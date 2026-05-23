@@ -4,13 +4,19 @@ import { isTwoFactorCookieValid } from '@/lib/auth/two-factor';
 
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request);
+  const isAdminPage = request.nextUrl.pathname.startsWith('/admin');
+  const isAdminApi = request.nextUrl.pathname.startsWith('/api/admin');
 
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  if (isAdminPage || isAdminApi) {
     const role = user?.app_metadata?.role;
     const hasTwoFactor = await isTwoFactorCookieValid(request.cookies.get('solara_admin_2fa')?.value, user?.id);
     const isAdmin = (role === 'admin' || role === 'service_role') && hasTwoFactor;
 
     if (!isAdmin) {
+      if (isAdminApi) {
+        return NextResponse.json({ error: user ? 'Sem permissao.' : 'Nao autenticado.' }, { status: user ? 403 : 401 });
+      }
+
       const loginUrl = new URL('/', request.url);
       loginUrl.searchParams.set('login', '1');
       loginUrl.searchParams.set('next', request.nextUrl.pathname);
@@ -22,5 +28,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 };

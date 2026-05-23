@@ -108,35 +108,40 @@ export default function AdminFaturasPage() {
     }
   };
 
-  const buildPdfUrl = (clienteId: string, download = false, faturamento?: GeneratedBilling | null) => {
-    const valor = faturamento ? Number(faturamento.valor ?? 0) : parseMoneyInput(billingValues[clienteId] ?? '');
-    const dueDate = faturamento?.data_vencimento ?? dueDates[clienteId];
-    if (valor <= 0 || !dueDate) {
-      alert('Informe valor e vencimento antes de gerar o PDF.');
+  const buildPdfUrl = (clienteId: string, faturamento?: GeneratedBilling | null) => {
+    if (!faturamento?.id) {
+      alert('Gere um boleto antes de visualizar ou baixar o PDF.');
       return null;
     }
 
-    const params = new URLSearchParams({
-      valor: String(valor),
-      dueDate,
-    });
-
-    if (faturamento?.id) {
-      params.set('faturamentoId', faturamento.id);
-    }
-
-    if (download) {
-      params.set('download', '1');
-    }
-
-    return `/api/admin/clientes/${clienteId}/pdf?${params.toString()}`;
+    return `/api/clientes/${clienteId}/faturamentos/${faturamento.id}/pdf`;
   };
 
-  const openPdf = (clienteId: string, download = false, faturamento?: GeneratedBilling | null) => {
-    const url = buildPdfUrl(clienteId, download, faturamento);
+  const openPdf = (clienteId: string, faturamento?: GeneratedBilling | null) => {
+    const url = buildPdfUrl(clienteId, faturamento);
     if (!url) return;
 
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const downloadPdf = async (clienteId: string, faturamento?: GeneratedBilling | null) => {
+    const url = buildPdfUrl(clienteId, faturamento);
+    if (!url || !faturamento) return;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      alert(payload?.error ?? 'Falha ao baixar boleto.');
+      return;
+    }
+
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `boleto-${clienteId}-${faturamento.data_vencimento}.pdf`;
+    link.click();
+    URL.revokeObjectURL(objectUrl);
   };
 
   const sendEmail = async (faturamentoId: string) => {
@@ -358,13 +363,13 @@ export default function AdminFaturasPage() {
                   {busyId === cliente.id ? 'Gerando...' : 'Gerar boleto'}
                 </button>
                 <button
-                  onClick={() => openPdf(cliente.id, false, cliente.ultimoFaturamento)}
+                  onClick={() => openPdf(cliente.id, cliente.ultimoFaturamento)}
                   className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white"
                 >
                   Ver boleto
                 </button>
                 <button
-                  onClick={() => openPdf(cliente.id, true, cliente.ultimoFaturamento)}
+                  onClick={() => void downloadPdf(cliente.id, cliente.ultimoFaturamento)}
                   className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200"
                 >
                   Baixar boleto
@@ -493,13 +498,13 @@ export default function AdminFaturasPage() {
                         {busyId === cliente.id ? 'Gerando...' : 'Gerar boleto'}
                       </button>
                       <button
-                        onClick={() => openPdf(cliente.id, false, cliente.ultimoFaturamento)}
+                        onClick={() => openPdf(cliente.id, cliente.ultimoFaturamento)}
                         className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white"
                       >
                         Ver boleto
                       </button>
                       <button
-                        onClick={() => openPdf(cliente.id, true, cliente.ultimoFaturamento)}
+                        onClick={() => void downloadPdf(cliente.id, cliente.ultimoFaturamento)}
                         className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200"
                       >
                         Baixar boleto

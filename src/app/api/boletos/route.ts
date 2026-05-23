@@ -57,11 +57,7 @@ export async function POST(req: Request) {
     const faturamentoId = (faturamento as { id?: unknown }).id;
     const adminPdfUrl =
       !simulacao && typeof faturamentoId === 'string'
-        ? `/api/admin/clientes/${clienteId}/pdf?${new URLSearchParams({
-            valor: String(valor),
-            dueDate: dataVencimento,
-            faturamentoId,
-          }).toString()}`
+        ? `/api/clientes/${clienteId}/faturamentos/${faturamentoId}/pdf`
         : null;
 
     return NextResponse.json({ faturamento, admin_pdf_url: adminPdfUrl }, { status: simulacao ? 200 : 201 });

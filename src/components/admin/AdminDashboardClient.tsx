@@ -59,22 +59,29 @@ function nextDueDate(day: number) {
   return date.toISOString().slice(0, 10);
 }
 
-function buildGeneratedBillingPdfUrl(clienteId: string, faturamento: GeneratedBilling, download = false) {
-  const params = new URLSearchParams({
-    valor: String(Number(faturamento.valor ?? 0)),
-    dueDate: faturamento.data_vencimento,
-    faturamentoId: faturamento.id,
-  });
-
-  if (download) {
-    params.set('download', '1');
-  }
-
-  return `/api/admin/clientes/${clienteId}/pdf?${params.toString()}`;
+function buildGeneratedBillingPdfUrl(clienteId: string, faturamento: GeneratedBilling) {
+  return `/api/clientes/${clienteId}/faturamentos/${faturamento.id}/pdf`;
 }
 
-function openGeneratedBillingPdf(clienteId: string, faturamento: GeneratedBilling, download = false) {
-  window.open(buildGeneratedBillingPdfUrl(clienteId, faturamento, download), '_blank', 'noopener,noreferrer');
+function openGeneratedBillingPdf(clienteId: string, faturamento: GeneratedBilling) {
+  window.open(buildGeneratedBillingPdfUrl(clienteId, faturamento), '_blank', 'noopener,noreferrer');
+}
+
+async function downloadGeneratedBillingPdf(clienteId: string, faturamento: GeneratedBilling) {
+  const res = await fetch(buildGeneratedBillingPdfUrl(clienteId, faturamento));
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+    alert(payload?.error ?? 'Falha ao baixar boleto.');
+    return;
+  }
+
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = `boleto-${clienteId}-${faturamento.data_vencimento}.pdf`;
+  link.click();
+  URL.revokeObjectURL(objectUrl);
 }
 
 function formFromClient(cliente?: DashboardOverview['clientes'][number] | null): ClientForm {
@@ -452,7 +459,7 @@ export default function AdminDashboardClient() {
                       Ver boleto
                     </button>
                     <button
-                      onClick={() => openGeneratedBillingPdf(cliente.id, cliente.ultimoFaturamento!, true)}
+                      onClick={() => void downloadGeneratedBillingPdf(cliente.id, cliente.ultimoFaturamento!)}
                       className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200"
                     >
                       Baixar boleto
@@ -577,7 +584,7 @@ export default function AdminDashboardClient() {
                           Ver
                         </button>
                         <button
-                          onClick={() => openGeneratedBillingPdf(cliente.id, cliente.ultimoFaturamento!, true)}
+                          onClick={() => void downloadGeneratedBillingPdf(cliente.id, cliente.ultimoFaturamento!)}
                           className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200"
                         >
                           Baixar

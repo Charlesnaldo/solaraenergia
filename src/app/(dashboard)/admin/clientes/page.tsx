@@ -67,35 +67,40 @@ export default function AdminClientesPage() {
     });
   }, [overview, query, statusFilter]);
 
-  const buildPdfUrl = (clienteId: string, download = false, faturamento?: GeneratedBilling | null) => {
-    const valor = faturamento ? Number(faturamento.valor ?? 0) : parseMoneyInput(billingValues[clienteId] ?? '');
-    const dueDate = faturamento?.data_vencimento ?? dueDates[clienteId];
-    if (valor <= 0 || !dueDate) {
-      alert('Informe valor e vencimento antes de gerar o PDF.');
+  const buildPdfUrl = (clienteId: string, faturamento?: GeneratedBilling | null) => {
+    if (!faturamento?.id) {
+      alert('Gere um boleto antes de visualizar ou baixar o PDF.');
       return null;
     }
 
-    const params = new URLSearchParams({
-      valor: String(valor),
-      dueDate,
-    });
-
-    if (faturamento?.id) {
-      params.set('faturamentoId', faturamento.id);
-    }
-
-    if (download) {
-      params.set('download', '1');
-    }
-
-    return `/api/admin/clientes/${clienteId}/pdf?${params.toString()}`;
+    return `/api/clientes/${clienteId}/faturamentos/${faturamento.id}/pdf`;
   };
 
-  const openPdf = (clienteId: string, download = false, faturamento?: GeneratedBilling | null) => {
-    const url = buildPdfUrl(clienteId, download, faturamento);
+  const openPdf = (clienteId: string, faturamento?: GeneratedBilling | null) => {
+    const url = buildPdfUrl(clienteId, faturamento);
     if (!url) return;
 
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const downloadPdf = async (clienteId: string, faturamento?: GeneratedBilling | null) => {
+    const url = buildPdfUrl(clienteId, faturamento);
+    if (!url || !faturamento) return;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      alert(payload?.error ?? 'Falha ao baixar boleto.');
+      return;
+    }
+
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `boleto-${clienteId}-${faturamento.data_vencimento}.pdf`;
+    link.click();
+    URL.revokeObjectURL(objectUrl);
   };
 
   const generateOfficialBoleto = async (clienteId: string) => {
@@ -128,11 +133,9 @@ export default function AdminClientesPage() {
     }
   };
 
-  const sendPdfEmail = async (clienteId: string) => {
-    const valor = parseMoneyInput(billingValues[clienteId] ?? '');
-    const dueDate = dueDates[clienteId];
-    if (valor <= 0 || !dueDate) {
-      alert('Informe valor e vencimento antes de enviar o PDF.');
+  const sendPdfEmail = async (clienteId: string, faturamento?: GeneratedBilling | null) => {
+    if (!faturamento?.id) {
+      alert('Gere um boleto antes de enviar o PDF por e-mail.');
       return;
     }
 
@@ -141,7 +144,7 @@ export default function AdminClientesPage() {
       const res = await fetch('/api/admin/clientes/email-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clienteId, valor, dueDate }),
+        body: JSON.stringify({ faturamentoId: faturamento.id }),
       });
       const payload = (await res.json()) as { error?: string; emailResult?: { mocked?: boolean; reason?: string } };
       if (!res.ok) throw new Error(payload.error ?? 'Falha ao enviar e-mail.');
@@ -266,10 +269,10 @@ export default function AdminClientesPage() {
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
-                <button onClick={() => openPdf(cliente.id, false, cliente.ultimoFaturamento)} className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white">
+                <button onClick={() => openPdf(cliente.id, cliente.ultimoFaturamento)} className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white">
                   Ver boleto
                 </button>
-                <button onClick={() => openPdf(cliente.id, true, cliente.ultimoFaturamento)} className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200">
+                <button onClick={() => void downloadPdf(cliente.id, cliente.ultimoFaturamento)} className="rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200">
                   Baixar boleto
                 </button>
                 {cliente.ultimoFaturamento?.boleto_url ? (
@@ -290,7 +293,7 @@ export default function AdminClientesPage() {
                   {busyId === cliente.id ? 'Processando...' : 'Gerar boleto'}
                 </button>
                 <button
-                  onClick={() => void sendPdfEmail(cliente.id)}
+                  onClick={() => void sendPdfEmail(cliente.id, cliente.ultimoFaturamento)}
                   disabled={busyId === cliente.id}
                   className="col-span-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
                 >
@@ -365,10 +368,10 @@ export default function AdminClientesPage() {
                   </td>
                   <td className="px-2 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => openPdf(cliente.id, false, cliente.ultimoFaturamento)} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white">
+                      <button onClick={() => openPdf(cliente.id, cliente.ultimoFaturamento)} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white">
                         Ver boleto
                       </button>
-                      <button onClick={() => openPdf(cliente.id, true, cliente.ultimoFaturamento)} className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200">
+                      <button onClick={() => void downloadPdf(cliente.id, cliente.ultimoFaturamento)} className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200">
                         Baixar boleto
                       </button>
                       {cliente.ultimoFaturamento?.boleto_url ? (
@@ -384,7 +387,7 @@ export default function AdminClientesPage() {
                       <button onClick={() => void generateOfficialBoleto(cliente.id)} disabled={busyId === cliente.id} className="rounded-lg bg-yellow-500 px-3 py-1 text-xs font-semibold text-slate-950 disabled:opacity-60">
                         {busyId === cliente.id ? 'Processando...' : 'Gerar boleto'}
                       </button>
-                      <button onClick={() => void sendPdfEmail(cliente.id)} disabled={busyId === cliente.id} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50">
+                      <button onClick={() => void sendPdfEmail(cliente.id, cliente.ultimoFaturamento)} disabled={busyId === cliente.id} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50">
                         {busyId === cliente.id ? 'Enviando...' : 'Enviar e-mail com PDF'}
                       </button>
                       <button

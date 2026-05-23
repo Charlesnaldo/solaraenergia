@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
-import { createBoletoPdfBuffer } from '@/lib/billing/pdf';
 import { sendBoletoPdfEmail } from '@/lib/notifications/email';
+import { getFaturamentoForPdf, isUuid } from '@/services/faturamentoService';
+import { createFaturamentoPdf, logPdfGeneration } from '@/services/pdfService';
+
+function getRequestIp(req: Request) {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    null
+  );
+}
 
 export async function POST(req: Request) {
   try {
@@ -11,55 +19,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = (await req.json()) as { clienteId?: string; valor?: number; dueDate?: string };
-    const clienteId = body.clienteId?.trim();
-    const valor = Number(body.valor ?? 0);
-    const dueDate = body.dueDate?.trim();
+    const body = (await req.json()) as { faturamentoId?: string };
+    const faturamentoId = body.faturamentoId?.trim() ?? '';
 
-    if (!clienteId || valor <= 0 || !dueDate) {
-      return NextResponse.json({ error: 'clienteId, valor e dueDate são obrigatórios.' }, { status: 400 });
+    if (!isUuid(faturamentoId)) {
+      return NextResponse.json({ error: 'faturamentoId valido e obrigatorio.' }, { status: 400 });
     }
 
-    const supabase = createSupabaseServiceClient();
-    const { data: cliente, error: clienteError } = await supabase
-      .from('clientes')
-      .select('id, nome, cpf_cnpj, email')
-      .eq('id', clienteId)
-      .single();
-
-    if (clienteError || !cliente) {
-      return NextResponse.json({ error: 'Cliente não encontrado.' }, { status: 404 });
+    const faturamento = await getFaturamentoForPdf(faturamentoId);
+    if (!faturamento) {
+      return NextResponse.json({ error: 'Faturamento nao encontrado.' }, { status: 404 });
     }
 
-    if (!cliente.email) {
-      return NextResponse.json({ error: 'Cliente não possui e-mail válido.' }, { status: 400 });
+    if (!faturamento.clientes.email) {
+      return NextResponse.json({ error: 'Cliente nao possui e-mail valido.' }, { status: 400 });
     }
 
-    const { data: faturamento } = await supabase
-      .from('faturamento')
-      .select('boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url')
-      .eq('cliente_id', clienteId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const amount = Number(faturamento.valor);
+    if (!Number.isFinite(amount) || amount <= 0 || !faturamento.data_vencimento) {
+      return NextResponse.json({ error: 'Dados do faturamento invalidos.' }, { status: 400 });
+    }
 
-    const pdf = createBoletoPdfBuffer({
-      clientName: cliente.nome,
-      clientDocument: cliente.cpf_cnpj,
-      amount: valor,
-      dueDate,
-      boletoUrl: faturamento?.boleto_url ?? null,
-      linhaDigitavel: faturamento?.linha_digitavel ?? null,
-      codigoBarras: faturamento?.codigo_barras ?? null,
-      pixUrl: faturamento?.pix_url ?? null,
-      pixQrCode: faturamento?.pix_qr_code ?? null,
+    const pdf = createFaturamentoPdf(faturamento);
+    await logPdfGeneration({
+      usuarioId: adminUser.id,
+      clienteId: faturamento.cliente_id,
+      faturamentoId: faturamento.id,
+      ip: getRequestIp(req),
+      userAgent: req.headers.get('user-agent'),
     });
 
     const emailResult = await sendBoletoPdfEmail({
-      to: cliente.email,
-      clientName: cliente.nome,
-      dueDate,
-      amount: valor,
+      to: faturamento.clientes.email,
+      clientName: faturamento.clientes.nome,
+      dueDate: faturamento.data_vencimento,
+      amount,
       pdfBuffer: pdf,
     });
 
