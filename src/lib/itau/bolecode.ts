@@ -381,25 +381,19 @@ function isHttpUrl(value: string) {
   }
 }
 
-function normalizePixPayload(value: string | null | undefined) {
-  return value?.replace(/\s+/g, '').trim() ?? '';
-}
-
-function sliceEmbeddedPixPayload(value: string) {
-  const normalized = normalizePixPayload(value);
-  const start = normalized.indexOf('000201');
-  if (start < 0) {
-    return normalized;
+export function normalizePixPayload(value?: string | null) {
+  if (!value) {
+    return null;
   }
 
-  const candidate = normalized.slice(start);
-  const crcMatches = [...candidate.matchAll(/6304[0-9A-Fa-f]{4}/g)];
-  const crcMatch = crcMatches[crcMatches.length - 1];
-  return crcMatch?.index === undefined ? candidate : candidate.slice(0, crcMatch.index + 8);
+  return value
+    .replace(/\s+/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim();
 }
 
 export function validatePixPayload(value: string | null | undefined) {
-  const text = sliceEmbeddedPixPayload(value ?? '');
+  const text = normalizePixPayload(value);
   if (!text) {
     return false;
   }
@@ -421,7 +415,7 @@ export const isPixPaymentPayload = validatePixPayload;
 
 export function extractPixPayload(value: unknown, seen = new WeakSet<object>()): string | null {
   if (typeof value === 'string') {
-    const payload = sliceEmbeddedPixPayload(value);
+    const payload = normalizePixPayload(value);
     return validatePixPayload(payload) ? payload : null;
   }
 
