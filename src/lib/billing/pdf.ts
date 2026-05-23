@@ -1,9 +1,4 @@
-import {
-  buildPixPayloadFromLocation,
-  extractPixPayload,
-  normalizePixPayload,
-  validatePixPayload,
-} from '@/lib/itau/bolecode';
+import { extractPixPayload, normalizePixPayload, validatePixPayload } from '@/lib/itau/bolecode';
 
 export function formatCurrencyBRL(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -571,7 +566,7 @@ function drawUnavailablePixQrCode(x: number, y: number, size: number, title = 'P
     drawRect(x, y, size, size, '1 1 1'),
     drawStrokeRect(x, y, size, size, '0.7 0.7 0.7'),
     drawText(x + 14, y + size / 2 + 8, title, 8, '0.5 0.5 0.5', 'F2'),
-    drawText(x + 14, y + size / 2 - 6, 'Use boleto', 7, '0.5 0.5 0.5'),
+    drawText(x + 14, y + size / 2 - 6, 'Utilize boleto', 7, '0.5 0.5 0.5'),
   ];
 }
 
@@ -650,23 +645,20 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
     extractPixPayload(input.pixPayload) ??
     extractPixPayload(input.pixCopiaCola) ??
     extractPixPayload(input.pixQrCode) ??
-    buildPixPayloadFromLocation({
-      location: input.pixUrl,
-      amount: input.amount,
-      merchantName: process.env.PIX_MERCHANT_NAME || process.env.SOLARA_PIX_MERCHANT_NAME || 'SOLARA ENERGIA',
-      merchantCity: process.env.PIX_MERCHANT_CITY || 'SAO PAULO',
-      txid: null,
-    });
+    null;
   const pixFallbackUrl = isHttpUrlText(input.pixUrl) ? input.pixUrl!.trim() : null;
+  const pixUnavailableText = pixFallbackUrl
+    ? `Pix indisponivel. Utilize boleto. Link Itau: ${pixFallbackUrl}`
+    : 'Pix indisponivel. Utilize boleto.';
   const pixCopyPasteLabel = pixPayload ? 'Pix copia e cola' : pixFallbackUrl ? 'Link Pix Itau' : 'Pix indisponivel';
   const pixCopyPasteText =
-    pixPayload ?? pixFallbackUrl ?? 'Payload Pix nao retornado pelo Itau. Use a linha digitavel ou o codigo de barras.';
+    pixPayload ?? pixUnavailableText;
 
   logInvalidPixPayload('pixPayload', input.pixPayload);
   logInvalidPixPayload('pixCopiaCola', input.pixCopiaCola);
   logInvalidPixPayload('pixQrCode', input.pixQrCode);
-  if (!pixPayload && pixFallbackUrl) {
-    console.warn('[billing-pdf] pixUrl recebido sem location Pix valida. A URL sera exibida apenas como fallback visual.');
+  if (!pixPayload) {
+    console.warn('[billing-pdf] Payload Pix EMV nao encontrado. QR Pix nao sera gerado.');
   }
 
   const companyCnpj = input.companyCnpj || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null;
@@ -852,10 +844,14 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const qrBaseY  = qrLabelY - 8 - qrSize; // bottom-left corner of the QR square
 
   parts.push(drawText(qrX, qrLabelY, 'QR Code Pix', 9, slate800, 'F2'));
-  try {
-    parts.push(...drawQrCode(pixPayload, qrX, qrBaseY, qrSize));
-  } catch (error) {
-    console.error('[billing-pdf] QR Pix indisponivel no PDF.', error);
+  if (pixPayload) {
+    try {
+      parts.push(...drawQrCode(pixPayload, qrX, qrBaseY, qrSize));
+    } catch (error) {
+      console.error('[billing-pdf] QR Pix indisponivel no PDF.', error);
+      parts.push(...drawUnavailablePixQrCode(qrX, qrBaseY, qrSize));
+    }
+  } else {
     parts.push(...drawUnavailablePixQrCode(qrX, qrBaseY, qrSize));
   }
 

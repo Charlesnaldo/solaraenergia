@@ -19,7 +19,7 @@ function buildAddress(cliente: FaturamentoPdfRecord['clientes']) {
 
 export function createFaturamentoPdf(record: FaturamentoPdfRecord) {
   const address = buildAddress(record.clientes);
-  const pixPaymentPayload = getPixPaymentPayload(record.pix_qr_code, record.pix_url, record.api_response);
+  const pixPaymentPayload = getPixPaymentPayload(record.pix_qr_code, record.api_response);
 
   return createBoletoPdfBuffer({
     clientName: record.clientes.nome,

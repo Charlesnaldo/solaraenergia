@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     }
 
     const amount = Number(data.valor);
-    const pixPaymentPayload = getPixPaymentPayload(data.pix_qr_code, data.pix_url, data.api_response);
+    const pixPaymentPayload = getPixPaymentPayload(data.pix_qr_code, data.api_response);
     const emailResult = data.boleto_url
       ? await sendBoletoEmail({
           to: clienteInfo.email,
