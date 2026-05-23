@@ -66,6 +66,7 @@ export interface DashboardOverview {
     Cliente & {
       assinatura?: Assinatura | null;
       ultimoFaturamento?: Faturamento | null;
+      historicoFaturamentos?: Faturamento[];
     }
   >;
 }

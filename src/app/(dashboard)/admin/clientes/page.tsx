@@ -1,9 +1,28 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import type { DashboardOverview, ClienteStatus } from '@/lib/dashboard/types';
 
 type GeneratedBilling = NonNullable<DashboardOverview['clientes'][number]['ultimoFaturamento']>;
+type DashboardClient = DashboardOverview['clientes'][number];
+
+function money(value: number) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+}
+
+function formatDateBR(value: string | null | undefined) {
+  if (!value) return '-';
+
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat('pt-BR').format(date);
+}
+
+function getBillingHistory(cliente: DashboardClient) {
+  if (cliente.historicoFaturamentos?.length) return cliente.historicoFaturamentos;
+  return cliente.ultimoFaturamento ? [cliente.ultimoFaturamento] : [];
+}
 
 function nextDueDate(day: number) {
   const now = new Date();
@@ -27,6 +46,7 @@ export default function AdminClientesPage() {
   const [dueDates, setDueDates] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deletingBillingId, setDeletingBillingId] = useState<string | null>(null);
+  const [openedClientId, setOpenedClientId] = useState<string | null>(null);
 
   const loadOverview = async () => {
     setLoading(true);
@@ -180,6 +200,96 @@ export default function AdminClientesPage() {
     }
   };
 
+  const renderBillingHistory = (cliente: DashboardClient) => {
+    const historico = getBillingHistory(cliente);
+
+    return (
+      <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/80 p-3">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-white">Historico de boletos</p>
+            <p className="text-xs text-slate-500">{historico.length ? `${historico.length} boleto(s) criado(s)` : 'Nenhum boleto criado para este cliente.'}</p>
+          </div>
+          <button
+            onClick={() => setOpenedClientId(null)}
+            className="mt-2 w-fit rounded-lg border border-white/15 px-3 py-1 text-xs font-semibold text-slate-200 hover:bg-white/5 sm:mt-0"
+          >
+            Fechar
+          </button>
+        </div>
+
+        {historico.length ? (
+          <div className="mt-3 space-y-2">
+            {historico.map((faturamento) => (
+              <div key={faturamento.id} className="rounded-xl border border-white/10 bg-slate-900/70 p-3">
+                <div className="grid gap-2 md:grid-cols-[120px_110px_100px_minmax(0,1fr)] md:items-start">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Vencimento</p>
+                    <p className="text-sm font-semibold text-white">{formatDateBR(faturamento.data_vencimento)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Valor</p>
+                    <p className="text-sm font-semibold text-yellow-300">{money(Number(faturamento.valor ?? 0))}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Status</p>
+                    <p className="text-sm font-semibold text-slate-200">{faturamento.status}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Nosso numero / linha digitavel</p>
+                    <p className="break-all font-mono text-xs text-slate-300">{faturamento.nosso_numero || faturamento.id_itau || faturamento.id}</p>
+                    <p className="mt-1 truncate font-mono text-[11px] text-slate-500" title={faturamento.linha_digitavel ?? undefined}>
+                      {faturamento.linha_digitavel ?? '-'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    onClick={() => openPdf(cliente.id, faturamento)}
+                    className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white hover:bg-white/5"
+                  >
+                    Ver PDF
+                  </button>
+                  <button
+                    onClick={() => void downloadPdf(cliente.id, faturamento)}
+                    className="rounded-lg border border-cyan-400/30 px-3 py-1 text-xs font-semibold text-cyan-200 hover:bg-cyan-400/10"
+                  >
+                    Baixar PDF
+                  </button>
+                  {faturamento.boleto_url ? (
+                    <a
+                      href={faturamento.boleto_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white hover:bg-white/5"
+                    >
+                      Abrir Itau
+                    </a>
+                  ) : null}
+                  <button
+                    onClick={() => void sendPdfEmail(cliente.id, faturamento)}
+                    disabled={busyId === cliente.id}
+                    className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                  >
+                    Enviar e-mail
+                  </button>
+                  <button
+                    onClick={() => void deleteBoleto(faturamento.id)}
+                    disabled={deletingBillingId === faturamento.id}
+                    className="rounded-lg border border-rose-400/30 px-3 py-1 text-xs font-semibold text-rose-200 disabled:opacity-50"
+                  >
+                    {deletingBillingId === faturamento.id ? 'Excluindo...' : 'Excluir'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
   if (loading || !overview) {
     return <div className="text-slate-300">Carregando clientes...</div>;
   }
@@ -293,6 +403,12 @@ export default function AdminClientesPage() {
                   {busyId === cliente.id ? 'Processando...' : 'Gerar boleto'}
                 </button>
                 <button
+                  onClick={() => setOpenedClientId((current) => (current === cliente.id ? null : cliente.id))}
+                  className="rounded-lg border border-yellow-400/30 px-3 py-2 text-xs font-semibold text-yellow-200"
+                >
+                  {openedClientId === cliente.id ? 'Fechar cliente' : 'Abrir cliente'}
+                </button>
+                <button
                   onClick={() => void sendPdfEmail(cliente.id, cliente.ultimoFaturamento)}
                   disabled={busyId === cliente.id}
                   className="col-span-2 rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
@@ -309,6 +425,8 @@ export default function AdminClientesPage() {
                   {deletingBillingId === cliente.ultimoFaturamento?.id ? 'Excluindo...' : 'Excluir boleto'}
                 </button>
               </div>
+
+              {openedClientId === cliente.id ? renderBillingHistory(cliente) : null}
             </article>
           ))}
         </div>
@@ -328,7 +446,8 @@ export default function AdminClientesPage() {
             </thead>
             <tbody>
               {filteredClients.map((cliente) => (
-                <tr key={cliente.id} className="border-b border-white/5 text-slate-200">
+                <Fragment key={cliente.id}>
+                <tr className="border-b border-white/5 text-slate-200">
                   <td className="px-2 py-3">
                     <p className="font-semibold text-white">{cliente.nome}</p>
                     <p className="text-xs text-slate-400">{cliente.cpf_cnpj}</p>
@@ -368,6 +487,12 @@ export default function AdminClientesPage() {
                   </td>
                   <td className="px-2 py-3">
                     <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setOpenedClientId((current) => (current === cliente.id ? null : cliente.id))}
+                        className="rounded-lg border border-yellow-400/30 px-3 py-1 text-xs font-semibold text-yellow-200"
+                      >
+                        {openedClientId === cliente.id ? 'Fechar cliente' : 'Abrir cliente'}
+                      </button>
                       <button onClick={() => openPdf(cliente.id, cliente.ultimoFaturamento)} className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white">
                         Ver boleto
                       </button>
@@ -402,6 +527,14 @@ export default function AdminClientesPage() {
                     </div>
                   </td>
                 </tr>
+                {openedClientId === cliente.id ? (
+                  <tr className="border-b border-white/10">
+                    <td colSpan={7} className="px-2 pb-4">
+                      {renderBillingHistory(cliente)}
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
               ))}
             </tbody>
           </table>

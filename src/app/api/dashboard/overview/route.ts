@@ -68,11 +68,13 @@ export async function GET() {
       monthlyBilling,
       clientes: clientesRows.map((cliente) => {
         const assinatura = assinaturasRows.find((a) => a.cliente_id === cliente.id && a.status === 'ativa') ?? null;
-        const ultimoFaturamento = faturamentoRows.find((f) => f.cliente_id === cliente.id) ?? null;
+        const historicoFaturamentos = faturamentoRows.filter((f) => f.cliente_id === cliente.id);
+        const ultimoFaturamento = historicoFaturamentos[0] ?? null;
         return {
           ...cliente,
           assinatura,
           ultimoFaturamento,
+          historicoFaturamentos,
         };
       }),
     };
