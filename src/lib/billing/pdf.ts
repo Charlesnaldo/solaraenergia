@@ -81,8 +81,33 @@ function clean(value: string | null | undefined) {
 function wrap(value: string, maxLength: number) {
   const text = value.trim();
   if (text.length <= maxLength) return [text];
+
+  // Break on word boundaries first; fall back to hard break only if a single
+  // word exceeds maxLength (e.g. a very long barcode or URL).
+  const words = text.split(' ');
   const lines: string[] = [];
-  for (let i = 0; i < text.length; i += maxLength) lines.push(text.slice(i, i + maxLength));
+  let current = '';
+
+  for (const word of words) {
+    if (!current) {
+      // Single word longer than maxLength: hard-break it
+      if (word.length > maxLength) {
+        for (let i = 0; i < word.length; i += maxLength) lines.push(word.slice(i, i + maxLength));
+      } else {
+        current = word;
+      }
+    } else if (current.length + 1 + word.length <= maxLength) {
+      current += ` ${word}`;
+    } else {
+      lines.push(current);
+      current = word.length > maxLength ? '' : word;
+      if (word.length > maxLength) {
+        for (let i = 0; i < word.length; i += maxLength) lines.push(word.slice(i, i + maxLength));
+      }
+    }
+  }
+
+  if (current) lines.push(current);
   return lines;
 }
 
@@ -803,8 +828,8 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   // ════════════════════════════════════════════════════════════════════════
   // 4. INFO CARDS  y 528–632
   // ════════════════════════════════════════════════════════════════════════
-  const CARD_Y = 528;
-  const CARD_H = 96;
+  const CARD_Y = 516;
+  const CARD_H = 108;
   const CARD_W = (CW - GAP) / 2;
 
   // ── Card: Cliente ──────────────────────────────────────────────────────
@@ -816,12 +841,12 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   // person icon + name
   const nameY = CARD_Y + CARD_H - 38;
   p.push(...iconPerson(ML + 14, nameY - 4, green, 0.8));
-  lv(ML + 27, nameY, 'Nome', input.clientName, 28);
+  lv(ML + 27, nameY, 'Nome', input.clientName, 36);
 
   // document icon + cpf/cnpj
   const docY = CARD_Y + CARD_H - 64;
   p.push(...iconReceipt(ML + 14, docY - 4, ink400, 0.8));
-  lv(ML + 27, docY, 'CPF / CNPJ', maskCpfCnpj(input.clientDocument), 30);
+  lv(ML + 27, docY, 'CPF / CNPJ', maskCpfCnpj(input.clientDocument), 36);
 
   // ── Card: Instalação ───────────────────────────────────────────────────
   const C2X = ML + CARD_W + GAP;
@@ -831,7 +856,7 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
 
   // pin icon + address lines
   p.push(...iconPin(C2X + 14, CARD_Y + CARD_H - 46, orange, 0.9));
-  sLines(C2X + 28, CARD_Y + CARD_H - 30, installAddr, 32, 8, ink600, 4);
+  sLines(C2X + 28, CARD_Y + CARD_H - 30, installAddr, 38, 8, ink600, 4);
 
   // ════════════════════════════════════════════════════════════════════════
   // 5. DETALHAMENTO  y 448–520
