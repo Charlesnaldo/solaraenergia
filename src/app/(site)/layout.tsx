@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import PreLoader from "@/components/PreLoader";
 import MotionProvider from "@/components/MotionProvider";
+import LgpdConsentPopup from "@/components/LgpdConsentPopup";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -77,6 +78,7 @@ export default function RootLayout({
           </main>
           <ScrollToTop />         
           <Footer />
+          <LgpdConsentPopup />
         </MotionProvider>
       </body>
     </html>
