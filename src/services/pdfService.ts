@@ -1,4 +1,5 @@
 import { createBoletoPdfBuffer } from '@/lib/billing/pdf';
+import { getPixPaymentPayload } from '@/lib/itau/bolecode';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import type { FaturamentoPdfRecord } from '@/services/faturamentoService';
 
@@ -18,6 +19,7 @@ function buildAddress(cliente: FaturamentoPdfRecord['clientes']) {
 
 export function createFaturamentoPdf(record: FaturamentoPdfRecord) {
   const address = buildAddress(record.clientes);
+  const pixPaymentPayload = getPixPaymentPayload(record.pix_qr_code, record.pix_url, record.api_response);
 
   return createBoletoPdfBuffer({
     clientName: record.clientes.nome,
@@ -38,7 +40,7 @@ export function createFaturamentoPdf(record: FaturamentoPdfRecord) {
     linhaDigitavel: record.linha_digitavel,
     codigoBarras: record.codigo_barras,
     pixUrl: record.pix_url,
-    pixQrCode: record.pix_qr_code,
+    pixQrCode: pixPaymentPayload || record.pix_qr_code,
   });
 }
 

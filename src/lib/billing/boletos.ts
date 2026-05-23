@@ -1,4 +1,4 @@
-import { createSeuNumero, emitirBolecode } from '@/lib/itau/bolecode';
+import { createSeuNumero, emitirBolecode, isPixPaymentPayload } from '@/lib/itau/bolecode';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 
 export async function gerarBoletoParaCliente(params: {
@@ -46,6 +46,7 @@ export async function gerarBoletoParaCliente(params: {
         codigoBarras: itau.codigoBarras,
         linhaDigitavel: itau.linhaDigitavel,
         qrCodePresente: Boolean(itau.qrCode),
+        qrCodePagavel: isPixPaymentPayload(itau.qrCode),
         pixUrlPresente: Boolean(itau.pixUrl),
         boletoUrlPresente: Boolean(itau.boletoUrl),
       },

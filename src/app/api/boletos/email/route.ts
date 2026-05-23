@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import { createBoletoPdfBuffer } from '@/lib/billing/pdf';
+import { getPixPaymentPayload } from '@/lib/itau/bolecode';
 import { sendBoletoEmail, sendBoletoPdfEmail } from '@/lib/notifications/email';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase
       .from('faturamento')
-      .select('id, valor, data_vencimento, boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url, clientes!inner(nome, cpf_cnpj, email)')
+      .select('id, valor, data_vencimento, boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url, api_response, clientes!inner(nome, cpf_cnpj, email)')
       .eq('id', faturamentoId)
       .single();
 
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
     }
 
     const amount = Number(data.valor);
+    const pixPaymentPayload = getPixPaymentPayload(data.pix_qr_code, data.pix_url, data.api_response);
     const emailResult = data.boleto_url
       ? await sendBoletoEmail({
           to: clienteInfo.email,
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
             linhaDigitavel: data.linha_digitavel,
             codigoBarras: data.codigo_barras,
             pixUrl: data.pix_url,
-            pixQrCode: data.pix_qr_code,
+            pixQrCode: pixPaymentPayload || data.pix_qr_code,
           }),
         });
 

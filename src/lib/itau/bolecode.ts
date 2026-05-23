@@ -342,6 +342,103 @@ function readFirstString(records: Array<Record<string, unknown> | null | undefin
   return '';
 }
 
+const PIX_EMV_FIELD_NAMES = [
+  'emv',
+  'emv_qrcode',
+  'emv_qr_code',
+  'qr_code_emv',
+  'qrcode_emv',
+  'qr_code',
+  'qrcode',
+  'qrcode_pix',
+  'qr_code_pix',
+  'payload_pix',
+  'brcode',
+  'br_code',
+  'copia_cola',
+  'copia_e_cola',
+  'pix_copia_cola',
+  'pix_copia_e_cola',
+  'codigo_pix',
+  'codigo_qrcode',
+  'codigo_qr_code',
+  'texto_qrcode',
+  'texto_qr_code',
+];
+
+function isHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+export function isPixPaymentPayload(value: string | null | undefined) {
+  const text = value?.trim();
+  if (!text) {
+    return false;
+  }
+
+  const normalized = text.toUpperCase();
+  return normalized.startsWith('000201') && normalized.includes('BR.GOV.BCB.PIX');
+}
+
+function findPixPaymentPayload(value: unknown, seen = new WeakSet<object>()): string {
+  if (typeof value === 'string') {
+    return isPixPaymentPayload(value) ? value.trim() : '';
+  }
+
+  if (!value || typeof value !== 'object') {
+    return '';
+  }
+
+  if (seen.has(value)) {
+    return '';
+  }
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findPixPaymentPayload(item, seen);
+      if (found) {
+        return found;
+      }
+    }
+
+    return '';
+  }
+
+  const record = value as Record<string, unknown>;
+  for (const name of PIX_EMV_FIELD_NAMES) {
+    const direct = record[name];
+    if (typeof direct === 'string' && isPixPaymentPayload(direct)) {
+      return direct.trim();
+    }
+  }
+
+  for (const nested of Object.values(record)) {
+    const found = findPixPaymentPayload(nested, seen);
+    if (found) {
+      return found;
+    }
+  }
+
+  return '';
+}
+
+export function getPixPaymentPayload(...values: unknown[]) {
+  for (const value of values) {
+    const found = findPixPaymentPayload(value);
+    if (found) {
+      return found;
+    }
+  }
+
+  return '';
+}
+
 function firstRecord(value: unknown) {
   if (Array.isArray(value)) {
     return asRecord(value[0]);
@@ -362,21 +459,22 @@ function readBolecodeResponse(payload: ItauBolecodeResponse): BolecodeOutput {
   const pixRecord = asRecord(dataRecord?.pix) ?? asRecord(payloadRecord?.pix);
 
   const boletoRecords = [boletoIndividual, boletoRecord, dataRecord, payloadRecord];
-  const pixRecords = [qrCodeRecord, pixRecord, dataRecord, payloadRecord];
-  const pixUrl =
+  const pixUrlCandidate =
     readFirstString([qrCodeRecord, pixRecord], ['location', 'url_pix', 'pix_url', 'url']) ||
     readFirstString([dataRecord, payloadRecord], ['pix_url', 'url_pix']);
+  const pixUrl = pixUrlCandidate && isHttpUrl(pixUrlCandidate) ? pixUrlCandidate : '';
   const genericUrl = readFirstString([dataRecord, payloadRecord], ['url']);
   const boletoUrl =
     readFirstString(boletoRecords, ['url_boleto', 'boleto_url', 'url_pdf', 'url_download', 'url_visualizacao', 'link_boleto']) ||
     (genericUrl && genericUrl !== pixUrl ? genericUrl : '');
+  const qrCode = getPixPaymentPayload(qrCodeRecord, pixRecord, boletoRecord, boletoIndividual, dataRecord, payloadRecord);
 
   return {
     idBoleto: readFirstString(boletoRecords, ['id_boleto', 'id_boleto_pix', 'id', 'numero_boleto']) || crypto.randomUUID(),
     nossoNumero: readFirstString(boletoRecords, ['numero_nosso_numero', 'nosso_numero']),
     codigoBarras: readFirstString(boletoRecords, ['codigo_barras', 'numero_codigo_barras']),
     linhaDigitavel: readFirstString(boletoRecords, ['numero_linha_digitavel', 'linha_digitavel']),
-    qrCode: readFirstString(pixRecords, ['emv', 'emv_qrcode', 'qr_code', 'qrcode', 'payload_pix', 'brcode', 'copia_cola', 'tx_id', 'txid']),
+    qrCode,
     pixUrl,
     boletoUrl: boletoUrl || null,
     raw: payload,

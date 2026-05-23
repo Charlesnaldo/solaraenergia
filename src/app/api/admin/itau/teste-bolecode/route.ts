@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import { getItauCachedTokenDiagnostics } from '@/lib/itau/auth';
-import { createSeuNumero, emitirBolecode, ItauBolecodeError } from '@/lib/itau/bolecode';
+import { createSeuNumero, emitirBolecode, isPixPaymentPayload, ItauBolecodeError } from '@/lib/itau/bolecode';
 
 export const runtime = 'nodejs';
 
@@ -187,6 +187,7 @@ export async function POST(req: Request) {
             linha_digitavel_presente: Boolean(itau.linhaDigitavel),
             codigo_barras_presente: Boolean(itau.codigoBarras),
             qr_code_presente: Boolean(itau.qrCode),
+            qr_code_pagavel: isPixPaymentPayload(itau.qrCode),
             pix_url_presente: Boolean(itau.pixUrl),
             boleto_url_presente: Boolean(itau.boletoUrl),
           },

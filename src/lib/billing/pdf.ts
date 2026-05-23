@@ -1,3 +1,5 @@
+import { isPixPaymentPayload } from '@/lib/itau/bolecode';
+
 export function formatCurrencyBRL(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
@@ -564,7 +566,9 @@ export function createBoletoPdfBuffer(input: {
   pixUrl?: string | null;
   pixQrCode?: string | null;
 }) {
-  const qrValue = input.pixQrCode || input.pixUrl;
+  const qrValue = [input.pixQrCode, input.pixUrl].find(isPixPaymentPayload) ?? null;
+  const pixCopyPasteText =
+    qrValue ?? 'Payload Pix nao retornado pelo Itau. Use a linha digitavel ou o codigo de barras.';
   const companyCnpj = input.companyCnpj || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null;
   const supportEmail = input.supportEmail || process.env.BILLING_SUPPORT_EMAIL || 'financeiro@solaraenergia.com.br';
   const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP || process.env.NEXT_PUBLIC_WHATSAPP || 'Atendimento Solara';
@@ -637,8 +641,8 @@ export function createBoletoPdfBuffer(input: {
   parts.push(drawText(88, 403, 'Pague com Pix ou Boleto', 10, slate950, 'F2'));
   parts.push(drawText(68, 374, 'Linha digitavel', 10, slate950, 'F2'));
   addSmallLines(68, 358, clean(input.linhaDigitavel), 62, 8, slate800, 3);
-  parts.push(drawText(68, 314, 'Pix copia e cola / URL', 10, slate950, 'F2'));
-  addSmallLines(68, 298, clean(qrValue), 56, 7, slate600, 4);
+  parts.push(drawText(68, 314, 'Pix copia e cola', 10, slate950, 'F2'));
+  addSmallLines(68, 298, pixCopyPasteText, 56, 7, slate600, 4);
   parts.push(drawText(397, 374, 'QR Code Pix', 10, slate950, 'F2'));
   parts.push(...drawQrCode(qrValue, 397, 252, 108));
   parts.push(drawText(68, 231, 'Codigo de barras', 10, slate950, 'F2'));

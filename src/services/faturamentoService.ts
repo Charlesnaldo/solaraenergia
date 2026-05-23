@@ -13,6 +13,7 @@ export interface FaturamentoPdfRecord {
   codigo_barras: string | null;
   pix_qr_code: string | null;
   pix_url: string | null;
+  api_response: unknown | null;
   clientes: {
     id: string;
     nome: string;
@@ -37,7 +38,7 @@ export async function getFaturamentoForPdf(faturamentoId: string) {
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from('faturamento')
-    .select('id, cliente_id, valor, data_vencimento, status, boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url, clientes!inner(id, nome, cpf_cnpj, email, endereco_completo, rua, numero, bairro, cidade, estado, cep, complemento)')
+    .select('id, cliente_id, valor, data_vencimento, status, boleto_url, linha_digitavel, codigo_barras, pix_qr_code, pix_url, api_response, clientes!inner(id, nome, cpf_cnpj, email, endereco_completo, rua, numero, bairro, cidade, estado, cep, complemento)')
     .eq('id', faturamentoId)
     .maybeSingle();
 
