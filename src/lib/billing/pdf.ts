@@ -689,7 +689,7 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const supportEmail    = input.supportEmail    || process.env.BILLING_SUPPORT_EMAIL     || 'financeiro@solaraenergia.com.br';
   const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP  || process.env.NEXT_PUBLIC_WHATSAPP || '';
   const siteUrl         = input.siteUrl         || process.env.NEXT_PUBLIC_SITE_URL      || 'solaraenergia.com.br';
-  const siteDisplay     = siteUrl.replace(/^https?:\/\//, '');
+  const siteDisplay     = siteUrl.replace(/^https?:\/\/(www\.)?/, 'www.');
   const issueDate       = formatDateBR(input.issueDate ?? new Date());
   const dueDate         = formatDateBR(input.dueDate);
   const status          = clean(input.status || 'gerado').toUpperCase();
