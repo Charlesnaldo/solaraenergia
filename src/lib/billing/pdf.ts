@@ -1,5 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
-import { extractPixPayload, normalizePixPayload, validatePixPayload } from '@/lib/itau/bolecode';
+import { normalizePixPayload, validatePixCrc, validatePixPayload } from '@/lib/itau/bolecode';
 import { getLogoPngBuffer } from '@/lib/pdf/getLogoPngBuffer';
 
 export function formatCurrencyBRL(value: number) {
@@ -608,19 +608,30 @@ function previewPixValue(value: string) {
 
 function logInvalidPixPayload(source: string, value: string | null | undefined) {
   const text = normalizePixPayload(value);
-  if (!text || validatePixPayload(text)) return;
+  if (!text) return;
+  if (!validatePixCrc(text)) {
+    console.error('Payload Pix com CRC inválido');
+    return;
+  }
+  if (validatePixPayload(text)) return;
   console.error(
     `[billing-pdf] Payload Pix invalido em ${source}. length=${text.length}; preview=${previewPixValue(text)}`,
   );
 }
 
-function isHttpUrlText(value: string | null | undefined) {
-  const text = value?.trim();
-  if (!text) return false;
-  try {
-    const url = new URL(text);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch { return false; }
+function resolveOfficialPixPayload(...values: Array<string | null | undefined>) {
+  for (const value of values) {
+    const payload = normalizePixPayload(value);
+    if (!payload) continue;
+
+    if (!validatePixCrc(payload)) continue;
+
+    if (validatePixPayload(payload)) {
+      return payload;
+    }
+  }
+
+  return null;
 }
 
 function drawUnavailableQr(x: number, y: number, size: number): string[] {
@@ -690,14 +701,9 @@ const GAP = 10;      // gap between cards
 export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
 
   // ── Resolve Pix ────────────────────────────────────────────────────────
-  const pixPayload =
-    extractPixPayload(input.pixPayload) ??
-    extractPixPayload(input.pixCopiaCola) ??
-    extractPixPayload(input.pixQrCode) ??
-    null;
-  const pixFallbackUrl = isHttpUrlText(input.pixUrl) ? input.pixUrl!.trim() : null;
-  const pixCopyLabel = pixPayload ? 'Pix Cópia e Cola' : pixFallbackUrl ? 'Link Pix Itaú' : 'Pix indisponível';
-  const pixCopyText = pixPayload ?? (pixFallbackUrl ? `Pix indisponível. Link: ${pixFallbackUrl}` : 'Pix indisponível. Utilize o boleto.');
+  const pixPayload = resolveOfficialPixPayload(input.pixPayload, input.pixCopiaCola, input.pixQrCode);
+  const pixCopyLabel = pixPayload ? 'Pix Cópia e Cola' : 'Pix indisponível';
+  const pixCopyText = pixPayload ?? 'Pix indisponível. Utilize boleto.';
 
   logInvalidPixPayload('pixPayload', input.pixPayload);
   logInvalidPixPayload('pixCopiaCola', input.pixCopiaCola);

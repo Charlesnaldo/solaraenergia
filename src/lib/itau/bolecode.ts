@@ -403,35 +403,17 @@ export function normalizePixPayload(value?: string | null) {
 
   // Se parecer base64, tenta decodificar
   const base64Decoded = tryBase64Decode(value);
-  if (base64Decoded) {
-    return base64Decoded.trim();
-  }
+  const officialPayload = base64Decoded ?? value;
 
-  return value
+  return officialPayload
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
     .replace(/[\r\n\t\f\v]+/g, '')
     .trim();
 }
 
-function compactPixPayload(value?: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const normalized = normalizePixPayload(value);
-  if (!normalized) return null;
-
-  return normalized
-    .replace(/\s+/g, '')
-    .trim();
-}
-
 function getPixPayloadCandidates(value: string | null | undefined) {
-  const candidates = [normalizePixPayload(value), compactPixPayload(value)].filter(
-    (candidate): candidate is string => Boolean(candidate),
-  );
-
-  return [...new Set(candidates)];
+  const normalized = normalizePixPayload(value);
+  return normalized ? [normalized] : [];
 }
 
 interface EmvTag {
@@ -477,7 +459,7 @@ function parseEmvTags(payload: string): EmvTag[] | null {
   return tags;
 }
 
-function crc16CcittFalse(value: string) {
+export function calculateCRC16CCITT(value: string) {
   let crc = 0xffff;
 
   for (const byte of Buffer.from(value, 'ascii')) {
@@ -491,14 +473,29 @@ function crc16CcittFalse(value: string) {
   return crc.toString(16).toUpperCase().padStart(4, '0');
 }
 
+export function validatePixCrc(payload: string): boolean {
+  const normalized = normalizePixPayload(payload);
+  if (!normalized) return false;
+
+  const crcIndex = normalized.lastIndexOf('6304');
+  if (crcIndex === -1) return false;
+
+  const payloadWithoutCrcValue = normalized.slice(0, crcIndex + 4);
+  const expectedCrc = normalized.slice(crcIndex + 4, crcIndex + 8).toUpperCase();
+  if (!/^[0-9A-F]{4}$/.test(expectedCrc)) return false;
+
+  const calculatedCrc = calculateCRC16CCITT(payloadWithoutCrcValue);
+
+  return calculatedCrc === expectedCrc;
+}
+
 function hasValidPixCrc(payload: string, tags: EmvTag[]) {
   const crcTag = tags.at(-1);
   if (!crcTag || crcTag.id !== '63' || crcTag.length !== 4 || !/^[0-9A-Fa-f]{4}$/.test(crcTag.value)) {
     return false;
   }
 
-  const crcInput = payload.slice(0, crcTag.start + 4);
-  return crc16CcittFalse(crcInput) === crcTag.value.toUpperCase();
+  return validatePixCrc(payload);
 }
 
 function hasPixMerchantAccount(tags: EmvTag[]) {
