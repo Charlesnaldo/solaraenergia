@@ -29,7 +29,7 @@ export async function createFaturamentoPdf(record: FaturamentoPdfRecord) {
     status: record.status,
     faturamentoId: record.id,
     issueDate: new Date().toISOString(),
-    description: 'Servicos de energia solar / faturamento mensal',
+    description: 'Serviços de energia solar / faturamento mensal',
     clientAddress: address,
     installationAddress: address,
     companyCnpj: process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null,

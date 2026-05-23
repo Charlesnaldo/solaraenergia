@@ -16,9 +16,9 @@ export function money(value: number) {
 }
 
 export function formatDateBR(value: string | Date | null | undefined) {
-  if (!value) return 'Nao informado';
+  if (!value) return 'Não informado';
   const date = value instanceof Date ? value : new Date(`${String(value).slice(0, 10)}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return 'Nao informado';
+  if (Number.isNaN(date.getTime())) return 'Não informado';
   return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(date);
 }
 
@@ -72,12 +72,63 @@ const ITF_PATTERNS: Record<string, string> = {
 
 // ─── PDF Primitives ────────────────────────────────────────────────────────────
 
+const WIN_ANSI_OVERRIDES = new Map<number, number>([
+  [0x20ac, 0x80],
+  [0x201a, 0x82],
+  [0x0192, 0x83],
+  [0x201e, 0x84],
+  [0x2026, 0x85],
+  [0x2020, 0x86],
+  [0x2021, 0x87],
+  [0x02c6, 0x88],
+  [0x2030, 0x89],
+  [0x0160, 0x8a],
+  [0x2039, 0x8b],
+  [0x0152, 0x8c],
+  [0x017d, 0x8e],
+  [0x2018, 0x91],
+  [0x2019, 0x92],
+  [0x201c, 0x93],
+  [0x201d, 0x94],
+  [0x2022, 0x95],
+  [0x2013, 0x96],
+  [0x2014, 0x97],
+  [0x02dc, 0x98],
+  [0x2122, 0x99],
+  [0x0161, 0x9a],
+  [0x203a, 0x9b],
+  [0x0153, 0x9c],
+  [0x017e, 0x9e],
+  [0x0178, 0x9f],
+]);
+
+function toWinAnsiByte(char: string) {
+  const codePoint = char.codePointAt(0) ?? 0x3f;
+  if (codePoint <= 0x7f) return codePoint;
+  if (codePoint >= 0xa0 && codePoint <= 0xff) return codePoint;
+  return WIN_ANSI_OVERRIDES.get(codePoint) ?? 0x3f;
+}
+
 function escapePdfText(value: string) {
-  return value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+  return Array.from(value)
+    .map((char) => {
+      const byte = toWinAnsiByte(char);
+
+      if (byte === 0x28 || byte === 0x29 || byte === 0x5c) {
+        return `\\${String.fromCharCode(byte)}`;
+      }
+
+      if (byte < 0x20 || byte > 0x7e) {
+        return `\\${byte.toString(8).padStart(3, '0')}`;
+      }
+
+      return String.fromCharCode(byte);
+    })
+    .join('');
 }
 
 function clean(value: string | null | undefined) {
-  return value?.trim() || 'Nao informado';
+  return value?.trim() || 'Não informado';
 }
 
 function wrap(value: string, maxLength: number) {
@@ -310,7 +361,7 @@ function iconEmail(x: number, y: number, color: string, s = 1): string[] {
 
 function drawBarcode(codigoBarras: string | null | undefined, x: number, y: number, maxWidth: number, height: number) {
   const digits = codigoBarras?.replace(/\D/g, '') ?? '';
-  if (digits.length < 2) return [tx(x, y + 18, 'Codigo de barras nao informado', 9, '0.5 0.5 0.5')];
+  if (digits.length < 2) return [tx(x, y + 18, 'Código de barras não informado', 9, '0.5 0.5 0.5')];
 
   const normalized = digits.length % 2 === 0 ? digits : `0${digits}`;
   const segments: Array<{ black: boolean; width: number }> = [
@@ -576,7 +627,7 @@ function drawUnavailableQr(x: number, y: number, size: number): string[] {
   return [
     rect(x, y, size, size, '0.97 0.97 0.98'),
     strokeRect(x, y, size, size, '0.85 0.88 0.92', 0.5),
-    tx(x + size / 2 - 28, y + size / 2 + 6, 'Pix indisponivel', 8, '0.55 0.60 0.69', 'F2'),
+    tx(x + size / 2 - 28, y + size / 2 + 6, 'Pix indisponível', 8, '0.55 0.60 0.69', 'F2'),
     tx(x + size / 2 - 22, y + size / 2 - 8, 'Use o boleto', 7, '0.70 0.74 0.80'),
   ];
 }
@@ -645,13 +696,13 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
     extractPixPayload(input.pixQrCode) ??
     null;
   const pixFallbackUrl = isHttpUrlText(input.pixUrl) ? input.pixUrl!.trim() : null;
-  const pixCopyLabel = pixPayload ? 'Pix Copia e Cola' : pixFallbackUrl ? 'Link Pix Itau' : 'Pix indisponivel';
-  const pixCopyText = pixPayload ?? (pixFallbackUrl ? `Pix indisponivel. Link: ${pixFallbackUrl}` : 'Pix indisponivel. Utilize o boleto.');
+  const pixCopyLabel = pixPayload ? 'Pix Cópia e Cola' : pixFallbackUrl ? 'Link Pix Itaú' : 'Pix indisponível';
+  const pixCopyText = pixPayload ?? (pixFallbackUrl ? `Pix indisponível. Link: ${pixFallbackUrl}` : 'Pix indisponível. Utilize o boleto.');
 
   logInvalidPixPayload('pixPayload', input.pixPayload);
   logInvalidPixPayload('pixCopiaCola', input.pixCopiaCola);
   logInvalidPixPayload('pixQrCode', input.pixQrCode);
-  if (!pixPayload) console.warn('[billing-pdf] Payload Pix EMV nao encontrado. QR nao sera gerado.');
+  if (!pixPayload) console.warn('[billing-pdf] Payload Pix EMV não encontrado. QR não será gerado.');
 
   // ── Resolve env ────────────────────────────────────────────────────────
   const companyCnpj     = input.companyCnpj     || process.env.SOLARA_CNPJ              || process.env.COMPANY_CNPJ   || null;
@@ -663,7 +714,7 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const issueDate       = formatDateBR(input.issueDate ?? new Date());
   const dueDate         = formatDateBR(input.dueDate);
   const status          = clean(input.status || 'gerado').toUpperCase();
-  const description     = input.description || 'Servicos de Energia Solar / Faturamento Mensal';
+  const description     = input.description || 'Serviços de Energia Solar / Faturamento Mensal';
   const installAddr     = clean(input.installationAddress || input.clientAddress);
   const isPago          = status === 'PAGO';
 
@@ -754,11 +805,11 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   if (companyAddress) {
     sLines(RX, 781, companyAddress, 44, 7, '0.52 0.58 0.67', 2);
   } else {
-    p.push(tx(RX, 781, 'Cobranca mensal de energia solar', 7, '0.52 0.58 0.67'));
+    p.push(tx(RX, 781, 'Cobrança mensal de energia solar', 7, '0.52 0.58 0.67'));
   }
   // status + issue badges in header
   badge(PAGE_W - ML - 76, 786, 76, isPago ? 'PAGO' : 'GERADO', isPago ? sGreen : yellow, isPago ? green : ink);
-  badge(PAGE_W - ML - 76, 768, 76, 'EMISSAO', '0.10 0.14 0.24', white);
+  badge(PAGE_W - ML - 76, 768, 76, 'EMISSÃO', '0.10 0.14 0.24', white);
 
   // CNPJ tiny on logo side bottom
   p.push(tx(ML, HDR_Y + 8, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : '', 7, '0.42 0.48 0.58'));
@@ -789,7 +840,7 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   p.push(tx(DX + 14, HERO_Y + HERO_H - 14, 'VENCIMENTO', 7, ink600, 'F2'));
   p.push(tx(DX, HERO_Y + HERO_H - 40, dueDate, 19, ink, 'F2'));
   badge(DX, HERO_Y + 28, 72, isPago ? 'PAGO' : 'A VENCER', isPago ? sGreen : sYellow, isPago ? green : '0.60 0.42 0.02');
-  p.push(tx(DX, HERO_Y + 13, `Emissao ${issueDate}`, 7, ink400));
+  p.push(tx(DX, HERO_Y + 13, `Emissão ${issueDate}`, 7, ink400));
 
   // ════════════════════════════════════════════════════════════════════════
   // 4. INFO CARDS  y 528–632
@@ -831,11 +882,11 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const DET_H = 72;
   p.push(rrect(ML, DET_Y, CW, DET_H, 8, white, border));
   p.push(rect(ML, DET_Y + DET_H - 4, CW, 4, ink));
-  sLabel(ML + 14, DET_Y + DET_H - 16, 'Detalhamento da cobranca');
+  sLabel(ML + 14, DET_Y + DET_H - 16, 'Detalhamento da cobrança');
 
   // receipt icon + description
   p.push(...iconReceipt(ML + 14, DET_Y + DET_H - 42, ink, 0.85));
-  lv(ML + 28, DET_Y + DET_H - 30, 'Descricao', description, 48);
+  lv(ML + 28, DET_Y + DET_H - 30, 'Descrição', description, 48);
 
   // vertical mini-divider
   p.push(line(ML + CW / 2, DET_Y + 10, ML + CW / 2, DET_Y + DET_H - 24, border, 0.4));
@@ -858,7 +909,7 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   // pix icon in band
   p.push(...iconPix(ML + 14, BAND_Y + 14, yellow, 0.9));
   p.push(tx(ML + 28, BAND_Y + BAND_H - 14, 'PAGUE COM PIX OU BOLETO', 10.5, white, 'F2'));
-  badge(ML + CW - 96, BAND_Y + 12, 82, 'INSTANTANEO', yellow, ink);
+  badge(ML + CW - 96, BAND_Y + 12, 82, 'INSTANTÂNEO', yellow, ink);
 
   const INNER_Y = BAND_Y - 8; // baseline below header
 
@@ -867,7 +918,7 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const RIGHT_DIVIDER_X = ML + CW - 152;
 
   // Linha Digitável
-  p.push(tx(LX, INNER_Y - 10, 'Linha digitavel', 9, ink800, 'F2'));
+  p.push(tx(LX, INNER_Y - 10, 'Linha digitável', 9, ink800, 'F2'));
   sLines(LX, INNER_Y - 26, clean(input.linhaDigitavel), 56, 7.5, ink600, 3);
   p.push(line(LX, INNER_Y - 66, RIGHT_DIVIDER_X - 10, INNER_Y - 66, border, 0.4));
 
@@ -887,7 +938,7 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
     try {
       p.push(...drawQrCode(pixPayload, QR_X, QR_BASE_Y, QR_SIZE));
     } catch (err) {
-      console.error('[billing-pdf] QR Pix indisponivel.', err);
+      console.error('[billing-pdf] QR Pix indisponível.', err);
       p.push(...drawUnavailableQr(QR_X, QR_BASE_Y, QR_SIZE));
     }
   } else {
@@ -905,7 +956,7 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const BC_H = 38;
   p.push(line(LX, BC_Y + BC_H + 10, LX + CW - 30, BC_Y + BC_H + 10, border, 0.4));
   p.push(...iconBarcode(LX, BC_Y + BC_H + 2, ink400, 0.7));
-  p.push(tx(LX + 11, BC_Y + BC_H + 6, 'Codigo de barras', 8, ink800, 'F2'));
+  p.push(tx(LX + 11, BC_Y + BC_H + 6, 'Código de barras', 8, ink800, 'F2'));
   p.push(...drawBarcode(input.codigoBarras, LX, BC_Y, CW - 36, BC_H));
   p.push(tx(LX, BC_Y - 8, clean(input.codigoBarras), 6, ink400));
 
@@ -916,8 +967,8 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const NB_H = 44;
   p.push(rrect(ML, NB_Y, CW, NB_H, 8, sYellow, yBorder));
   p.push(...iconInfo(ML + 12, NB_Y + NB_H / 2 - 6, yellow, 0.9));
-  p.push(tx(ML + 30, NB_Y + 31, 'Observacao', 8.5, ink800, 'F2'));
-  p.push(tx(ML + 30, NB_Y + 18, 'Apos o pagamento, a compensacao podera ocorrer conforme o prazo da instituicao financeira.', 7.5, ink600));
+  p.push(tx(ML + 30, NB_Y + 31, 'Observação', 8.5, ink800, 'F2'));
+  p.push(tx(ML + 30, NB_Y + 18, 'Após o pagamento, a compensação poderá ocorrer conforme o prazo da instituição financeira.', 7.5, ink600));
 
   // ════════════════════════════════════════════════════════════════════════
   // 8. FOOTER  y 0–86
@@ -944,7 +995,7 @@ footerCols.forEach(({ iconFn, label, value }, i) => {
 
   // Tagline + logo watermark
   p.push(line(ML, 32, PAGE_W - MR, 32, '0.14 0.16 0.24', 0.4));
-  p.push(tx(ML, 18, 'Solara Energia: transparencia, economia e confianca na sua jornada de energia solar.', 7.5, '0.42 0.48 0.58'));
+  p.push(tx(ML, 18, 'Solara Energia: transparência, economia e confiança na sua jornada de energia solar.', 7.5, '0.42 0.48 0.58'));
 
   // ════════════════════════════════════════════════════════════════════════
   // 9. BUILD PDF BYTES
@@ -955,8 +1006,8 @@ footerCols.forEach(({ iconFn, label, value }, i) => {
     '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n',
     '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n',
     '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >> endobj\n',
-    '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n',
-    '5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> endobj\n',
+    '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >> endobj\n',
+    '5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >> endobj\n',
     `6 0 obj << /Length ${Buffer.byteLength(content, 'utf8')} >> stream\n${content}\nendstream endobj\n`,
   ];
 
