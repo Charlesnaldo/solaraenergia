@@ -389,8 +389,27 @@ export function normalizePixPayload(value?: string | null) {
 
   return value
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\r\n\t\f\v]+/g, '')
+    .trim();
+}
+
+function compactPixPayload(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  return value
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
     .replace(/\s+/g, '')
     .trim();
+}
+
+function getPixPayloadCandidates(value: string | null | undefined) {
+  const candidates = [normalizePixPayload(value), compactPixPayload(value)].filter(
+    (candidate): candidate is string => Boolean(candidate),
+  );
+
+  return [...new Set(candidates)];
 }
 
 interface EmvTag {
@@ -494,12 +513,13 @@ function isValidPixPayloadCandidate(payload: string) {
 }
 
 function findValidPixPayload(value: string | null | undefined) {
-  const payload = normalizePixPayload(value);
-  if (!payload) {
-    return null;
+  for (const payload of getPixPayloadCandidates(value)) {
+    if (isValidPixPayloadCandidate(payload)) {
+      return payload;
+    }
   }
 
-  return isValidPixPayloadCandidate(payload) ? payload : null;
+  return null;
 }
 
 export function validatePixPayload(value: string | null | undefined) {
@@ -687,5 +707,12 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
     throw new ItauBolecodeError(response);
   }
 
-  return readBolecodeResponse(response.data);
+  const output = readBolecodeResponse(response.data);
+  if (!output.qrCode) {
+    console.warn(
+      '[itau-bolecode] Itau nao retornou payload Pix EMV valido. pix_url/location pode existir, mas nao sera usado como QR Pix.',
+    );
+  }
+
+  return output;
 }
