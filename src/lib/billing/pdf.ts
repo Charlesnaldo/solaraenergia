@@ -741,29 +741,31 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   parts.push(drawRect(0, 838, 595, 4, brandYellow));
   parts.push(drawRect(0, 834, 595, 4, brandOrange));
 
-  // logo
-  parts.push(...drawSolaraLogo(M, 776, 0.85));
+  // logo - raised slightly
+  parts.push(...drawSolaraLogo(M, 786, 0.85));
 
   // vertical divider between logo and header info
-  parts.push(drawLine(340, 758, 340, 838, '0.20 0.22 0.30', 0.5));
+  parts.push(drawLine(330, 758, 330, 828, '0.20 0.22 0.30', 0.5));
 
   // right block: document type + meta
-  parts.push(drawText(350, 814, 'RESUMO DE FATURAMENTO', 11, white, 'F2'));
-  parts.push(drawLine(350, 809, 548, 809, '0.30 0.34 0.44', 0.4));
-  parts.push(drawText(350, 796, `Emitido em ${issueDate}`, 8, '0.72 0.76 0.86'));
-  parts.push(drawText(350, 783, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 8, '0.60 0.66 0.76'));
+  parts.push(drawText(340, 814, 'RESUMO DE FATURAMENTO', 11, white, 'F2'));
+  parts.push(drawLine(340, 809, 548, 809, '0.30 0.34 0.44', 0.4));
+  parts.push(drawText(340, 798, `Emitido em ${issueDate}`, 8, '0.72 0.76 0.86'));
+  parts.push(drawText(340, 788, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 8, '0.60 0.66 0.76'));
   if (companyAddress) {
-    addSmallLines(350, 772, companyAddress, 42, 7.2, '0.52 0.58 0.67', 2);
+    addSmallLines(340, 778, companyAddress, 45, 7, '0.52 0.58 0.67', 2);
   } else {
-    parts.push(drawText(350, 770, 'Cobrança mensal premium e segura', 7.2, '0.52 0.58 0.67'));
+    parts.push(drawText(340, 778, 'Cobrança mensal premium e segura', 7.2, '0.52 0.58 0.67'));
   }
-  parts.push(drawText(350, 758, `Site ${siteDisplay}`, 7.2, '0.52 0.58 0.67'));
-  parts.push(drawText(350, 746, supportWhatsapp ? `WhatsApp ${supportWhatsapp}` : `Contato ${supportEmail}`, 7.2, '0.52 0.58 0.67'));
-  parts.push(...drawChip(480, 773, 84, statusLabel, status === 'PAGO' ? softGreen : brandYellow, status === 'PAGO' ? brandGreen : slate950));
-  parts.push(...drawChip(480, 749, 84, 'EMISSAO', '0.13 0.18 0.28', white));
+  parts.push(drawText(340, 768, `Site ${siteDisplay}`, 7.2, '0.52 0.58 0.67'));
+  parts.push(drawText(340, 758, supportWhatsapp ? `WhatsApp ${supportWhatsapp}` : `Contato ${supportEmail}`, 7.2, '0.52 0.58 0.67'));
+  
+  // badges
+  parts.push(...drawChip(480, 778, 84, statusLabel, status === 'PAGO' ? softGreen : brandYellow, status === 'PAGO' ? brandGreen : slate950));
+  parts.push(...drawChip(480, 758, 84, 'EMISSAO', '0.13 0.18 0.28', white));
 
   // CNPJ subtext on left
-  parts.push(drawText(M, 762, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 7.5, '0.50 0.55 0.65'));
+  parts.push(drawText(M, 765, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 7.5, '0.50 0.55 0.65'));
 
   // ════════════════════════════════════════════════════════════════════════
   // HERO VALUE BAND  (y 640–742)
