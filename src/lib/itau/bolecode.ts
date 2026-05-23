@@ -371,6 +371,7 @@ const PIX_EMV_FIELD_NAMES = [
 ];
 
 const PIX_MIN_PAYLOAD_LENGTH = 80;
+const PIX_GUI = 'BR.GOV.BCB.PIX';
 
 function isHttpUrl(value: string) {
   try {
@@ -387,36 +388,153 @@ export function normalizePixPayload(value?: string | null) {
   }
 
   return value
-    .replace(/\s+/g, '')
     .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\r\n\t\f\v]+/g, '')
     .trim();
 }
 
-export function validatePixPayload(value: string | null | undefined) {
-  const text = normalizePixPayload(value);
-  if (!text) {
-    return false;
+function normalizePixPayloadAggressive(value?: string | null) {
+  if (!value) {
+    return null;
   }
 
-  if (isHttpUrl(text) || text.length < PIX_MIN_PAYLOAD_LENGTH) {
-    return false;
-  }
+  return value
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+}
 
-  const normalized = text.toUpperCase();
-  return (
-    normalized.startsWith('000201') &&
-    normalized.includes('BR.GOV.BCB.PIX') &&
-    normalized.includes('5802BR') &&
-    /6304[0-9A-F]{4}$/i.test(text)
+function pixPayloadCandidates(value: string) {
+  const candidates = [normalizePixPayload(value), normalizePixPayloadAggressive(value)].filter(
+    (candidate): candidate is string => Boolean(candidate),
   );
+
+  return [...new Set(candidates)];
+}
+
+interface EmvTag {
+  id: string;
+  length: number;
+  value: string;
+  start: number;
+  end: number;
+}
+
+function parseEmvTags(payload: string): EmvTag[] | null {
+  const tags: EmvTag[] = [];
+  let cursor = 0;
+
+  while (cursor < payload.length) {
+    if (cursor + 4 > payload.length) {
+      return null;
+    }
+
+    const id = payload.slice(cursor, cursor + 2);
+    const lengthText = payload.slice(cursor + 2, cursor + 4);
+    if (!/^\d{2}$/.test(id) || !/^\d{2}$/.test(lengthText)) {
+      return null;
+    }
+
+    const length = Number(lengthText);
+    const valueStart = cursor + 4;
+    const valueEnd = valueStart + length;
+    if (valueEnd > payload.length) {
+      return null;
+    }
+
+    tags.push({
+      id,
+      length,
+      value: payload.slice(valueStart, valueEnd),
+      start: cursor,
+      end: valueEnd,
+    });
+    cursor = valueEnd;
+  }
+
+  return tags;
+}
+
+function crc16CcittFalse(value: string) {
+  let crc = 0xffff;
+
+  for (const byte of Buffer.from(value, 'ascii')) {
+    crc ^= byte << 8;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+      crc &= 0xffff;
+    }
+  }
+
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+function hasValidPixCrc(payload: string, tags: EmvTag[]) {
+  const crcTag = tags.at(-1);
+  if (!crcTag || crcTag.id !== '63' || crcTag.length !== 4 || !/^[0-9A-Fa-f]{4}$/.test(crcTag.value)) {
+    return false;
+  }
+
+  const crcInput = payload.slice(0, crcTag.start + 4);
+  return crc16CcittFalse(crcInput) === crcTag.value.toUpperCase();
+}
+
+function hasPixMerchantAccount(tags: EmvTag[]) {
+  return tags.some((tag) => {
+    const tagId = Number(tag.id);
+    if (tagId < 26 || tagId > 51) {
+      return false;
+    }
+
+    const nestedTags = parseEmvTags(tag.value);
+    return nestedTags?.some((nested) => nested.id === '00' && nested.value.toUpperCase() === PIX_GUI) ?? false;
+  });
+}
+
+function isValidPixPayloadCandidate(payload: string) {
+  if (isHttpUrl(payload) || payload.length < PIX_MIN_PAYLOAD_LENGTH || !payload.startsWith('000201')) {
+    return false;
+  }
+
+  const tags = parseEmvTags(payload);
+  if (!tags) {
+    return false;
+  }
+
+  const payloadFormat = tags.find((tag) => tag.id === '00');
+  const countryCode = tags.find((tag) => tag.id === '58');
+
+  return (
+    payloadFormat?.value === '01' &&
+    countryCode?.value.toUpperCase() === 'BR' &&
+    hasPixMerchantAccount(tags) &&
+    hasValidPixCrc(payload, tags)
+  );
+}
+
+function findValidPixPayload(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  for (const candidate of pixPayloadCandidates(value)) {
+    if (isValidPixPayloadCandidate(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+export function validatePixPayload(value: string | null | undefined) {
+  return Boolean(findValidPixPayload(value));
 }
 
 export const isPixPaymentPayload = validatePixPayload;
 
 export function extractPixPayload(value: unknown, seen = new WeakSet<object>()): string | null {
   if (typeof value === 'string') {
-    const payload = normalizePixPayload(value);
-    return validatePixPayload(payload) ? payload : null;
+    return findValidPixPayload(value);
   }
 
   if (!value || typeof value !== 'object') {
@@ -471,6 +589,93 @@ export function getPixPaymentPayload(...values: unknown[]) {
   return '';
 }
 
+function emvTag(id: string, value: string) {
+  if (value.length > 99) {
+    throw new Error(`Campo EMV ${id} excede 99 caracteres.`);
+  }
+
+  return `${id}${String(value.length).padStart(2, '0')}${value}`;
+}
+
+function sanitizePixText(value: string | null | undefined, fallback: string, maxLength: number) {
+  const sanitized = sanitizeItauText(value ?? fallback, maxLength).toUpperCase();
+  return (sanitized || fallback).slice(0, maxLength);
+}
+
+function sanitizePixTxid(value: string | null | undefined) {
+  const sanitized = (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .slice(0, 25);
+
+  return sanitized || '***';
+}
+
+function formatPixAmount(value: number | null | undefined) {
+  if (!Number.isFinite(value) || !value || value <= 0) {
+    return null;
+  }
+
+  return value.toFixed(2);
+}
+
+export function normalizePixLocation(value: string | null | undefined) {
+  const text = normalizePixPayloadAggressive(value);
+  if (!text) {
+    return null;
+  }
+
+  try {
+    const url = new URL(text);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return null;
+    }
+
+    return `${url.hostname}${url.pathname}${url.search}`;
+  } catch {
+    return text.includes('/') && text.toLowerCase().includes('pix') ? text : null;
+  }
+}
+
+export function isPixDynamicLocation(value: string | null | undefined) {
+  const location = normalizePixLocation(value);
+  return Boolean(location && location.length <= 77 && location.toLowerCase().includes('pix'));
+}
+
+export function buildPixPayloadFromLocation(input: {
+  location: string | null | undefined;
+  amount?: number | null;
+  merchantName?: string | null;
+  merchantCity?: string | null;
+  txid?: string | null;
+}) {
+  const location = normalizePixLocation(input.location);
+  if (!location || location.length > 77 || !isPixDynamicLocation(location)) {
+    return null;
+  }
+
+  const merchantAccount = emvTag('00', PIX_GUI) + emvTag('25', location);
+  const additionalData = emvTag('05', sanitizePixTxid(input.txid));
+  const amount = formatPixAmount(input.amount);
+  const payloadWithoutCrc = [
+    emvTag('00', '01'),
+    emvTag('01', '12'),
+    emvTag('26', merchantAccount),
+    emvTag('52', '0000'),
+    emvTag('53', '986'),
+    ...(amount ? [emvTag('54', amount)] : []),
+    emvTag('58', 'BR'),
+    emvTag('59', sanitizePixText(input.merchantName, 'SOLARA ENERGIA', 25)),
+    emvTag('60', sanitizePixText(input.merchantCity, 'SAO PAULO', 15)),
+    emvTag('62', additionalData),
+    '6304',
+  ].join('');
+
+  const payload = `${payloadWithoutCrc}${crc16CcittFalse(payloadWithoutCrc)}`;
+  return validatePixPayload(payload) ? payload : null;
+}
+
 function firstRecord(value: unknown) {
   if (Array.isArray(value)) {
     return asRecord(value[0]);
@@ -494,7 +699,7 @@ function readBolecodeResponse(payload: ItauBolecodeResponse): BolecodeOutput {
   const pixUrlCandidate =
     readFirstString([qrCodeRecord, pixRecord], ['location', 'url_pix', 'pix_url', 'url']) ||
     readFirstString([dataRecord, payloadRecord], ['pix_url', 'url_pix']);
-  const pixUrl = pixUrlCandidate && isHttpUrl(pixUrlCandidate) ? pixUrlCandidate : '';
+  const pixUrl = pixUrlCandidate && (isHttpUrl(pixUrlCandidate) || isPixDynamicLocation(pixUrlCandidate)) ? pixUrlCandidate : '';
   const genericUrl = readFirstString([dataRecord, payloadRecord], ['url']);
   const boletoUrl =
     readFirstString(boletoRecords, ['url_boleto', 'boleto_url', 'url_pdf', 'url_download', 'url_visualizacao', 'link_boleto']) ||
@@ -593,5 +798,17 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
     throw new ItauBolecodeError(response);
   }
 
-  return readBolecodeResponse(response.data);
+  const output = readBolecodeResponse(response.data);
+  if (!output.qrCode && output.pixUrl) {
+    output.qrCode =
+      buildPixPayloadFromLocation({
+        location: output.pixUrl,
+        amount: input.valor,
+        merchantName: process.env.PIX_MERCHANT_NAME || process.env.SOLARA_PIX_MERCHANT_NAME || 'SOLARA ENERGIA',
+        merchantCity: input.pagador.cidade || process.env.PIX_MERCHANT_CITY || 'SAO PAULO',
+        txid: null,
+      }) ?? '';
+  }
+
+  return output;
 }

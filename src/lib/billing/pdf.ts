@@ -1,4 +1,9 @@
-import { extractPixPayload, normalizePixPayload, validatePixPayload } from '@/lib/itau/bolecode';
+import {
+  buildPixPayloadFromLocation,
+  extractPixPayload,
+  normalizePixPayload,
+  validatePixPayload,
+} from '@/lib/itau/bolecode';
 
 export function formatCurrencyBRL(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -641,12 +646,17 @@ export interface BoletoPdfInput {
 }
 
 export function createBoletoPdfBuffer(input: BoletoPdfInput) {
-  const rawPixPayload = input.pixPayload || input.pixCopiaCola || input.pixQrCode || null;
-  const normalizedPixPayload = normalizePixPayload(rawPixPayload);
   const pixPayload =
     extractPixPayload(input.pixPayload) ??
     extractPixPayload(input.pixCopiaCola) ??
-    extractPixPayload(input.pixQrCode);
+    extractPixPayload(input.pixQrCode) ??
+    buildPixPayloadFromLocation({
+      location: input.pixUrl,
+      amount: input.amount,
+      merchantName: process.env.PIX_MERCHANT_NAME || process.env.SOLARA_PIX_MERCHANT_NAME || 'SOLARA ENERGIA',
+      merchantCity: process.env.PIX_MERCHANT_CITY || 'SAO PAULO',
+      txid: null,
+    });
   const pixFallbackUrl = isHttpUrlText(input.pixUrl) ? input.pixUrl!.trim() : null;
   const pixCopyPasteLabel = pixPayload ? 'Pix copia e cola' : pixFallbackUrl ? 'Link Pix Itau' : 'Pix indisponivel';
   const pixCopyPasteText =
@@ -655,11 +665,8 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   logInvalidPixPayload('pixPayload', input.pixPayload);
   logInvalidPixPayload('pixCopiaCola', input.pixCopiaCola);
   logInvalidPixPayload('pixQrCode', input.pixQrCode);
-  if (normalizedPixPayload && !normalizedPixPayload.startsWith('000201')) {
-    console.error('[billing-pdf] Payload Pix invalido: nao inicia com 000201.');
-  }
   if (!pixPayload && pixFallbackUrl) {
-    console.warn('[billing-pdf] pixUrl recebido sem payload EMV. A URL sera exibida apenas como fallback visual.');
+    console.warn('[billing-pdf] pixUrl recebido sem location Pix valida. A URL sera exibida apenas como fallback visual.');
   }
 
   const companyCnpj = input.companyCnpj || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null;
