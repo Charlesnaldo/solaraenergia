@@ -873,16 +873,16 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   }
 
   // vertical divider between columns
-  parts.push(drawLine(qrX - 16, innerY - 6, qrX - 16, payY + 12, borderColor, 0.4));
-  parts.push(drawText(qrX - 16, payY + 14, 'Abra no app do banco e confirme o pagamento', 7.2, slate600));
+  parts.push(drawLine(qrX - 16, innerY - 6, qrX - 16, payY + 28, borderColor, 0.4));
+  parts.push(drawText(qrX - 16, payY + 44, 'Abra no app do banco e confirme o pagamento', 7.2, slate600));
 
   // ── Barcode area ────────────────────────────────────────────────────────
-  const bcAreaY = payY + 12;
-  const bcH = 50;
-  parts.push(drawLine(lx, bcAreaY + bcH + 14, lx + W - 36, bcAreaY + bcH + 14, borderColor, 0.4));
-  parts.push(drawText(lx, bcAreaY + bcH + 8, 'Codigo de barras', 9, slate800, 'F2'));
-  parts.push(...drawBarcode(input.codigoBarras, lx, bcAreaY - 2, W - 36, bcH));
-  parts.push(drawText(lx, bcAreaY - 10, clean(input.codigoBarras), 6.5, slate400));
+  const bcAreaY = payY + 8;
+  const bcH = 40;
+  parts.push(drawLine(lx, bcAreaY + bcH + 12, lx + W - 36, bcAreaY + bcH + 12, borderColor, 0.4));
+  parts.push(drawText(lx, bcAreaY + bcH + 6, 'Codigo de barras', 8, slate800, 'F2'));
+  parts.push(...drawBarcode(input.codigoBarras, lx, bcAreaY, W - 36, bcH));
+  parts.push(drawText(lx, bcAreaY - 8, clean(input.codigoBarras), 6.5, slate400));
 
   // ════════════════════════════════════════════════════════════════════════
   // NOTICE BAR  (y 96–140)
