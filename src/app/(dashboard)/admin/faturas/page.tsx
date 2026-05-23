@@ -282,7 +282,7 @@ export default function AdminFaturasPage() {
       </section>
 
       <section className="rounded-[1.5rem] border border-white/10 bg-slate-950/60 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.2)] md:rounded-[1.75rem] md:p-5">
-        <div className="space-y-3 md:hidden">
+        <div className="grid gap-3 xl:grid-cols-2">
           {filteredClients.map((cliente) => (
             <article key={cliente.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
               <div className="flex items-start justify-between gap-3">
@@ -411,7 +411,7 @@ export default function AdminFaturasPage() {
           ))}
         </div>
 
-        <div className="hidden overflow-x-auto md:block">
+        <div className="hidden">
           <table className="min-w-[1280px] table-fixed text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left text-slate-400">

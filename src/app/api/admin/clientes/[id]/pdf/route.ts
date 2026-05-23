@@ -93,7 +93,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     });
 
     const filename = `boleto-${cliente.id}-${dueDate}.pdf`;
-    const { error: updateError } = await supabase
+    await supabase
       .from('faturamento')
       .update({
         valor,
@@ -104,10 +104,6 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
         pdf_gerado_em: new Date().toISOString(),
       })
       .eq('id', faturamento.id);
-
-    if (updateError) {
-      return NextResponse.json({ error: `Erro ao armazenar PDF: ${updateError.message}` }, { status: 500 });
-    }
 
     return new NextResponse(pdf, {
       status: 200,
