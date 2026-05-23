@@ -1,5 +1,40 @@
-export function money(value: number) {
+export function formatCurrencyBRL(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+}
+
+export function money(value: number) {
+  return formatCurrencyBRL(value);
+}
+
+export function formatDateBR(value: string | Date | null | undefined) {
+  if (!value) {
+    return 'Nao informado';
+  }
+
+  const date = value instanceof Date ? value : new Date(`${String(value).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return 'Nao informado';
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(date);
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, '');
+}
+
+export function maskCpfCnpj(value: string | null | undefined) {
+  const digits = onlyDigits(value ?? '');
+
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  }
+
+  if (digits.length === 14) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+  }
+
+  return clean(value);
 }
 
 type Matrix = boolean[][];
@@ -125,8 +160,8 @@ function wrap(value: string, maxLength: number) {
   return lines;
 }
 
-function drawText(x: number, y: number, text: string, size = 10, color = '0 0 0') {
-  return `BT ${color} rg /F1 ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${escapePdfText(text)}) Tj ET`;
+function drawText(x: number, y: number, text: string, size = 10, color = '0 0 0', font = 'F1') {
+  return `BT ${color} rg /${font} ${size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${escapePdfText(text)}) Tj ET`;
 }
 
 function drawRect(x: number, y: number, width: number, height: number, color = '0 0 0') {
@@ -135,6 +170,41 @@ function drawRect(x: number, y: number, width: number, height: number, color = '
 
 function drawStrokeRect(x: number, y: number, width: number, height: number, color = '0 0 0') {
   return `${color} RG ${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re S`;
+}
+
+function drawRoundRect(x: number, y: number, width: number, height: number, radius: number, fill = '1 1 1', stroke?: string) {
+  const r = Math.min(radius, width / 2, height / 2);
+  const c = r * 0.5522847498;
+  const path = [
+    `${fill} rg`,
+    ...(stroke ? [`${stroke} RG`] : []),
+    `${(x + r).toFixed(2)} ${y.toFixed(2)} m`,
+    `${(x + width - r).toFixed(2)} ${y.toFixed(2)} l`,
+    `${(x + width - r + c).toFixed(2)} ${y.toFixed(2)} ${(x + width).toFixed(2)} ${(y + r - c).toFixed(2)} ${(x + width).toFixed(2)} ${(y + r).toFixed(2)} c`,
+    `${(x + width).toFixed(2)} ${(y + height - r).toFixed(2)} l`,
+    `${(x + width).toFixed(2)} ${(y + height - r + c).toFixed(2)} ${(x + width - r + c).toFixed(2)} ${(y + height).toFixed(2)} ${(x + width - r).toFixed(2)} ${(y + height).toFixed(2)} c`,
+    `${(x + r).toFixed(2)} ${(y + height).toFixed(2)} l`,
+    `${(x + r - c).toFixed(2)} ${(y + height).toFixed(2)} ${x.toFixed(2)} ${(y + height - r + c).toFixed(2)} ${x.toFixed(2)} ${(y + height - r).toFixed(2)} c`,
+    `${x.toFixed(2)} ${(y + r).toFixed(2)} l`,
+    `${x.toFixed(2)} ${(y + r - c).toFixed(2)} ${(x + r - c).toFixed(2)} ${y.toFixed(2)} ${(x + r).toFixed(2)} ${y.toFixed(2)} c`,
+    stroke ? 'B' : 'f',
+  ];
+
+  return path.join(' ');
+}
+
+function drawCircle(cx: number, cy: number, radius: number, color: string) {
+  const c = radius * 0.5522847498;
+
+  return [
+    `${color} rg`,
+    `${(cx + radius).toFixed(2)} ${cy.toFixed(2)} m`,
+    `${(cx + radius).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx + c).toFixed(2)} ${(cy + radius).toFixed(2)} ${cx.toFixed(2)} ${(cy + radius).toFixed(2)} c`,
+    `${(cx - c).toFixed(2)} ${(cy + radius).toFixed(2)} ${(cx - radius).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx - radius).toFixed(2)} ${cy.toFixed(2)} c`,
+    `${(cx - radius).toFixed(2)} ${(cy - c).toFixed(2)} ${(cx - c).toFixed(2)} ${(cy - radius).toFixed(2)} ${cx.toFixed(2)} ${(cy - radius).toFixed(2)} c`,
+    `${(cx + c).toFixed(2)} ${(cy - radius).toFixed(2)} ${(cx + radius).toFixed(2)} ${(cy - c).toFixed(2)} ${(cx + radius).toFixed(2)} ${cy.toFixed(2)} c`,
+    'f',
+  ].join(' ');
 }
 
 function drawBarcode(codigoBarras: string | null | undefined, x: number, y: number, maxWidth: number, height: number) {
@@ -443,6 +513,16 @@ export function createBoletoPdfBuffer(input: {
   clientDocument: string;
   amount: number;
   dueDate: string;
+  status?: string | null;
+  faturamentoId?: string | null;
+  issueDate?: string | null;
+  description?: string | null;
+  clientAddress?: string | null;
+  installationAddress?: string | null;
+  companyCnpj?: string | null;
+  supportEmail?: string | null;
+  supportWhatsapp?: string | null;
+  siteUrl?: string | null;
   boletoUrl?: string | null;
   linhaDigitavel?: string | null;
   codigoBarras?: string | null;
@@ -450,44 +530,117 @@ export function createBoletoPdfBuffer(input: {
   pixQrCode?: string | null;
 }) {
   const qrValue = input.pixQrCode || input.pixUrl;
-  const parts: string[] = [
-    drawRect(0, 0, 595, 842, '1 1 1'),
-    drawText(72, 780, 'Solara Energia', 20),
-    drawText(72, 758, 'Boleto de cobranca', 12, '0.3 0.3 0.3'),
-    drawStrokeRect(72, 705, 451, 42, '0.8 0.8 0.8'),
-    drawText(84, 730, `Valor: ${money(input.amount)}`, 13),
-    drawText(260, 730, `Vencimento: ${input.dueDate}`, 13),
-    drawText(84, 714, `Documento: ${input.clientDocument}`, 9, '0.3 0.3 0.3'),
-    drawText(72, 680, 'Pagador', 12),
-    drawText(72, 663, input.clientName, 10),
-    drawText(72, 625, 'Linha digitavel', 12),
-  ];
+  const companyCnpj = input.companyCnpj || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null;
+  const supportEmail = input.supportEmail || process.env.BILLING_SUPPORT_EMAIL || 'financeiro@solaraenergia.com.br';
+  const supportWhatsapp = input.supportWhatsapp || process.env.BILLING_SUPPORT_WHATSAPP || process.env.NEXT_PUBLIC_WHATSAPP || 'Atendimento Solara';
+  const siteUrl = input.siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'solaraenergia.com.br';
+  const issueDate = input.issueDate ? formatDateBR(input.issueDate) : formatDateBR(new Date());
+  const dueDate = formatDateBR(input.dueDate);
+  const status = clean(input.status || 'gerado').toUpperCase();
+  const description = input.description || 'Servicos de energia solar / faturamento mensal';
+  const clientAddress = clean(input.clientAddress);
+  const installationAddress = clean(input.installationAddress || input.clientAddress);
+  const brandYellow = '0.98 0.80 0.08';
+  const brandGreen = '0.06 0.55 0.38';
+  const slate950 = '0.01 0.02 0.06';
+  const slate800 = '0.12 0.16 0.24';
+  const slate600 = '0.28 0.33 0.41';
+  const slate500 = '0.39 0.45 0.55';
+  const slate50 = '0.98 0.99 1';
+  const border = '0.85 0.88 0.92';
+  const softYellow = '1 0.97 0.83';
+  const softGreen = '0.88 0.97 0.93';
+  const parts: string[] = [];
 
-  wrap(clean(input.linhaDigitavel), 62).slice(0, 2).forEach((line, index) => {
-    parts.push(drawText(72, 607 - index * 14, line, 10));
-  });
+  function addLabelValue(x: number, y: number, label: string, value: string, maxLength = 34) {
+    parts.push(drawText(x, y, label.toUpperCase(), 7, slate500, 'F2'));
+    wrap(clean(value), maxLength).slice(0, 2).forEach((line, index) => {
+      parts.push(drawText(x, y - 13 - index * 11, line, 9, slate800));
+    });
+  }
 
-  parts.push(drawText(72, 558, 'Pix copia e cola / URL', 12));
-  wrap(clean(qrValue), 58).slice(0, 4).forEach((line, index) => {
-    parts.push(drawText(72, 540 - index * 13, line, 8));
-  });
+  function addSmallLines(x: number, y: number, value: string, maxLength: number, size = 8, color = slate600, limit = 3) {
+    wrap(clean(value), maxLength).slice(0, limit).forEach((line, index) => {
+      parts.push(drawText(x, y - index * (size + 3), line, size, color));
+    });
+  }
 
-  parts.push(drawText(395, 625, 'QR Code Pix', 12));
-  parts.push(...drawQrCode(qrValue, 395, 450, 128));
+  parts.push(drawRect(0, 0, 595, 842, '1 1 1'));
+  parts.push(drawRect(0, 748, 595, 94, slate950));
+  parts.push(drawRect(0, 748, 595, 7, brandYellow));
+  parts.push(drawCircle(60, 792, 20, brandYellow));
+  parts.push(drawCircle(60, 792, 9, '1 1 1'));
+  parts.push(drawText(92, 802, 'Solara Energia', 19, '1 1 1', 'F2'));
+  parts.push(drawText(93, 784, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : 'Energia solar por assinatura', 8, '0.78 0.83 0.90'));
+  parts.push(drawText(395, 804, 'Resumo de Faturamento', 15, '1 1 1', 'F2'));
+  parts.push(drawText(397, 786, `Emitido em ${issueDate}`, 8, '0.78 0.83 0.90'));
 
-  parts.push(drawText(72, 155, 'Codigo de barras', 12));
-  parts.push(...drawBarcode(input.codigoBarras, 72, 88, 450, 50));
-  parts.push(drawText(72, 68, clean(input.codigoBarras), 8, '0.25 0.25 0.25'));
-  parts.push(drawText(72, 42, `Boleto URL: ${clean(input.boletoUrl)}`, 8, '0.35 0.35 0.35'));
+  parts.push(drawRoundRect(48, 648, 310, 78, 10, slate50, border));
+  parts.push(drawText(70, 704, 'VALOR DO FATURAMENTO', 8, slate500, 'F2'));
+  parts.push(drawText(70, 674, formatCurrencyBRL(input.amount), 26, slate950, 'F2'));
+  parts.push(drawText(72, 658, description, 8, slate600));
+
+  parts.push(drawRoundRect(374, 648, 173, 78, 10, softYellow, '0.96 0.80 0.20'));
+  parts.push(drawText(394, 704, 'VENCIMENTO', 8, slate600, 'F2'));
+  parts.push(drawText(394, 681, dueDate, 17, slate950, 'F2'));
+  parts.push(drawRoundRect(394, 657, 86, 18, 9, softGreen, '0.54 0.85 0.68'));
+  parts.push(drawText(409, 662, status, 7, brandGreen, 'F2'));
+
+  parts.push(drawRoundRect(48, 522, 238, 98, 10, '1 1 1', border));
+  parts.push(drawText(68, 597, 'Dados do cliente', 12, slate950, 'F2'));
+  addLabelValue(68, 575, 'Cliente', input.clientName, 28);
+  addLabelValue(68, 535, 'CPF/CNPJ', maskCpfCnpj(input.clientDocument), 28);
+
+  parts.push(drawRoundRect(307, 522, 240, 98, 10, '1 1 1', border));
+  parts.push(drawText(327, 597, 'Instalacao / unidade consumidora', 12, slate950, 'F2'));
+  addSmallLines(327, 575, installationAddress, 34, 8, slate600, 3);
+  parts.push(drawText(327, 531, 'Endereco do cliente', 7, slate500, 'F2'));
+  addSmallLines(327, 518, clientAddress, 36, 8, slate600, 2);
+
+  parts.push(drawRoundRect(48, 432, 499, 66, 10, '1 1 1', border));
+  parts.push(drawText(68, 476, 'Detalhamento da cobranca', 12, slate950, 'F2'));
+  addLabelValue(68, 455, 'Descricao', description, 44);
+  addLabelValue(333, 455, 'Faturamento ID', clean(input.faturamentoId), 27);
+
+  parts.push(drawRoundRect(48, 178, 499, 230, 12, '1 1 1', border));
+  parts.push(drawRoundRect(68, 370, 190, 24, 12, brandYellow));
+  parts.push(drawText(88, 377, 'Pague com Pix ou Boleto', 10, slate950, 'F2'));
+  parts.push(drawText(68, 347, 'Linha digitavel', 10, slate950, 'F2'));
+  addSmallLines(68, 331, clean(input.linhaDigitavel), 58, 8, slate800, 3);
+  parts.push(drawText(68, 287, 'Pix copia e cola / URL', 10, slate950, 'F2'));
+  addSmallLines(68, 271, clean(qrValue), 56, 7, slate600, 5);
+  parts.push(drawText(392, 348, 'QR Code Pix', 10, slate950, 'F2'));
+  parts.push(...drawQrCode(qrValue, 392, 220, 116));
+  parts.push(drawText(68, 214, 'Codigo de barras', 10, slate950, 'F2'));
+  parts.push(...drawBarcode(input.codigoBarras, 68, 184, 290, 24));
+  parts.push(drawText(68, 168, clean(input.codigoBarras), 7, slate600));
+
+  parts.push(drawRoundRect(48, 105, 499, 48, 10, '1 0.99 0.93', '0.95 0.83 0.34'));
+  parts.push(drawText(68, 132, 'Observacao', 9, slate950, 'F2'));
+  parts.push(drawText(68, 117, 'Apos o pagamento, a compensacao podera ocorrer conforme o prazo da instituicao financeira.', 8, slate600));
+
+  parts.push(drawRect(0, 0, 595, 82, slate950));
+  parts.push(drawText(48, 54, 'Atendimento', 9, '1 1 1', 'F2'));
+  parts.push(drawText(48, 39, supportEmail, 8, '0.78 0.83 0.90'));
+  parts.push(drawText(220, 54, 'WhatsApp', 9, '1 1 1', 'F2'));
+  parts.push(drawText(220, 39, supportWhatsapp, 8, '0.78 0.83 0.90'));
+  parts.push(drawText(392, 54, 'Site', 9, '1 1 1', 'F2'));
+  parts.push(drawText(392, 39, siteUrl.replace(/^https?:\/\//, ''), 8, '0.78 0.83 0.90'));
+  parts.push(drawText(48, 18, 'Solara Energia: transparencia, economia e confianca na sua jornada de energia solar.', 8, '0.78 0.83 0.90'));
+
+  if (input.boletoUrl) {
+    parts.push(drawText(392, 196, `Link boleto: ${input.boletoUrl}`, 6, slate500));
+  }
 
   const content = parts.join('\n');
   const objects = [
     '%PDF-1.4\n',
     '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n',
     '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n',
-    '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n',
+    '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >> endobj\n',
     '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n',
-    `5 0 obj << /Length ${Buffer.byteLength(content, 'utf8')} >> stream\n${content}\nendstream endobj\n`,
+    '5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> endobj\n',
+    `6 0 obj << /Length ${Buffer.byteLength(content, 'utf8')} >> stream\n${content}\nendstream endobj\n`,
   ];
 
   let offset = 0;
@@ -504,10 +657,10 @@ export function createBoletoPdfBuffer(input: {
   const xrefStart = offset;
   const xrefLines = [
     'xref\n',
-    '0 6\n',
+    '0 7\n',
     '0000000000 65535 f \n',
     ...offsets.slice(1).map((off) => `${String(off).padStart(10, '0')} 00000 n \n`),
-    'trailer << /Size 6 /Root 1 0 R >>\n',
+    'trailer << /Size 7 /Root 1 0 R >>\n',
     `startxref\n${xrefStart}\n%%EOF`,
   ].join('');
 
