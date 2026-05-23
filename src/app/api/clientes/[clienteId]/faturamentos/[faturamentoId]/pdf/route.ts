@@ -47,7 +47,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ client
       return NextResponse.json({ error: 'Dados do faturamento invalidos.' }, { status: 400 });
     }
 
-    const pdf = createFaturamentoPdf(faturamento);
+    const pdf = await createFaturamentoPdf(faturamento);
     await logPdfGeneration({
       usuarioId: auth.user.id,
       clienteId,

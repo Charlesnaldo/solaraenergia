@@ -54,7 +54,7 @@ export async function POST(req: Request) {
           clientName: clienteInfo.nome,
           dueDate: data.data_vencimento,
           amount,
-          pdfBuffer: createBoletoPdfBuffer({
+          pdfBuffer: await createBoletoPdfBuffer({
             clientName: clienteInfo.nome,
             clientDocument: clienteInfo.cpf_cnpj,
             amount,

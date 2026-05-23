@@ -17,11 +17,11 @@ function buildAddress(cliente: FaturamentoPdfRecord['clientes']) {
   return structured || cliente.endereco_completo || null;
 }
 
-export function createFaturamentoPdf(record: FaturamentoPdfRecord) {
+export async function createFaturamentoPdf(record: FaturamentoPdfRecord) {
   const address = buildAddress(record.clientes);
   const pixPaymentPayload = getPixPaymentPayload(record.pix_qr_code, record.api_response);
 
-  return createBoletoPdfBuffer({
+  return await createBoletoPdfBuffer({
     clientName: record.clientes.nome,
     clientDocument: record.clientes.cpf_cnpj,
     amount: Number(record.valor),

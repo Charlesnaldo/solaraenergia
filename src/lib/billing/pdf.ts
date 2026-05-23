@@ -1,4 +1,6 @@
+import { PDFDocument } from 'pdf-lib';
 import { extractPixPayload, normalizePixPayload, validatePixPayload } from '@/lib/itau/bolecode';
+import { getLogoPngBuffer } from '@/lib/pdf/getLogoPngBuffer';
 
 export function formatCurrencyBRL(value: number) {
   const amount = new Intl.NumberFormat('pt-BR', {
@@ -158,16 +160,6 @@ function circle(cx: number, cy: number, r: number, color: string) {
   ].join(' ');
 }
 
-function diamond(cx: number, cy: number, w: number, h: number, color: string) {
-  return [
-    `${color} rg`,
-    `${cx.toFixed(2)} ${(cy + h / 2).toFixed(2)} m`,
-    `${(cx + w / 2).toFixed(2)} ${cy.toFixed(2)} l`,
-    `${cx.toFixed(2)} ${(cy - h / 2).toFixed(2)} l`,
-    `${(cx - w / 2).toFixed(2)} ${cy.toFixed(2)} l f`,
-  ].join(' ');
-}
-
 // ─── PDF Vector Icons (12×12 at origin, translate via caller) ─────────────────
 // Each returns PDF path operators. All icons drawn at ~12pt baseline.
 
@@ -313,28 +305,6 @@ function iconEmail(x: number, y: number, color: string, s = 1): string[] {
 }
 
 // ─── Solara Logo ───────────────────────────────────────────────────────────────
-
-function solaraLogo(x: number, y: number, scale = 1): string[] {
-  const orange = '1 0.68 0.20';
-  const yellow = '0.98 0.65 0.15';
-  const white = '1 1 1';
-  const cx = x + 20 * scale;
-  const cy = y + 20 * scale;
-  return [
-    diamond(cx, cy + 20 * scale, 8 * scale, 18 * scale, orange),
-    diamond(cx, cy - 20 * scale, 8 * scale, 18 * scale, orange),
-    diamond(cx - 20 * scale, cy, 18 * scale, 8 * scale, orange),
-    diamond(cx + 20 * scale, cy, 18 * scale, 8 * scale, orange),
-    diamond(cx - 14 * scale, cy + 14 * scale, 10 * scale, 16 * scale, orange),
-    diamond(cx + 14 * scale, cy + 14 * scale, 10 * scale, 16 * scale, orange),
-    diamond(cx - 14 * scale, cy - 14 * scale, 10 * scale, 16 * scale, orange),
-    diamond(cx + 14 * scale, cy - 14 * scale, 10 * scale, 16 * scale, orange),
-    circle(cx, cy, 9 * scale, white),
-    circle(cx, cy, 4 * scale, orange),
-    tx(x + 54 * scale, y + 25 * scale, 'Solara', 25 * scale, white, 'F2'),
-    tx(x + 94 * scale, y + 7 * scale, 'ENERGIA', 8 * scale, yellow, 'F2'),
-  ];
-}
 
 // ─── Barcode ───────────────────────────────────────────────────────────────────
 
@@ -666,7 +636,7 @@ const MR = 40;       // margin right
 const CW = PAGE_W - ML - MR; // content width = 515
 const GAP = 10;      // gap between cards
 
-export function createBoletoPdfBuffer(input: BoletoPdfInput) {
+export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
 
   // ── Resolve Pix ────────────────────────────────────────────────────────
   const pixPayload =
@@ -701,7 +671,7 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const yellow   = '0.98 0.80 0.08';
   const orange   = '1 0.68 0.20';
   const green    = '0.06 0.55 0.38';
-  const ink      = '0.01 0.02 0.06';   // slate-950
+  const ink      = '0.008 0.024 0.090'; // #020617
   const ink800   = '0.12 0.16 0.24';   // slate-800
   const ink600   = '0.28 0.33 0.41';   // slate-600
   const ink400   = '0.55 0.60 0.69';   // slate-400
@@ -769,12 +739,8 @@ export function createBoletoPdfBuffer(input: BoletoPdfInput) {
   const HDR_Y = 750;
   const HDR_H = 92;
   p.push(rect(0, HDR_Y, PAGE_W, HDR_H, ink));
-  // top accent bars
-  p.push(rect(0, PAGE_H - 4, PAGE_W, 4, yellow));
-  p.push(rect(0, PAGE_H - 8, PAGE_W, 4, orange));
-
-  // Logo left
-  p.push(...solaraLogo(ML, 776, 0.82));
+  p.push(rect(0, PAGE_H - 5, PAGE_W, 5, yellow));
+  p.push(line(0, HDR_Y, PAGE_W, HDR_Y, '0.12 0.16 0.24', 0.5));
 
   // Vertical separator
   p.push(line(320, HDR_Y + 10, 320, PAGE_H - 10, '0.18 0.20 0.30', 0.5));
@@ -1016,5 +982,20 @@ footerCols.forEach(({ iconFn, label, value }, i) => {
   ].join('');
 
   chunks.push(Buffer.from(xrefLines, 'utf8'));
-  return Buffer.concat(chunks);
+
+  const pdfDoc = await PDFDocument.load(Buffer.concat(chunks));
+  const [page] = pdfDoc.getPages();
+  const logoBuffer = await getLogoPngBuffer();
+  const logoImage = await pdfDoc.embedPng(logoBuffer);
+  const logoDims = logoImage.scale(0.58);
+
+  page.drawImage(logoImage, {
+    x: 40,
+    y: 772,
+    width: logoDims.width,
+    height: logoDims.height,
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  return Buffer.from(pdfBytes);
 }
