@@ -7,7 +7,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import '../../globals.css';
 
 const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/clientes', label: 'Clientes', icon: Users },
   { href: '/admin/faturas', label: 'Boletos e Itau', icon: FileText },
   { href: '/admin/testes', label: 'Testes', icon: FlaskConical },
