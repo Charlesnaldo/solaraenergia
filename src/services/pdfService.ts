@@ -1,5 +1,5 @@
 import { createBoletoPdfBuffer } from '@/lib/billing/pdf';
-import { getPixPaymentPayload } from '@/lib/itau/bolecode';
+import { getPixPaymentPayload, normalizePixPayload, validatePixPayload } from '@/lib/itau/bolecode';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import type { FaturamentoPdfRecord } from '@/services/faturamentoService';
 
@@ -19,7 +19,29 @@ function buildAddress(cliente: FaturamentoPdfRecord['clientes']) {
 
 export async function createFaturamentoPdf(record: FaturamentoPdfRecord) {
   const address = buildAddress(record.clientes);
-  const pixPaymentPayload = getPixPaymentPayload(record.pix_qr_code, record.api_response);
+  const hasItauRawResponse = record.api_response !== null && record.api_response !== undefined;
+  const pixPayloadFromItau = getPixPaymentPayload(record.api_response);
+  const pixPayloadSaved = normalizePixPayload(record.pix_qr_code);
+  const pixPaymentPayload =
+    pixPayloadFromItau ||
+    (!hasItauRawResponse && pixPayloadSaved && validatePixPayload(pixPayloadSaved) ? pixPayloadSaved : '');
+
+  console.log('PIX PAYLOAD RECEBIDO DO ITAU', pixPayloadFromItau || null);
+  console.log('PIX PAYLOAD SALVO NO BANCO', pixPayloadSaved || null);
+
+  if (pixPayloadFromItau && pixPayloadSaved !== pixPayloadFromItau) {
+    console.warn('[billing-pdf] Payload Pix salvo diverge do payload oficial do Itaú. Atualizando pix_qr_code.');
+
+    const supabase = createSupabaseServiceClient();
+    const { error } = await supabase
+      .from('faturamento')
+      .update({ pix_qr_code: pixPayloadFromItau })
+      .eq('id', record.id);
+
+    if (error) {
+      console.error('[billing-pdf] Erro ao atualizar pix_qr_code com payload oficial do Itaú:', error.message);
+    }
+  }
 
   return await createBoletoPdfBuffer({
     clientName: record.clientes.nome,

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import { createBoletoPdfBuffer } from '@/lib/billing/pdf';
-import { getPixPaymentPayload } from '@/lib/itau/bolecode';
+import { getPixPaymentPayload, normalizePixPayload, validatePixPayload } from '@/lib/itau/bolecode';
 import { sendBoletoEmail, sendBoletoPdfEmail } from '@/lib/notifications/email';
 import { getAuthenticatedAdminUser } from '@/lib/auth/admin';
 
@@ -40,7 +40,27 @@ export async function POST(req: Request) {
     }
 
     const amount = Number(data.valor);
-    const pixPaymentPayload = getPixPaymentPayload(data.pix_qr_code, data.api_response);
+    const hasItauRawResponse = data.api_response !== null && data.api_response !== undefined;
+    const pixPayloadFromItau = getPixPaymentPayload(data.api_response);
+    const pixPayloadSaved = normalizePixPayload(data.pix_qr_code);
+    const pixPaymentPayload =
+      pixPayloadFromItau ||
+      (!hasItauRawResponse && pixPayloadSaved && validatePixPayload(pixPayloadSaved) ? pixPayloadSaved : '');
+
+    console.log('PIX PAYLOAD RECEBIDO DO ITAU', pixPayloadFromItau || null);
+    console.log('PIX PAYLOAD SALVO NO BANCO', pixPayloadSaved || null);
+
+    if (pixPayloadFromItau && pixPayloadSaved !== pixPayloadFromItau) {
+      console.warn('[billing-pdf] Payload Pix salvo diverge do payload oficial do Itaú. Atualizando pix_qr_code.');
+      const { error: updatePixError } = await supabase
+        .from('faturamento')
+        .update({ pix_qr_code: pixPayloadFromItau })
+        .eq('id', data.id);
+
+      if (updatePixError) {
+        console.error('[billing-pdf] Erro ao atualizar pix_qr_code com payload oficial do Itaú:', updatePixError.message);
+      }
+    }
     const emailResult = data.boleto_url
       ? await sendBoletoEmail({
           to: clienteInfo.email,

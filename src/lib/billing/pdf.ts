@@ -702,6 +702,7 @@ export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
 
   // ── Resolve Pix ────────────────────────────────────────────────────────
   const pixPayload = resolveOfficialPixPayload(input.pixPayload, input.pixCopiaCola, input.pixQrCode);
+  console.log('PIX PAYLOAD USADO NO PDF', pixPayload);
   const pixCopyLabel = pixPayload ? 'Pix Cópia e Cola' : 'Pix indisponível';
   const pixCopyText = pixPayload ?? 'Pix indisponível. Utilize boleto.';
 

@@ -35,6 +35,7 @@ export async function gerarBoletoParaCliente(params: {
     },
     simulacao: params.simulacao,
   });
+  console.log('PIX PAYLOAD RECEBIDO DO ITAU', itau.qrCode || null);
 
   if (params.simulacao) {
     return {
@@ -89,6 +90,8 @@ export async function gerarBoletoParaCliente(params: {
 
     throw new Error(`Erro ao salvar faturamento: ${faturamentoError.message}`);
   }
+
+  console.log('PIX PAYLOAD SALVO NO BANCO', faturamento.pix_qr_code || null);
 
   return faturamento;
 }

@@ -346,23 +346,30 @@ const PIX_EMV_FIELD_NAMES = [
   'pixPayload',
   'pix_payload',
   'pixCopiaCola',
+  'pixCopiaECola',
   'pix_copia_cola',
+  'pix_copia_e_cola',
   'emv',
   'emv_qrcode',
   'emv_qr_code',
   'qr_code_emv',
   'qrcode_emv',
+  'qrCode',
+  'QRCode',
   'qr_code',
   'qrcode',
   'qrcode_pix',
   'qr_code_pix',
+  'payload',
+  'payloadPix',
   'payload_pix',
   'brcode',
+  'brCode',
+  'BRCode',
   'br_code',
+  'copiaECola',
   'copia_cola',
   'copia_e_cola',
-  'pix_copia_cola',
-  'pix_copia_e_cola',
   'codigo_pix',
   'codigo_qrcode',
   'codigo_qr_code',
@@ -563,6 +570,10 @@ export function extractPixPayload(value: unknown, seen = new WeakSet<object>()):
 
   if (Array.isArray(value)) {
     for (const item of value) {
+      if (!item || typeof item !== 'object') {
+        continue;
+      }
+
       const found = extractPixPayload(item, seen);
       if (found) {
         return found;
@@ -584,6 +595,10 @@ export function extractPixPayload(value: unknown, seen = new WeakSet<object>()):
   }
 
   for (const nested of Object.values(record)) {
+    if (!nested || typeof nested !== 'object') {
+      continue;
+    }
+
     const found = extractPixPayload(nested, seen);
     if (found) {
       return found;
@@ -632,7 +647,7 @@ function readBolecodeResponse(payload: ItauBolecodeResponse): BolecodeOutput {
   const boletoUrl =
     readFirstString(boletoRecords, ['url_boleto', 'boleto_url', 'url_pdf', 'url_download', 'url_visualizacao', 'link_boleto']) ||
     (genericUrl && genericUrl !== pixUrl ? genericUrl : '');
-  const qrCode = getPixPaymentPayload(qrCodeRecord, pixRecord, boletoRecord, boletoIndividual, dataRecord, payloadRecord);
+  const qrCode = getPixPaymentPayload(qrCodeRecord, pixRecord, dataRecord, payloadRecord, boletoRecord, boletoIndividual);
 
   return {
     idBoleto: readFirstString(boletoRecords, ['id_boleto', 'id_boleto_pix', 'id', 'numero_boleto']) || crypto.randomUUID(),
@@ -721,6 +736,7 @@ export async function emitirBolecode(input: EmitirBolecodeInput): Promise<Boleco
     },
     body: JSON.stringify(payload),
   });
+  console.log('ITAU RAW RESPONSE', JSON.stringify(response, null, 2));
 
   if (response.status < 200 || response.status >= 300) {
     throw new ItauBolecodeError(response);
