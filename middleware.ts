@@ -5,9 +5,10 @@ import { isTwoFactorCookieValid } from '@/lib/auth/two-factor';
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request);
   const isAdminPage = request.nextUrl.pathname.startsWith('/admin');
+  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard');
   const isAdminApi = request.nextUrl.pathname.startsWith('/api/admin');
 
-  if (isAdminPage || isAdminApi) {
+  if (isAdminPage || isDashboardPage || isAdminApi) {
     const role = user?.app_metadata?.role;
     const hasTwoFactor = await isTwoFactorCookieValid(request.cookies.get('solara_admin_2fa')?.value, user?.id);
     const isAdmin = (role === 'admin' || role === 'service_role') && hasTwoFactor;
@@ -28,5 +29,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/api/admin/:path*'],
 };

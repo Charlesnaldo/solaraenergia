@@ -31,7 +31,7 @@ export default async function SaasDashboardLayout({ children }: { children: Reac
 
   return (
     <DashboardProviders role={role}>
-      <DashboardShell>{children}</DashboardShell>
+      <DashboardShell basePath="/dashboard">{children}</DashboardShell>
     </DashboardProviders>
   );
 }

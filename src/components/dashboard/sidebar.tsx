@@ -9,6 +9,7 @@ import {
   Bolt,
   CreditCard,
   FileText,
+  FlaskConical,
   Gauge,
   Layers3,
   PlugZap,
@@ -21,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useDashboardStore } from '@/stores/dashboard-store';
 
-const navItems = [
+const saasNavItems = [
   { label: 'Dashboard', href: '/dashboard', icon: Gauge },
   { label: 'Clientes', href: '/dashboard/clientes', icon: Users },
   { label: 'Faturamentos', href: '/dashboard/faturamentos', icon: ReceiptText },
@@ -35,10 +36,30 @@ const navItems = [
   { label: 'Configurações', href: '/dashboard/configuracoes', icon: Settings },
 ];
 
-export function DashboardSidebar() {
+const adminNavItems = [
+  { label: 'Dashboard', href: '/admin', icon: Gauge },
+  { label: 'Clientes', href: '/admin/clientes', icon: Users },
+  { label: 'Boletos Itaú', href: '/admin/faturas', icon: ReceiptText },
+  { label: 'Cobranças', href: '/admin/cobrancas', icon: FileText },
+  { label: 'Pagamentos', href: '/admin/pagamentos', icon: CreditCard },
+  { label: 'Energia', href: '/admin/energia', icon: Bolt },
+  { label: 'Relatórios', href: '/admin/relatorios', icon: BarChart3 },
+  { label: 'Integrações', href: '/admin/integracoes', icon: PlugZap },
+  { label: 'Usuários', href: '/admin/usuarios', icon: ShieldCheck },
+  { label: 'Logs', href: '/admin/logs', icon: Activity },
+  { label: 'Testes', href: '/admin/testes', icon: FlaskConical },
+  { label: 'Configurações', href: '/admin/configuracoes', icon: Settings },
+];
+
+interface DashboardSidebarProps {
+  basePath?: '/dashboard' | '/admin';
+}
+
+export function DashboardSidebar({ basePath = '/dashboard' }: DashboardSidebarProps) {
   const pathname = usePathname();
   const sidebarOpen = useDashboardStore((state) => state.sidebarOpen);
   const setSidebarOpen = useDashboardStore((state) => state.setSidebarOpen);
+  const navItems = basePath === '/admin' ? adminNavItems : saasNavItems;
 
   return (
     <>
@@ -57,7 +78,7 @@ export function DashboardSidebar() {
         )}
       >
         <div className="mb-7 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-3">
+          <Link href={basePath} className="flex items-center gap-3">
             <Image src="/Solara2.svg" alt="Solara Energia" width={138} height={40} className="h-10 w-auto" priority />
           </Link>
           <button

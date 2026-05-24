@@ -1,13 +1,16 @@
 'use client';
 
-import { Bell, Menu, Moon, Search, Sun, UserCircle2, Wifi } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Bell, LogOut, Menu, Moon, Search, Sun, UserCircle2, Wifi } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useDashboardStore } from '@/stores/dashboard-store';
 
 export function DashboardTopbar() {
+  const router = useRouter();
   const { data } = useDashboardData();
   const globalSearch = useDashboardStore((state) => state.globalSearch);
   const setGlobalSearch = useDashboardStore((state) => state.setGlobalSearch);
@@ -17,6 +20,19 @@ export function DashboardTopbar() {
   const role = useDashboardStore((state) => state.role);
 
   const itauOnline = data?.itauStatus.token === 'online' && data?.itauStatus.webhook === 'online';
+
+  async function logout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch {
+      // The server logout is enough when Supabase env vars are not available locally.
+    } finally {
+      router.push('/');
+      router.refresh();
+    }
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-[color:var(--dash-border)] bg-[color:var(--dash-bg-soft)]/90 backdrop-blur-xl">
@@ -53,6 +69,10 @@ export function DashboardTopbar() {
 
         <Button type="button" variant="ghost" size="icon" aria-label="Notificações">
           <Bell size={18} />
+        </Button>
+
+        <Button type="button" variant="ghost" size="icon" onClick={() => void logout()} aria-label="Sair">
+          <LogOut size={18} />
         </Button>
 
         <div className="hidden items-center gap-3 rounded-md border border-[color:var(--dash-border)] bg-[color:var(--dash-surface)] px-3 py-2 sm:flex">

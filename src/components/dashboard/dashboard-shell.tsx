@@ -38,9 +38,10 @@ const lightVars: DashboardCssVars = {
 
 interface DashboardShellProps {
   children: ReactNode;
+  basePath?: '/dashboard' | '/admin';
 }
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({ children, basePath = '/dashboard' }: DashboardShellProps) {
   const theme = useDashboardStore((state) => state.theme);
 
   useDashboardRealtime();
@@ -50,7 +51,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
       style={theme === 'dark' ? darkVars : lightVars}
       className="min-h-screen bg-[color:var(--dash-bg)] text-[color:var(--dash-fg)]"
     >
-      <DashboardSidebar />
+      <DashboardSidebar basePath={basePath} />
       <div className="min-h-screen lg:pl-72">
         <DashboardTopbar />
         <main className="px-4 py-5 sm:px-6 lg:px-8">{children}</main>
