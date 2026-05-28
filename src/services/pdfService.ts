@@ -62,6 +62,7 @@ export async function createFaturamentoPdf(record: FaturamentoPdfRecord) {
     boletoUrl: record.boleto_url,
     linhaDigitavel: record.linha_digitavel,
     codigoBarras: record.codigo_barras,
+    nossoNumero: record.nosso_numero,
     pixUrl: record.pix_url,
     pixPayload: pixPaymentPayload || null,
     pixQrCode: record.pix_qr_code,

@@ -669,6 +669,7 @@ export interface BoletoPdfInput {
   clientDocument: string;
   amount: number;
   dueDate: string;
+  companyName?: string | null;
   status?: string | null;
   faturamentoId?: string | null;
   issueDate?: string | null;
@@ -683,6 +684,7 @@ export interface BoletoPdfInput {
   boletoUrl?: string | null;
   linhaDigitavel?: string | null;
   codigoBarras?: string | null;
+  nossoNumero?: string | null;
   pixUrl?: string | null;
   pixPayload?: string | null;
   pixCopiaCola?: string | null;
@@ -690,6 +692,407 @@ export interface BoletoPdfInput {
 }
 
 // ─── Layout constants ──────────────────────────────────────────────────────────
+
+const ITAU_PAGE_W = 842;
+const ITAU_PAGE_H = 595;
+const ITAU_PAPER_X = 18;
+const ITAU_PAPER_Y = 18;
+const ITAU_PAPER_W = 806;
+const ITAU_PAPER_H = 558;
+const ITAU_VIA_X = 32;
+const ITAU_VIA_W = 778;
+const ITAU_VIA_H = 255;
+const ITAU_TOP_VIA_Y = 314;
+const ITAU_BOTTOM_VIA_Y = 35;
+const ITAU_BANK_CODE = '341-7';
+const ITAU_FALLBACK_LINE = '34191.79001 01043.510047 91020.150008 9 96990000012345';
+const ITAU_FALLBACK_BARCODE = '34199969900000123451790010010435100479102015';
+const ITAU_FALLBACK_PIX =
+  '00020101021226580014BR.GOV.BCB.PIX0136f0cddcaa-2c3a-44ad-9f97-0000000001235204000053039865406123.455802BR5913SIMULACAO S/A6009SAO PAULO62070503***6304ABCD';
+
+function estimateTextWidth(text: string, size: number) {
+  return text.length * size * 0.52;
+}
+
+function txRight(xRight: number, y: number, text: string, size = 8, color = '0 0 0', font = 'F1') {
+  return tx(xRight - estimateTextWidth(text, size), y, text, size, color, font);
+}
+
+function txCenter(x: number, w: number, y: number, text: string, size = 8, color = '0 0 0', font = 'F1') {
+  return tx(x + w / 2 - estimateTextWidth(text, size) / 2, y, text, size, color, font);
+}
+
+function dashedLine(x1: number, y1: number, x2: number, y2: number, color = '0.45 0.45 0.45', lw = 0.35) {
+  return `q [4 3] 0 d ${lw} w ${color} RG ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S Q`;
+}
+
+function rotationMatrix(degrees: number, cx: number, cy: number) {
+  const rad = (degrees * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const e = cx - cos * cx + sin * cy;
+  const f = cy - sin * cx - cos * cy;
+  return `q ${cos.toFixed(5)} ${sin.toFixed(5)} ${(-sin).toFixed(5)} ${cos.toFixed(5)} ${e.toFixed(2)} ${f.toFixed(2)} cm`;
+}
+
+function formatItauLinhaDigitavel(value: string | null | undefined) {
+  const digits = onlyDigits(value ?? '');
+  if (digits.length >= 47) {
+    const boletoDigits = digits.slice(0, 47);
+    return [
+      `${boletoDigits.slice(0, 5)}.${boletoDigits.slice(5, 10)}`,
+      `${boletoDigits.slice(10, 15)}.${boletoDigits.slice(15, 21)}`,
+      `${boletoDigits.slice(21, 26)}.${boletoDigits.slice(26, 32)}`,
+      boletoDigits.slice(32, 33),
+      boletoDigits.slice(33, 47),
+    ].join(' ');
+  }
+
+  const text = value?.trim();
+  return text && text.length > 20 ? text : ITAU_FALLBACK_LINE;
+}
+
+function formatItauCodigoBarras(value: string | null | undefined) {
+  const digits = onlyDigits(value ?? '');
+  return digits.length >= 44 ? digits.slice(0, 44) : ITAU_FALLBACK_BARCODE;
+}
+
+function buildItauDocNumber(input: BoletoPdfInput) {
+  const cleanId = (input.faturamentoId ?? '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  return cleanId ? cleanId.slice(-10).padStart(8, '0') : '00000123';
+}
+
+function buildItauNossoNumero(input: BoletoPdfInput, codigoBarras: string) {
+  const explicit = input.nossoNumero?.trim();
+  if (explicit) return explicit;
+
+  const serial =
+    onlyDigits(input.faturamentoId ?? '').slice(-8) ||
+    onlyDigits(codigoBarras).slice(-8) ||
+    '00000123';
+  return `109/${serial.padStart(8, '0')}-4`;
+}
+
+function maxCharsForWidth(width: number, size: number) {
+  return Math.max(8, Math.floor(width / (size * 0.53)));
+}
+
+function drawBoletoField(
+  parts: string[],
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  label: string,
+  value: string | string[],
+  options: {
+    size?: number;
+    labelSize?: number;
+    bold?: boolean;
+    right?: boolean;
+    maxLines?: number;
+    maxChars?: number;
+    font?: string;
+  } = {},
+) {
+  const labelSize = options.labelSize ?? 5.2;
+  const valueSize = options.size ?? 7.1;
+  const valueFont = options.font ?? (options.bold ? 'F2' : 'F1');
+  const maxLines = options.maxLines ?? Math.max(1, Math.floor((h - 10) / (valueSize + 2)));
+  const maxChars = options.maxChars ?? maxCharsForWidth(w - 7, valueSize);
+  const lines = Array.isArray(value) ? value : wrap(clean(value), maxChars);
+
+  parts.push(strokeRect(x, y, w, h, '0.08 0.08 0.08', 0.35));
+  parts.push(tx(x + 3, y + h - labelSize - 1.5, label, labelSize, '0.22 0.22 0.22', 'F1'));
+
+  lines.slice(0, maxLines).forEach((item, index) => {
+    const text = item.trim();
+    const textY = y + h - 16 - index * (valueSize + 2);
+    if (options.right) {
+      parts.push(txRight(x + w - 4, textY, text, valueSize, '0.02 0.02 0.02', valueFont));
+    } else {
+      parts.push(tx(x + 3, textY, text, valueSize, '0.02 0.02 0.02', valueFont));
+    }
+  });
+}
+
+function drawItauLogo(parts: string[], x: number, y: number) {
+  parts.push(rect(x, y, 22, 22, '0 0 0'));
+  parts.push(txCenter(x, 22, y + 7.2, 'Itaú', 9.4, '1 1 1', 'F2'));
+}
+
+function drawItauHeader(parts: string[], x: number, y: number, w: number, title: string, linhaDigitavel: string) {
+  drawItauLogo(parts, x, y);
+  parts.push(tx(x + 29, y + 13.2, 'Banco Itaú S.A.', 8.4, '0 0 0', 'F2'));
+  parts.push(strokeRect(x + 118, y, 44, 22, '0 0 0', 0.65));
+  parts.push(txCenter(x + 118, 44, y + 6.6, ITAU_BANK_CODE, 11.2, '0 0 0', 'F2'));
+  parts.push(tx(x + 172, y + 8.3, linhaDigitavel, 11.4, '0 0 0', 'F4'));
+  parts.push(txRight(x + w, y + 0.8, title, 6.6, '0.18 0.18 0.18', 'F2'));
+  parts.push(line(x, y - 5, x + w, y - 5, '0 0 0', 1.05));
+}
+
+function drawPaperNoise(parts: string[]) {
+  for (let i = 0; i < 16; i += 1) {
+    const y = ITAU_PAPER_Y + 18 + i * 33;
+    parts.push(line(ITAU_PAPER_X + 5, y, ITAU_PAPER_X + ITAU_PAPER_W - 5, y + 0.7, '0.955 0.955 0.955', 0.18));
+  }
+
+  for (let i = 0; i < 42; i += 1) {
+    const x = ITAU_PAPER_X + 13 + ((i * 37) % Math.floor(ITAU_PAPER_W - 26));
+    const y = ITAU_PAPER_Y + 11 + ((i * 53) % Math.floor(ITAU_PAPER_H - 22));
+    parts.push(rect(x, y, 0.55, 0.55, i % 3 === 0 ? '0.82 0.82 0.82' : '0.90 0.90 0.90'));
+  }
+}
+
+function drawItauVia(
+  parts: string[],
+  originY: number,
+  title: string,
+  data: {
+    linhaDigitavel: string;
+    codigoBarras: string;
+    pixPayload: string;
+    pixCopyText: string;
+    amount: string;
+    dueDate: string;
+    issueDate: string;
+    docNumber: string;
+    beneficiaryName: string;
+    beneficiaryDocument: string;
+    beneficiaryAddress: string;
+    payerName: string;
+    payerDocument: string;
+    payerAddress: string;
+    nossoNumero: string;
+    withPaymentArea: boolean;
+  },
+) {
+  const x = ITAU_VIA_X;
+  const y = originY;
+  const w = ITAU_VIA_W;
+  const h = ITAU_VIA_H;
+  const row = 22;
+  const fieldGap = data.withPaymentArea ? 104 : 0;
+  const rightW = data.withPaymentArea ? 96 : 168;
+  const leftW = w - rightW - fieldGap;
+  const rightX = x + leftW;
+  const headerY = y + h - 29;
+  const row1Y = y + h - 55;
+  const row2Y = row1Y - row;
+  const row3Y = row2Y - row;
+  const row4Y = row3Y - 28;
+  const row5Y = row4Y - 60;
+  const instructionLines = [
+    'Instruções de responsabilidade do BENEFICIÁRIO. Não receber após 30 dias do vencimento.',
+    'Após vencimento cobrar juros de 1% a.m. e multa de 2%.',
+    'Título sujeito a negativação após 5 dias de atraso.',
+    'Documento emitido em ambiente de simulação para conferência visual.',
+  ];
+
+  parts.push(strokeRect(x, y, w, h, '0.18 0.18 0.18', 0.35));
+  drawItauHeader(parts, x, headerY, w, title, data.linhaDigitavel);
+
+  drawBoletoField(parts, x, row1Y, leftW, row, 'Local de pagamento', 'Pagável em qualquer banco até o vencimento.', {
+    size: 7.1,
+    maxLines: 1,
+  });
+  drawBoletoField(parts, rightX, row1Y, rightW, row, 'Vencimento', data.dueDate, {
+    size: 8.2,
+    bold: true,
+    right: true,
+    maxLines: 1,
+  });
+
+  drawBoletoField(
+    parts,
+    x,
+    row2Y,
+    leftW,
+    row,
+    'Beneficiário',
+    `${data.beneficiaryName} - CNPJ ${data.beneficiaryDocument} - ${data.beneficiaryAddress}`,
+    {
+      size: 6.3,
+      bold: true,
+      maxLines: 1,
+    },
+  );
+  drawBoletoField(parts, rightX, row2Y, rightW, row, 'Agência/Cód. Beneficiário', '2938/00012345-6', {
+    size: 6.3,
+    right: true,
+    maxLines: 1,
+  });
+
+  const dateW = 104;
+  const docW = 151;
+  const especieW = 68;
+  const aceiteW = 52;
+  const procW = leftW - dateW - docW - especieW - aceiteW;
+  drawBoletoField(parts, x, row3Y, dateW, row, 'Data do documento', data.issueDate, { size: 6.7, maxLines: 1 });
+  drawBoletoField(parts, x + dateW, row3Y, docW, row, 'Núm. do Documento', data.docNumber, {
+    size: 6.7,
+    font: 'F3',
+    maxLines: 1,
+  });
+  drawBoletoField(parts, x + dateW + docW, row3Y, especieW, row, 'Espécie Doc.', 'DM', { size: 6.7, maxLines: 1 });
+  drawBoletoField(parts, x + dateW + docW + especieW, row3Y, aceiteW, row, 'Aceite', 'N', { size: 6.7, maxLines: 1 });
+  drawBoletoField(parts, x + dateW + docW + especieW + aceiteW, row3Y, procW, row, 'Data Processamento', data.issueDate, {
+    size: 6.7,
+    maxLines: 1,
+  });
+  drawBoletoField(parts, rightX, row3Y, rightW, row, 'Nosso Número', data.nossoNumero, {
+    size: 6.4,
+    font: 'F3',
+    right: true,
+    maxLines: 1,
+  });
+
+  drawBoletoField(parts, x, row4Y, leftW, 28, 'Pagador', [`${data.payerName} - CPF/CNPJ ${data.payerDocument}`, data.payerAddress], {
+    size: 6.5,
+    maxLines: 2,
+  });
+  drawBoletoField(parts, rightX, row4Y, rightW, 28, 'Valor do Documento', data.amount, {
+    size: 8.4,
+    bold: true,
+    right: true,
+    maxLines: 1,
+  });
+
+  drawBoletoField(parts, x, row5Y, leftW, 60, 'Instruções de responsabilidade do BENEFICIÁRIO', instructionLines, {
+    size: 6.05,
+    maxLines: 4,
+  });
+  drawBoletoField(parts, rightX, row5Y + 40, rightW, 20, 'Descontos/Abatimento', '0,00', { size: 6.3, right: true, maxLines: 1 });
+  drawBoletoField(parts, rightX, row5Y + 20, rightW, 20, 'Mora/Multa', '0,00', { size: 6.3, right: true, maxLines: 1 });
+  drawBoletoField(parts, rightX, row5Y, rightW, 20, 'Valor Cobrado', data.amount, { size: 6.8, bold: true, right: true, maxLines: 1 });
+
+  if (!data.withPaymentArea) {
+    parts.push(tx(x + w - 103, y + 50, 'RECIBO DO PAGADOR', 6.7, '0.25 0.25 0.25', 'F2'));
+    parts.push(line(x + w - 126, y + 44, x + w - 8, y + 44, '0.25 0.25 0.25', 0.35));
+    parts.push(tx(x + w - 118, y + 32, 'Autenticação no verso', 6, '0.35 0.35 0.35'));
+    return;
+  }
+
+  const qrSize = 82;
+  const qrX = x + w - qrSize - 12;
+  const qrY = y + 92;
+  try {
+    parts.push(...drawQrCode(data.pixPayload, qrX, qrY, qrSize));
+  } catch (err) {
+    console.error('[billing-pdf] QR Pix indisponível no layout Itaú.', err);
+    parts.push(...drawQrCode(ITAU_FALLBACK_PIX, qrX, qrY, qrSize));
+  }
+
+  parts.push(txCenter(qrX, qrSize, qrY - 10, 'PIX Copia e Cola', 6.8, '0 0 0', 'F2'));
+  wrap(data.pixCopyText, 28).slice(0, 2).forEach((lineText, index) => {
+    parts.push(tx(qrX, qrY - 21 - index * 7, lineText, 5, '0.22 0.22 0.22', 'F3'));
+  });
+
+  const barcodeY = y + 17;
+  parts.push(tx(x, barcodeY + 47, 'FICHA DE COMPENSAÇÃO', 7.4, '0 0 0', 'F2'));
+  parts.push(...drawBarcode(data.codigoBarras, x + 6, barcodeY + 7, 520, 38));
+  parts.push(tx(x + 6, barcodeY - 2, data.codigoBarras, 5.6, '0.18 0.18 0.18', 'F3'));
+  parts.push(txRight(x + w, barcodeY - 1, 'Autenticação Mecânica', 6.3, '0 0 0', 'F2'));
+}
+
+function createRawPdfBuffer(content: string, width: number, height: number) {
+  const header = Buffer.from('%PDF-1.4\n', 'utf8');
+  const objects = [
+    '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n',
+    '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n',
+    `3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R /F4 7 0 R >> >> /Contents 8 0 R >> endobj\n`,
+    '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >> endobj\n',
+    '5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >> endobj\n',
+    '6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >> endobj\n',
+    '7 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >> endobj\n',
+    `8 0 obj << /Length ${Buffer.byteLength(content, 'utf8')} >> stream\n${content}\nendstream endobj\n`,
+  ];
+
+  const chunks: Buffer[] = [header];
+  const offsets: number[] = [0];
+  let offset = header.length;
+
+  for (const object of objects) {
+    offsets.push(offset);
+    const chunk = Buffer.from(object, 'utf8');
+    chunks.push(chunk);
+    offset += chunk.length;
+  }
+
+  const xrefStart = offset;
+  const xref = [
+    'xref\n',
+    `0 ${objects.length + 1}\n`,
+    '0000000000 65535 f \n',
+    ...offsets.slice(1).map((item) => `${String(item).padStart(10, '0')} 00000 n \n`),
+    `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\n`,
+    `startxref\n${xrefStart}\n%%EOF`,
+  ].join('');
+
+  chunks.push(Buffer.from(xref, 'utf8'));
+  return Buffer.concat(chunks);
+}
+
+async function createItauBoletoPdfBuffer(input: BoletoPdfInput) {
+  const pixPayload = resolveOfficialPixPayload(input.pixPayload, input.pixCopiaCola, input.pixQrCode);
+  logInvalidPixPayload('pixPayload', input.pixPayload);
+  logInvalidPixPayload('pixCopiaCola', input.pixCopiaCola);
+  logInvalidPixPayload('pixQrCode', input.pixQrCode);
+  if (!pixPayload) console.warn('[billing-pdf] Payload Pix EMV não encontrado. Usando QR de simulação no PDF.');
+
+  const amount = Number.isFinite(input.amount) && input.amount > 0 ? input.amount : 123.45;
+  const linhaDigitavel = formatItauLinhaDigitavel(input.linhaDigitavel);
+  const codigoBarras = formatItauCodigoBarras(input.codigoBarras);
+  const issueDate = formatDateBR(input.issueDate ?? new Date());
+  const dueDate = formatDateBR(input.dueDate || '2024-05-01');
+  const beneficiaryName = clean(input.companyName || process.env.BOLETO_BENEFICIARY_NAME || 'SIMULAÇÃO S/A');
+  const beneficiaryDocument = maskCpfCnpj(input.companyCnpj || process.env.BOLETO_BENEFICIARY_CNPJ || '12345678000190');
+  const beneficiaryAddress = clean(
+    input.companyAddress ||
+      process.env.BOLETO_BENEFICIARY_ADDRESS ||
+      'Av. Paulista, 1000, 10º andar, Bela Vista, São Paulo - SP, 01310-100',
+  );
+  const payerName = clean(input.clientName || 'PAGADOR TESTE');
+  const payerDocument = maskCpfCnpj(input.clientDocument || '12345678909');
+  const payerAddress = clean(input.clientAddress || input.installationAddress || 'Rua das Palmeiras, 45, Centro, Campinas - SP, 13010-001');
+  const docNumber = buildItauDocNumber(input);
+  const nossoNumero = buildItauNossoNumero(input, codigoBarras);
+  const pixCopyText = pixPayload ?? ITAU_FALLBACK_PIX;
+
+  const data = {
+    linhaDigitavel,
+    codigoBarras,
+    pixPayload: pixCopyText,
+    pixCopyText,
+    amount: formatCurrencyBRL(amount),
+    dueDate,
+    issueDate,
+    docNumber,
+    beneficiaryName,
+    beneficiaryDocument,
+    beneficiaryAddress,
+    payerName,
+    payerDocument,
+    payerAddress,
+    nossoNumero,
+  };
+
+  const parts: string[] = [];
+  parts.push(rect(0, 0, ITAU_PAGE_W, ITAU_PAGE_H, '0.91 0.91 0.91'));
+  parts.push(rotationMatrix(-0.28, ITAU_PAGE_W / 2, ITAU_PAGE_H / 2));
+  parts.push(rect(ITAU_PAPER_X + 5, ITAU_PAPER_Y - 5, ITAU_PAPER_W, ITAU_PAPER_H, '0.70 0.70 0.70'));
+  parts.push(rect(ITAU_PAPER_X, ITAU_PAPER_Y, ITAU_PAPER_W, ITAU_PAPER_H, '0.985 0.985 0.975'));
+  parts.push(strokeRect(ITAU_PAPER_X, ITAU_PAPER_Y, ITAU_PAPER_W, ITAU_PAPER_H, '0.72 0.72 0.72', 0.35));
+  drawPaperNoise(parts);
+  parts.push(dashedLine(ITAU_PAPER_X + 8, 299, ITAU_PAPER_X + ITAU_PAPER_W - 8, 299, '0.42 0.42 0.42', 0.35));
+  parts.push(tx(ITAU_PAPER_X + 10, 303, 'Corte na linha pontilhada', 5.6, '0.35 0.35 0.35'));
+
+  drawItauVia(parts, ITAU_TOP_VIA_Y, 'RECIBO DO PAGADOR', { ...data, withPaymentArea: false });
+  drawItauVia(parts, ITAU_BOTTOM_VIA_Y, 'FICHA DE COMPENSAÇÃO', { ...data, withPaymentArea: true });
+  parts.push('Q');
+
+  return createRawPdfBuffer(parts.join('\n'), ITAU_PAGE_W, ITAU_PAGE_H);
+}
 
 const PAGE_W = 595;
 const PAGE_H = 842;
@@ -699,6 +1102,14 @@ const CW = PAGE_W - ML - MR; // content width = 515
 const GAP = 10;      // gap between cards
 
 export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
+  if (process.env.PDF_RENDERER_LEGACY === '1') {
+    return createLegacyBoletoPdfBuffer(input);
+  }
+
+  return createItauBoletoPdfBuffer(input);
+}
+
+async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
 
   // ── Resolve Pix ────────────────────────────────────────────────────────
   const pixPayload = resolveOfficialPixPayload(input.pixPayload, input.pixCopiaCola, input.pixQrCode);
