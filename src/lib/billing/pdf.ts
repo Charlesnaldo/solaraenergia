@@ -827,7 +827,8 @@ function drawItauHeader(parts: string[], x: number, y: number, w: number, title:
   parts.push(strokeRect(x + 118, y, 44, 22, '0 0 0', 0.65));
   parts.push(txCenter(x + 118, 44, y + 6.6, ITAU_BANK_CODE, 11.2, '0 0 0', 'F2'));
   parts.push(tx(x + 172, y + 8.3, linhaDigitavel, 11.4, '0 0 0', 'F4'));
-  parts.push(txRight(x + w, y + 0.8, title, 6.6, '0.18 0.18 0.18', 'F2'));
+  parts.push(strokeRect(x + w - 128, y + 1.5, 128, 18, '0.18 0.18 0.18', 0.3));
+  parts.push(txCenter(x + w - 128, 128, y + 7.4, title, 6.4, '0.18 0.18 0.18', 'F2'));
   parts.push(line(x, y - 5, x + w, y - 5, '0 0 0', 1.05));
 }
 
@@ -967,9 +968,10 @@ function drawItauVia(
   drawBoletoField(parts, rightX, row5Y, rightW, 20, 'Valor Cobrado', data.amount, { size: 6.8, bold: true, right: true, maxLines: 1 });
 
   if (!data.withPaymentArea) {
-    parts.push(tx(x + w - 103, y + 50, 'RECIBO DO PAGADOR', 6.7, '0.25 0.25 0.25', 'F2'));
-    parts.push(line(x + w - 126, y + 44, x + w - 8, y + 44, '0.25 0.25 0.25', 0.35));
-    parts.push(tx(x + w - 118, y + 32, 'Autenticação no verso', 6, '0.35 0.35 0.35'));
+    const receiptBoxX = x + w - 138;
+    parts.push(strokeRect(receiptBoxX, y + 31, 126, 23, '0.25 0.25 0.25', 0.35));
+    parts.push(txCenter(receiptBoxX, 126, y + 44, 'RECIBO DO PAGADOR', 6.7, '0.25 0.25 0.25', 'F2'));
+    parts.push(txCenter(receiptBoxX, 126, y + 34, 'Autenticação no verso', 5.8, '0.35 0.35 0.35'));
     return;
   }
 
@@ -989,7 +991,8 @@ function drawItauVia(
   });
 
   const barcodeY = y + 17;
-  parts.push(tx(x, barcodeY + 47, 'FICHA DE COMPENSAÇÃO', 7.4, '0 0 0', 'F2'));
+  parts.push(strokeRect(x + 354, barcodeY + 41, 176, 15, '0.18 0.18 0.18', 0.35));
+  parts.push(txCenter(x + 354, 176, barcodeY + 45.5, 'FICHA DE COMPENSAÇÃO', 7.1, '0 0 0', 'F2'));
   parts.push(...drawBarcode(data.codigoBarras, x + 6, barcodeY + 7, 520, 38));
   parts.push(tx(x + 6, barcodeY - 2, data.codigoBarras, 5.6, '0.18 0.18 0.18', 'F3'));
   parts.push(txRight(x + w, barcodeY - 1, 'Autenticação Mecânica', 6.3, '0 0 0', 'F2'));
