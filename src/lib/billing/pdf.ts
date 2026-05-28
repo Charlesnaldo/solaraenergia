@@ -1051,17 +1051,17 @@ async function createItauBoletoPdfBuffer(input: BoletoPdfInput) {
       process.env.SOLARA_RAZAO_SOCIAL ||
       process.env.SOLARA_NAME ||
       process.env.COMPANY_NAME ||
-      'SIMULAÇÃO S/A',
+      'SOLARA ENERGIA',
   );
   const beneficiaryDocument = maskCpfCnpj(
-    input.companyCnpj || process.env.BOLETO_BENEFICIARY_CNPJ || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || '12345678000190',
+    input.companyCnpj || process.env.BOLETO_BENEFICIARY_CNPJ || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || '',
   );
   const beneficiaryAddress = clean(
     input.companyAddress ||
       process.env.BOLETO_BENEFICIARY_ADDRESS ||
       process.env.SOLARA_ADDRESS ||
       process.env.COMPANY_ADDRESS ||
-      'Av. Paulista, 1000, 10º andar, Bela Vista, São Paulo - SP, 01310-100',
+      'Endereço do beneficiário não informado',
   );
   const payerName = clean(input.clientName || 'PAGADOR TESTE');
   const payerDocument = maskCpfCnpj(input.clientDocument || '12345678909');
