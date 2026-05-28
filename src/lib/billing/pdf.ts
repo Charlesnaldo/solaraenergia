@@ -1045,11 +1045,22 @@ async function createItauBoletoPdfBuffer(input: BoletoPdfInput) {
   const codigoBarras = formatItauCodigoBarras(input.codigoBarras);
   const issueDate = formatDateBR(input.issueDate ?? new Date());
   const dueDate = formatDateBR(input.dueDate || '2024-05-01');
-  const beneficiaryName = clean(input.companyName || process.env.BOLETO_BENEFICIARY_NAME || 'SIMULAÇÃO S/A');
-  const beneficiaryDocument = maskCpfCnpj(input.companyCnpj || process.env.BOLETO_BENEFICIARY_CNPJ || '12345678000190');
+  const beneficiaryName = clean(
+    input.companyName ||
+      process.env.BOLETO_BENEFICIARY_NAME ||
+      process.env.SOLARA_RAZAO_SOCIAL ||
+      process.env.SOLARA_NAME ||
+      process.env.COMPANY_NAME ||
+      'SIMULAÇÃO S/A',
+  );
+  const beneficiaryDocument = maskCpfCnpj(
+    input.companyCnpj || process.env.BOLETO_BENEFICIARY_CNPJ || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || '12345678000190',
+  );
   const beneficiaryAddress = clean(
     input.companyAddress ||
       process.env.BOLETO_BENEFICIARY_ADDRESS ||
+      process.env.SOLARA_ADDRESS ||
+      process.env.COMPANY_ADDRESS ||
       'Av. Paulista, 1000, 10º andar, Bela Vista, São Paulo - SP, 01310-100',
   );
   const payerName = clean(input.clientName || 'PAGADOR TESTE');

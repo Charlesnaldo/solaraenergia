@@ -17,9 +17,146 @@ function buildAddress(cliente: FaturamentoPdfRecord['clientes']) {
   return structured || cliente.endereco_completo || null;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function readStringField(record: Record<string, unknown> | null | undefined, names: string[]) {
+  if (!record) return null;
+
+  for (const name of names) {
+    const value = record[name];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function collectRecords(value: unknown, path: string[] = [], seen = new WeakSet<object>()) {
+  const records: Array<{ path: string[]; record: Record<string, unknown> }> = [];
+
+  if (!value || typeof value !== 'object') {
+    return records;
+  }
+
+  if (seen.has(value)) {
+    return records;
+  }
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      records.push(...collectRecords(item, [...path, String(index)], seen));
+    });
+    return records;
+  }
+
+  const record = value as Record<string, unknown>;
+  records.push({ path, record });
+
+  Object.entries(record).forEach(([key, nested]) => {
+    if (nested && typeof nested === 'object') {
+      records.push(...collectRecords(nested, [...path, key], seen));
+    }
+  });
+
+  return records;
+}
+
+function isBeneficiaryPath(path: string[]) {
+  const text = path
+    .join('.')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  return (
+    /(beneficiario|beneficiary|cedente|favorecido|recebedor)/.test(text) &&
+    !/(pagador|sacado|texto_uso_beneficiario)/.test(text)
+  );
+}
+
+function readAddressFromRecord(record: Record<string, unknown> | null | undefined) {
+  if (!record) return null;
+
+  const direct = readStringField(record, [
+    'endereco_beneficiario',
+    'enderecoBeneficiario',
+    'beneficiario_endereco',
+    'beneficiary_address',
+    'address',
+    'endereco',
+    'endereco_completo',
+    'logradouro',
+  ]);
+  if (direct && direct.length > 12) return direct;
+
+  const addressRecord =
+    asRecord(record.endereco) ||
+    asRecord(record.endereco_beneficiario) ||
+    asRecord(record.enderecoBeneficiario) ||
+    asRecord(record.address) ||
+    record;
+
+  if (!addressRecord) return null;
+
+  const street = readStringField(addressRecord, ['nome_logradouro', 'logradouro', 'rua', 'street']);
+  const number = readStringField(addressRecord, ['numero', 'numero_logradouro', 'number']);
+  const district = readStringField(addressRecord, ['nome_bairro', 'bairro', 'district']);
+  const city = readStringField(addressRecord, ['nome_cidade', 'cidade', 'city']);
+  const state = readStringField(addressRecord, ['sigla_UF', 'uf', 'estado', 'state']);
+  const cep = readStringField(addressRecord, ['numero_CEP', 'cep', 'codigo_cep', 'zip']);
+  const streetLine = [street, number].filter(Boolean).join(', ');
+  const cityLine = [city, state].filter(Boolean).join(' - ');
+  const structured = [streetLine, district, cityLine, cep].filter(Boolean).join(', ');
+
+  return structured || null;
+}
+
+function readFromRecordWithAnyField(records: Record<string, unknown>[], names: string[]) {
+  const record = records.find((item) => readStringField(item, names));
+  return readStringField(record, names);
+}
+
+function extractBeneficiaryFromItauResponse(raw: unknown) {
+  const records = collectRecords(raw);
+  const beneficiaryRecords = records.filter(({ path }) => isBeneficiaryPath(path)).map(({ record }) => record);
+  const allRecords = records.map(({ record }) => record);
+
+  const name =
+    readFromRecordWithAnyField(beneficiaryRecords, ['nome', 'nome_pessoa', 'razao_social', 'nome_razao_social', 'nome_cobrador']) ||
+    readFromRecordWithAnyField(allRecords, ['nome_beneficiario', 'nomeBeneficiario', 'beneficiary_name']);
+  const document =
+    readFromRecordWithAnyField(beneficiaryRecords, [
+      'cnpj',
+      'cpf_cnpj',
+      'cpfCnpj',
+      'documento',
+      'numero_cadastro_nacional_pessoa_juridica',
+      'numero_inscricao',
+    ]) ||
+    readFromRecordWithAnyField(allRecords, [
+      'cnpj_beneficiario',
+      'cpf_cnpj_beneficiario',
+      'documento_beneficiario',
+      'beneficiary_document',
+    ]);
+  const address =
+    beneficiaryRecords.map(readAddressFromRecord).find((value): value is string => Boolean(value)) ||
+    readFromRecordWithAnyField(allRecords, ['endereco_beneficiario', 'enderecoBeneficiario', 'beneficiary_address']);
+
+  return {
+    name,
+    document,
+    address,
+  };
+}
+
 export async function createFaturamentoPdf(record: FaturamentoPdfRecord) {
   const address = buildAddress(record.clientes);
   const hasItauRawResponse = record.api_response !== null && record.api_response !== undefined;
+  const beneficiary = extractBeneficiaryFromItauResponse(record.api_response);
   const pixPayloadFromItau = getPixPaymentPayload(record.api_response);
   const pixPayloadSaved = normalizePixPayload(record.pix_qr_code);
   const pixPaymentPayload =
@@ -54,8 +191,15 @@ export async function createFaturamentoPdf(record: FaturamentoPdfRecord) {
     description: 'Serviços de energia solar / faturamento mensal',
     clientAddress: address,
     installationAddress: address,
-    companyCnpj: process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null,
-    companyAddress: process.env.SOLARA_ADDRESS || process.env.COMPANY_ADDRESS || null,
+    companyName:
+      beneficiary.name ||
+      process.env.BOLETO_BENEFICIARY_NAME ||
+      process.env.SOLARA_RAZAO_SOCIAL ||
+      process.env.SOLARA_NAME ||
+      process.env.COMPANY_NAME ||
+      null,
+    companyCnpj: beneficiary.document || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || null,
+    companyAddress: beneficiary.address || process.env.SOLARA_ADDRESS || process.env.COMPANY_ADDRESS || null,
     supportEmail: process.env.BILLING_SUPPORT_EMAIL || null,
     supportWhatsapp: process.env.BILLING_SUPPORT_WHATSAPP || process.env.NEXT_PUBLIC_WHATSAPP || null,
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || null,
