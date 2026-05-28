@@ -693,17 +693,17 @@ export interface BoletoPdfInput {
 
 // ─── Layout constants ──────────────────────────────────────────────────────────
 
-const ITAU_PAGE_W = 595;
-const ITAU_PAGE_H = 842;
+const ITAU_PAGE_W = 842;
+const ITAU_PAGE_H = 595;
 const ITAU_PAPER_X = 18;
 const ITAU_PAPER_Y = 18;
-const ITAU_PAPER_W = 559;
-const ITAU_PAPER_H = 806;
+const ITAU_PAPER_W = 806;
+const ITAU_PAPER_H = 558;
 const ITAU_VIA_X = 32;
-const ITAU_VIA_W = 531;
-const ITAU_VIA_H = 360;
-const ITAU_TOP_VIA_Y = 455;
-const ITAU_BOTTOM_VIA_Y = 50;
+const ITAU_VIA_W = 778;
+const ITAU_VIA_H = 255;
+const ITAU_TOP_VIA_Y = 314;
+const ITAU_BOTTOM_VIA_Y = 35;
 const ITAU_BANK_CODE = '341-7';
 const ITAU_FALLBACK_LINE = '34191.79001 01043.510047 91020.150008 9 96990000012345';
 const ITAU_FALLBACK_BARCODE = '34199969900000123451790010010435100479102015';
@@ -923,10 +923,10 @@ function drawItauVia(
     maxLines: 1,
   });
 
-  const dateW = 78;
-  const docW = 95;
-  const especieW = 50;
-  const aceiteW = 38;
+  const dateW = 104;
+  const docW = 151;
+  const especieW = 68;
+  const aceiteW = 52;
   const procW = leftW - dateW - docW - especieW - aceiteW;
   drawBoletoField(parts, x, row3Y, dateW, row, 'Data do documento', data.issueDate, { size: 6.7, maxLines: 1 });
   drawBoletoField(parts, x + dateW, row3Y, docW, row, 'Núm. do Documento', data.docNumber, {
@@ -1095,8 +1095,8 @@ async function createItauBoletoPdfBuffer(input: BoletoPdfInput) {
   parts.push(rect(ITAU_PAPER_X, ITAU_PAPER_Y, ITAU_PAPER_W, ITAU_PAPER_H, '0.985 0.985 0.975'));
   parts.push(strokeRect(ITAU_PAPER_X, ITAU_PAPER_Y, ITAU_PAPER_W, ITAU_PAPER_H, '0.72 0.72 0.72', 0.35));
   drawPaperNoise(parts);
-  parts.push(dashedLine(ITAU_PAPER_X + 8, 432, ITAU_PAPER_X + ITAU_PAPER_W - 8, 432, '0.42 0.42 0.42', 0.35));
-  parts.push(tx(ITAU_PAPER_X + 10, 436, 'Corte na linha pontilhada', 5.6, '0.35 0.35 0.35'));
+  parts.push(dashedLine(ITAU_PAPER_X + 8, 299, ITAU_PAPER_X + ITAU_PAPER_W - 8, 299, '0.42 0.42 0.42', 0.35));
+  parts.push(tx(ITAU_PAPER_X + 10, 303, 'Corte na linha pontilhada', 5.6, '0.35 0.35 0.35'));
 
   drawItauVia(parts, ITAU_TOP_VIA_Y, 'RECIBO DO PAGADOR', { ...data, withPaymentArea: false });
   drawItauVia(parts, ITAU_BOTTOM_VIA_Y, 'FICHA DE COMPENSAÇÃO', { ...data, withPaymentArea: true });
