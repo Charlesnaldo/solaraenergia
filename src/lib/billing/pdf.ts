@@ -11,6 +11,14 @@ export function formatCurrencyBRL(value: number) {
   return `R$ ${amount}`;
 }
 
+/** Formats a number as Brazilian decimal WITHOUT the R$ prefix (for boleto value fields) */
+function formatValueOnly(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(value) && value > 0 ? value : 0);
+}
+
 export function money(value: number) {
   return formatCurrencyBRL(value);
 }
@@ -135,15 +143,12 @@ function wrap(value: string, maxLength: number) {
   const text = value.trim();
   if (text.length <= maxLength) return [text];
 
-  // Break on word boundaries first; fall back to hard break only if a single
-  // word exceeds maxLength (e.g. a very long barcode or URL).
   const words = text.split(' ');
   const lines: string[] = [];
   let current = '';
 
   for (const word of words) {
     if (!current) {
-      // Single word longer than maxLength: hard-break it
       if (word.length > maxLength) {
         for (let i = 0; i < word.length; i += maxLength) lines.push(word.slice(i, i + maxLength));
       } else {
@@ -211,39 +216,32 @@ function circle(cx: number, cy: number, r: number, color: string) {
   ].join(' ');
 }
 
-// ─── PDF Vector Icons (12×12 at origin, translate via caller) ─────────────────
-// Each returns PDF path operators. All icons drawn at ~12pt baseline.
+// ─── PDF Vector Icons ─────────────────────────────────────────────────────────
 
-/** Person / user icon */
 function iconPerson(x: number, y: number, color: string, s = 1): string[] {
   const cx = x + 6 * s;
   return [
     circle(cx, y + 8.5 * s, 2.8 * s, color),
-    // body arc approximated as rounded rect
     rrect(x + 1.5 * s, y + 0.5 * s, 9 * s, 5.5 * s, 3 * s, color),
   ];
 }
 
-/** Location pin icon */
 function iconPin(x: number, y: number, color: string, s = 1): string[] {
   const cx = x + 6 * s;
   const cy = y + 6 * s;
   const c = 3.5 * s * 0.5522847498;
   const r = 3.5 * s;
-  // circle top
   const circ = [
     `${color} rg`,
     `${(cx + r).toFixed(2)} ${cy.toFixed(2)} m`,
     `${(cx + r).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx + c).toFixed(2)} ${(cy + r).toFixed(2)} ${cx.toFixed(2)} ${(cy + r).toFixed(2)} c`,
     `${(cx - c).toFixed(2)} ${(cy + r).toFixed(2)} ${(cx - r).toFixed(2)} ${(cy + c).toFixed(2)} ${(cx - r).toFixed(2)} ${cy.toFixed(2)} c`,
-    // taper to point at bottom
     `${(cx - r).toFixed(2)} ${(cy - c * 0.5).toFixed(2)} ${cx.toFixed(2)} ${(y + 0.5 * s).toFixed(2)} ${cx.toFixed(2)} ${(y + 0.5 * s).toFixed(2)} c`,
     `${cx.toFixed(2)} ${(y + 0.5 * s).toFixed(2)} ${(cx + r).toFixed(2)} ${(cy - c * 0.5).toFixed(2)} ${(cx + r).toFixed(2)} ${cy.toFixed(2)} c f`,
   ].join(' ');
   return [circ, circle(cx, cy + 1.5 * s, 1.6 * s, '1 1 1')];
 }
 
-/** Receipt / document icon */
 function iconReceipt(x: number, y: number, color: string, s = 1): string[] {
   return [
     rrect(x + 1.5 * s, y + 0.5 * s, 9 * s, 11 * s, 1.5 * s, color),
@@ -253,13 +251,11 @@ function iconReceipt(x: number, y: number, color: string, s = 1): string[] {
   ];
 }
 
-/** Barcode icon */
 function iconBarcode(x: number, y: number, color: string, s = 1): string[] {
   const bars = [0, 2, 3.5, 5, 6.5, 8, 9.5];
   return bars.map((bx) => rect(x + bx * s, y + 1 * s, 1 * s, 10 * s, color));
 }
 
-/** Pix bolt / lightning icon */
 function iconPix(x: number, y: number, color: string, s = 1): string[] {
   return [
     [
@@ -274,19 +270,16 @@ function iconPix(x: number, y: number, color: string, s = 1): string[] {
   ];
 }
 
-/** Calendar icon */
 function iconCalendar(x: number, y: number, color: string, s = 1): string[] {
   return [
     rrect(x + 0.5 * s, y + 0.5 * s, 11 * s, 11 * s, 1.5 * s, color),
     rect(x + 0.5 * s, y + 6 * s, 11 * s, 5.5 * s, '1 1 1'),
-    // dots grid
     ...([3, 5.5, 8] as number[]).flatMap((bx) =>
       ([2, 4] as number[]).map((by) => circle(x + bx * s, y + by * s, 0.9 * s, color)),
     ),
   ];
 }
 
-/** Check circle icon */
 function iconCheck(x: number, y: number, color: string, s = 1): string[] {
   return [
     circle(x + 6 * s, y + 6 * s, 5.5 * s, color),
@@ -302,7 +295,6 @@ function iconCheck(x: number, y: number, color: string, s = 1): string[] {
   ];
 }
 
-/** Info circle icon */
 function iconInfo(x: number, y: number, color: string, s = 1): string[] {
   return [
     circle(x + 6 * s, y + 6 * s, 5.5 * s, color),
@@ -311,7 +303,6 @@ function iconInfo(x: number, y: number, color: string, s = 1): string[] {
   ];
 }
 
-/** Phone / WhatsApp icon */
 function iconPhone(x: number, y: number, color: string, s = 1): string[] {
   return [
     rrect(x + 2 * s, y + 0.5 * s, 8 * s, 11 * s, 2 * s, color),
@@ -320,7 +311,6 @@ function iconPhone(x: number, y: number, color: string, s = 1): string[] {
   ];
 }
 
-/** Globe / site icon */
 function iconGlobe(x: number, y: number, color: string, s = 1): string[] {
   const cx = x + 6 * s;
   const cy = y + 6 * s;
@@ -333,14 +323,11 @@ function iconGlobe(x: number, y: number, color: string, s = 1): string[] {
     `${(cx - 5 * s).toFixed(2)} ${(cy - c2).toFixed(2)} ${(cx - c2).toFixed(2)} ${(cy - 5 * s).toFixed(2)} ${cx.toFixed(2)} ${(cy - 5 * s).toFixed(2)} c`,
     `${(cx + c2).toFixed(2)} ${(cy - 5 * s).toFixed(2)} ${(cx + 5 * s).toFixed(2)} ${(cy - c2).toFixed(2)} ${(cx + 5 * s).toFixed(2)} ${cy.toFixed(2)} c f`,
   ].join(' ');
-  // meridian oval
   const mer = rrect(cx - 2 * s, cy - 5 * s, 4 * s, 10 * s, 2 * s, '1 1 1');
-  // equator line
   const eq = rect(cx - 5 * s, cy - 0.6 * s, 10 * s, 1.2 * s, '1 1 1');
   return [globe, mer, eq];
 }
 
-/** Email icon */
 function iconEmail(x: number, y: number, color: string, s = 1): string[] {
   return [
     rrect(x + 0.5 * s, y + 2.5 * s, 11 * s, 8 * s, 1.5 * s, color),
@@ -354,8 +341,6 @@ function iconEmail(x: number, y: number, color: string, s = 1): string[] {
     line(x + 11.5 * s, y + 2.5 * s, x + 6 * s, y + 7.5 * s, '1 1 1', 1),
   ];
 }
-
-// ─── Solara Logo ───────────────────────────────────────────────────────────────
 
 // ─── Barcode ───────────────────────────────────────────────────────────────────
 
@@ -623,14 +608,9 @@ function resolveOfficialPixPayload(...values: Array<string | null | undefined>) 
   for (const value of values) {
     const payload = normalizePixPayload(value);
     if (!payload) continue;
-
     if (!validatePixCrc(payload)) continue;
-
-    if (validatePixPayload(payload)) {
-      return payload;
-    }
+    if (validatePixPayload(payload)) return payload;
   }
-
   return null;
 }
 
@@ -689,6 +669,18 @@ export interface BoletoPdfInput {
   pixPayload?: string | null;
   pixCopiaCola?: string | null;
   pixQrCode?: string | null;
+  // ── NEW: Itaú-specific fields ──────────────────────────────────────────
+  /** Agência e código do beneficiário. Ex: "0057/12345-7" */
+  agenciaCodBeneficiario?: string | null;
+  /**
+   * Instruções de responsabilidade do BENEFICIÁRIO (até 4 linhas).
+   * Se não fornecido, usa o padrão com juros 5% a.m. e multa 10%.
+   */
+  instrucoes?: string[] | null;
+  /** Desconto/abatimento a exibir. Deixe null/undefined para exibir em branco. */
+  descontoAbatimento?: string | null;
+  /** Mora/multa a exibir. Deixe null/undefined para exibir em branco. */
+  moraMulTA?: string | null;
 }
 
 // ─── Layout constants ──────────────────────────────────────────────────────────
@@ -709,6 +701,14 @@ const ITAU_FALLBACK_LINE = '34191.79001 01043.510047 91020.150008 9 969900000123
 const ITAU_FALLBACK_BARCODE = '34199969900000123451790010010435100479102015';
 const ITAU_FALLBACK_PIX =
   '00020101021226580014BR.GOV.BCB.PIX0136f0cddcaa-2c3a-44ad-9f97-0000000001235204000053039865406123.455802BR5913SIMULACAO S/A6009SAO PAULO62070503***6304ABCD';
+
+/** Default instructions shown in boleto when not provided by caller */
+const DEFAULT_INSTRUCOES = [
+  'Instruções de responsabilidade do BENEFICIÁRIO. Qualquer dúvida sobre este boleto Contate o BENEFICIÁRIO',
+  'APÓS O VENCIMENTO COBRAR JUROS DE .......5,00% AO MÊS',
+  'APÓS O VENCIMENTO COBRAR MULTA DE .......10,00% AO MÊS',
+  'NEGATIVAÇÃO APÓS 10 DIAS DO VENCIMENTO',
+];
 
 function estimateTextWidth(text: string, size: number) {
   return text.length * size * 0.52;
@@ -747,7 +747,6 @@ function formatItauLinhaDigitavel(value: string | null | undefined) {
       boletoDigits.slice(33, 47),
     ].join(' ');
   }
-
   const text = value?.trim();
   return text && text.length > 20 ? text : ITAU_FALLBACK_LINE;
 }
@@ -765,7 +764,6 @@ function buildItauDocNumber(input: BoletoPdfInput) {
 function buildItauNossoNumero(input: BoletoPdfInput, codigoBarras: string) {
   const explicit = input.nossoNumero?.trim();
   if (explicit) return explicit;
-
   const serial =
     onlyDigits(input.faturamentoId ?? '').slice(-8) ||
     onlyDigits(codigoBarras).slice(-8) ||
@@ -793,6 +791,8 @@ function drawBoletoField(
     maxLines?: number;
     maxChars?: number;
     font?: string;
+    /** When true, renders an empty field (no value text) */
+    empty?: boolean;
   } = {},
 ) {
   const labelSize = options.labelSize ?? 5.2;
@@ -805,15 +805,17 @@ function drawBoletoField(
   parts.push(strokeRect(x, y, w, h, '0.08 0.08 0.08', 0.35));
   parts.push(tx(x + 3, y + h - labelSize - 1.5, label, labelSize, '0.22 0.22 0.22', 'F1'));
 
-  lines.slice(0, maxLines).forEach((item, index) => {
-    const text = item.trim();
-    const textY = y + h - 16 - index * (valueSize + 2);
-    if (options.right) {
-      parts.push(txRight(x + w - 4, textY, text, valueSize, '0.02 0.02 0.02', valueFont));
-    } else {
-      parts.push(tx(x + 3, textY, text, valueSize, '0.02 0.02 0.02', valueFont));
-    }
-  });
+  if (!options.empty) {
+    lines.slice(0, maxLines).forEach((item, index) => {
+      const text = item.trim();
+      const textY = y + h - 16 - index * (valueSize + 2);
+      if (options.right) {
+        parts.push(txRight(x + w - 4, textY, text, valueSize, '0.02 0.02 0.02', valueFont));
+      } else {
+        parts.push(tx(x + 3, textY, text, valueSize, '0.02 0.02 0.02', valueFont));
+      }
+    });
+  }
 }
 
 function drawItauLogo(parts: string[], x: number, y: number) {
@@ -837,7 +839,6 @@ function drawPaperNoise(parts: string[]) {
     const y = ITAU_PAPER_Y + 18 + i * 33;
     parts.push(line(ITAU_PAPER_X + 5, y, ITAU_PAPER_X + ITAU_PAPER_W - 5, y + 0.7, '0.955 0.955 0.955', 0.18));
   }
-
   for (let i = 0; i < 42; i += 1) {
     const x = ITAU_PAPER_X + 13 + ((i * 37) % Math.floor(ITAU_PAPER_W - 26));
     const y = ITAU_PAPER_Y + 11 + ((i * 53) % Math.floor(ITAU_PAPER_H - 22));
@@ -854,7 +855,7 @@ function drawItauVia(
     codigoBarras: string;
     pixPayload: string;
     pixCopyText: string;
-    amount: string;
+    amount: string;           // formatted WITHOUT "R$" prefix (e.g. "123,45")
     dueDate: string;
     issueDate: string;
     docNumber: string;
@@ -865,6 +866,10 @@ function drawItauVia(
     payerDocument: string;
     payerAddress: string;
     nossoNumero: string;
+    agenciaCodBeneficiario: string;
+    instrucoes: string[];
+    descontoAbatimento: string | null;
+    moraMulTA: string | null;
     withPaymentArea: boolean;
   },
 ) {
@@ -883,90 +888,77 @@ function drawItauVia(
   const row3Y = row2Y - row;
   const row4Y = row3Y - 28;
   const row5Y = row4Y - 60;
-  const instructionLines = [
-    'Instruções de responsabilidade do BENEFICIÁRIO. Não receber após 30 dias do vencimento.',
-    'Após vencimento cobrar juros de 1% a.m. e multa de 2%.',
-    'Título sujeito a negativação após 5 dias de atraso.',
-    'Documento emitido em ambiente de simulação para conferência visual.',
-  ];
 
   parts.push(strokeRect(x, y, w, h, '0.18 0.18 0.18', 0.35));
   drawItauHeader(parts, x, headerY, w, title, data.linhaDigitavel);
 
-  drawBoletoField(parts, x, row1Y, leftW, row, 'Local de pagamento', 'Pagável em qualquer banco até o vencimento.', {
-    size: 7.1,
-    maxLines: 1,
-  });
-  drawBoletoField(parts, rightX, row1Y, rightW, row, 'Vencimento', data.dueDate, {
-    size: 8.2,
-    bold: true,
-    right: true,
-    maxLines: 1,
-  });
+  // Row 1: Local de pagamento + Vencimento
+  drawBoletoField(parts, x, row1Y, leftW, row, 'Local de pagamento',
+    'Em qualquer banco ou correspondente bancário mesmo após o vencimento.', { size: 6.8, maxLines: 1 });
+  drawBoletoField(parts, rightX, row1Y, rightW, row, 'Vencimento', data.dueDate,
+    { size: 8.2, bold: true, right: true, maxLines: 1 });
 
-  drawBoletoField(
-    parts,
-    x,
-    row2Y,
-    leftW,
-    row,
-    'Beneficiário',
-    `${data.beneficiaryName} - CNPJ ${data.beneficiaryDocument} - ${data.beneficiaryAddress}`,
-    {
-      size: 6.3,
-      bold: true,
-      maxLines: 1,
-    },
-  );
-  drawBoletoField(parts, rightX, row2Y, rightW, row, 'Agência/Cód. Beneficiário', '2938/00012345-6', {
-    size: 6.3,
-    right: true,
-    maxLines: 1,
-  });
+  // Row 2: Beneficiário (name + CNPJ on same line) + Agência/Cód. Beneficiário
+  // Name and CNPJ on the label line, address on value line — matching the image layout
+  const beneficiaryLine = `${data.beneficiaryName}    CNPJ: ${data.beneficiaryDocument}`;
+  drawBoletoField(parts, x, row2Y, leftW, row, 'Beneficiário:', beneficiaryLine, { size: 6.3, bold: true, maxLines: 1 });
+  // Address rendered as a second sub-line inside the same cell
+  parts.push(tx(x + 3, row2Y + 4, `Endereço Beneficiário: ${data.beneficiaryAddress}`, 5.5, '0.18 0.18 0.18', 'F1'));
+  drawBoletoField(parts, rightX, row2Y, rightW, row, 'Agência/Código Beneficiário', data.agenciaCodBeneficiario,
+    { size: 6.3, right: true, maxLines: 1 });
 
+  // Row 3: Date/Doc/Espécie/Aceite/Processamento + Nosso Número
   const dateW = 104;
   const docW = 151;
   const especieW = 68;
   const aceiteW = 52;
   const procW = leftW - dateW - docW - especieW - aceiteW;
   drawBoletoField(parts, x, row3Y, dateW, row, 'Data do documento', data.issueDate, { size: 6.7, maxLines: 1 });
-  drawBoletoField(parts, x + dateW, row3Y, docW, row, 'Núm. do Documento', data.docNumber, {
-    size: 6.7,
-    font: 'F3',
-    maxLines: 1,
-  });
+  drawBoletoField(parts, x + dateW, row3Y, docW, row, 'Núm. do Documento', data.docNumber,
+    { size: 6.7, font: 'F3', maxLines: 1 });
   drawBoletoField(parts, x + dateW + docW, row3Y, especieW, row, 'Espécie Doc.', 'DM', { size: 6.7, maxLines: 1 });
   drawBoletoField(parts, x + dateW + docW + especieW, row3Y, aceiteW, row, 'Aceite', 'N', { size: 6.7, maxLines: 1 });
-  drawBoletoField(parts, x + dateW + docW + especieW + aceiteW, row3Y, procW, row, 'Data Processamento', data.issueDate, {
-    size: 6.7,
-    maxLines: 1,
-  });
-  drawBoletoField(parts, rightX, row3Y, rightW, row, 'Nosso Número', data.nossoNumero, {
-    size: 6.4,
-    font: 'F3',
-    right: true,
-    maxLines: 1,
-  });
+  drawBoletoField(parts, x + dateW + docW + especieW + aceiteW, row3Y, procW, row, 'Data Processamento', data.issueDate,
+    { size: 6.7, maxLines: 1 });
+  drawBoletoField(parts, rightX, row3Y, rightW, row, 'Nosso Número', data.nossoNumero,
+    { size: 6.4, font: 'F3', right: true, maxLines: 1 });
 
-  drawBoletoField(parts, x, row4Y, leftW, 28, 'Pagador', [`${data.payerName} - CPF/CNPJ ${data.payerDocument}`, data.payerAddress], {
-    size: 6.5,
-    maxLines: 2,
-  });
-  drawBoletoField(parts, rightX, row4Y, rightW, 28, 'Valor do Documento', data.amount, {
-    size: 8.4,
-    bold: true,
-    right: true,
-    maxLines: 1,
-  });
+  // Row 4: Pagador + (=) Valor do Documento
+  // Pagador: name + CPF/CNPJ on first line, address on second line
+  drawBoletoField(parts, x, row4Y, leftW, 28, 'Pagador',
+    [`${data.payerName}    CPF/CNPJ:${data.payerDocument}`, data.payerAddress],
+    { size: 6.5, maxLines: 2 });
+  // Value shown WITHOUT "R$" prefix — just the number (e.g. "123,45")
+  drawBoletoField(parts, rightX, row4Y, rightW, 28, '(=) Valor do Documento', data.amount,
+    { size: 8.4, bold: true, right: true, maxLines: 1 });
 
-  drawBoletoField(parts, x, row5Y, leftW, 60, 'Instruções de responsabilidade do BENEFICIÁRIO', instructionLines, {
-    size: 6.05,
-    maxLines: 4,
-  });
-  drawBoletoField(parts, rightX, row5Y + 40, rightW, 20, 'Descontos/Abatimento', '0,00', { size: 6.3, right: true, maxLines: 1 });
-  drawBoletoField(parts, rightX, row5Y + 20, rightW, 20, 'Mora/Multa', '0,00', { size: 6.3, right: true, maxLines: 1 });
-  drawBoletoField(parts, rightX, row5Y, rightW, 20, 'Valor Cobrado', data.amount, { size: 6.8, bold: true, right: true, maxLines: 1 });
+  // Row 5: Instruções + value breakdown fields
+  drawBoletoField(parts, x, row5Y, leftW, 60, 'Instruções de responsabilidade do BENEFICIÁRIO. Qualquer dúvida sobre este boleto Contate o BENEFICIÁRIO',
+    data.instrucoes, { size: 6.05, maxLines: 4 });
 
+  // (-) Descontos/Abatimento — empty by default
+  if (data.descontoAbatimento) {
+    drawBoletoField(parts, rightX, row5Y + 40, rightW, 20, '(-) Descontos/Abatimento',
+      data.descontoAbatimento, { size: 6.3, right: true, maxLines: 1 });
+  } else {
+    drawBoletoField(parts, rightX, row5Y + 40, rightW, 20, '(-) Descontos/Abatimento', '',
+      { size: 6.3, right: true, maxLines: 1, empty: true });
+  }
+
+  // (+) Mora/Multa — empty by default
+  if (data.moraMulTA) {
+    drawBoletoField(parts, rightX, row5Y + 20, rightW, 20, '(+) Mora/Multa',
+      data.moraMulTA, { size: 6.3, right: true, maxLines: 1 });
+  } else {
+    drawBoletoField(parts, rightX, row5Y + 20, rightW, 20, '(+) Mora/Multa', '',
+      { size: 6.3, right: true, maxLines: 1, empty: true });
+  }
+
+  // (=) Valor Cobrado — empty by default (filled after payment)
+  drawBoletoField(parts, rightX, row5Y, rightW, 20, '(=) Valor Cobrado', '',
+    { size: 6.8, bold: true, right: true, maxLines: 1, empty: true });
+
+  // ── Via: RECIBO DO PAGADOR (top, no payment area) ──────────────────────
   if (!data.withPaymentArea) {
     const receiptBoxX = x + w - 138;
     parts.push(strokeRect(receiptBoxX, y + 31, 126, 23, '0.25 0.25 0.25', 0.35));
@@ -975,6 +967,9 @@ function drawItauVia(
     return;
   }
 
+  // ── Via: FICHA DE COMPENSAÇÃO (bottom, with QR + barcode) ─────────────
+
+  // QR Code Pix
   const qrSize = 82;
   const qrX = x + w - qrSize - 12;
   const qrY = y + 92;
@@ -985,17 +980,28 @@ function drawItauVia(
     parts.push(...drawQrCode(ITAU_FALLBACK_PIX, qrX, qrY, qrSize));
   }
 
+  // PIX Copia e Cola label + text above QR
   parts.push(txCenter(qrX, qrSize, qrY - 10, 'PIX Copia e Cola', 6.8, '0 0 0', 'F2'));
   wrap(data.pixCopyText, 28).slice(0, 2).forEach((lineText, index) => {
     parts.push(tx(qrX, qrY - 21 - index * 7, lineText, 5, '0.22 0.22 0.22', 'F3'));
   });
 
+  // "Escolha a forma..." hint text below QR
+  const hintLines = [
+    'Escolha a forma mais conveniente para realizar o seu pagamento: Codigo de barras ou QR Code basta acessar o',
+    'aplicativo da sua instituição financeira e utilizar apenas uma das opções.',
+  ];
+  hintLines.forEach((hl, i) => {
+    parts.push(tx(x + 6, qrY - 6 - i * 7, hl, 5.2, '0.22 0.22 0.22'));
+  });
+
+  // Barcode + FICHA DE COMPENSAÇÃO label
   const barcodeY = y + 17;
   parts.push(strokeRect(x + 354, barcodeY + 41, 176, 15, '0.18 0.18 0.18', 0.35));
   parts.push(txCenter(x + 354, 176, barcodeY + 45.5, 'FICHA DE COMPENSAÇÃO', 7.1, '0 0 0', 'F2'));
+  parts.push(tx(x + 354 + 176 + 4, barcodeY + 45.5, 'autenticação Mecanica', 6.3, '0 0 0', 'F2'));
   parts.push(...drawBarcode(data.codigoBarras, x + 6, barcodeY + 7, 520, 38));
   parts.push(tx(x + 6, barcodeY - 2, data.codigoBarras, 5.6, '0.18 0.18 0.18', 'F3'));
-  parts.push(txRight(x + w, barcodeY - 1, 'Autenticação Mecânica', 6.3, '0 0 0', 'F2'));
 }
 
 function createRawPdfBuffer(content: string, width: number, height: number) {
@@ -1048,37 +1054,50 @@ async function createItauBoletoPdfBuffer(input: BoletoPdfInput) {
   const codigoBarras = formatItauCodigoBarras(input.codigoBarras);
   const issueDate = formatDateBR(input.issueDate ?? new Date());
   const dueDate = formatDateBR(input.dueDate || '2024-05-01');
+
   const beneficiaryName = clean(
     input.companyName ||
       process.env.BOLETO_BENEFICIARY_NAME ||
       process.env.SOLARA_RAZAO_SOCIAL ||
       process.env.SOLARA_NAME ||
       process.env.COMPANY_NAME ||
-      'SOLARA ENERGIA',
+      'SIMULACAO S/A',
   );
   const beneficiaryDocument = maskCpfCnpj(
-    input.companyCnpj || process.env.BOLETO_BENEFICIARY_CNPJ || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || '',
+    input.companyCnpj || process.env.BOLETO_BENEFICIARY_CNPJ || process.env.SOLARA_CNPJ || process.env.COMPANY_CNPJ || '11111111000111',
   );
   const beneficiaryAddress = clean(
     input.companyAddress ||
       process.env.BOLETO_BENEFICIARY_ADDRESS ||
       process.env.SOLARA_ADDRESS ||
       process.env.COMPANY_ADDRESS ||
-      'Endereço do beneficiário não informado',
+      'Rua Simulação,1234 - Bairro Teste - São Paulo SP CEP.01234-001',
   );
-  const payerName = clean(input.clientName || 'PAGADOR TESTE');
-  const payerDocument = maskCpfCnpj(input.clientDocument || '12345678909');
-  const payerAddress = clean(input.clientAddress || input.installationAddress || 'Rua das Palmeiras, 45, Centro, Campinas - SP, 13010-001');
+
+  const payerName = clean(input.clientName || 'PAGADOR - TESTE NOME DO PAGADOR');
+  const payerDocument = maskCpfCnpj(input.clientDocument || '00000000000182');
+  const payerAddress = clean(input.clientAddress || input.installationAddress || 'Endereço do Pagador - CIDADE - ESTADO - SIGLA ESTADO');
   const docNumber = buildItauDocNumber(input);
   const nossoNumero = buildItauNossoNumero(input, codigoBarras);
   const pixCopyText = pixPayload ?? ITAU_FALLBACK_PIX;
+
+  // ── Resolve new parametric fields ─────────────────────────────────────
+  const agenciaCodBeneficiario = input.agenciaCodBeneficiario?.trim() || '0057/12345-7';
+  const instrucoes = (input.instrucoes && input.instrucoes.length > 0)
+    ? input.instrucoes
+    : DEFAULT_INSTRUCOES;
+  const descontoAbatimento = input.descontoAbatimento ?? null;
+  const moraMulTA = input.moraMulTA ?? null;
+
+  // Amount formatted WITHOUT "R$" prefix — just the decimal number
+  const amountFormatted = formatValueOnly(amount);
 
   const data = {
     linhaDigitavel,
     codigoBarras,
     pixPayload: pixCopyText,
     pixCopyText,
-    amount: formatCurrencyBRL(amount),
+    amount: amountFormatted,
     dueDate,
     issueDate,
     docNumber,
@@ -1089,6 +1108,10 @@ async function createItauBoletoPdfBuffer(input: BoletoPdfInput) {
     payerDocument,
     payerAddress,
     nossoNumero,
+    agenciaCodBeneficiario,
+    instrucoes,
+    descontoAbatimento,
+    moraMulTA,
   };
 
   const parts: string[] = [];
@@ -1101,31 +1124,35 @@ async function createItauBoletoPdfBuffer(input: BoletoPdfInput) {
   parts.push(dashedLine(ITAU_PAPER_X + 8, 299, ITAU_PAPER_X + ITAU_PAPER_W - 8, 299, '0.42 0.42 0.42', 0.35));
   parts.push(tx(ITAU_PAPER_X + 10, 303, 'Corte na linha pontilhada', 5.6, '0.35 0.35 0.35'));
 
+  // Top via: RECIBO DO PAGADOR (no QR / barcode)
   drawItauVia(parts, ITAU_TOP_VIA_Y, 'RECIBO DO PAGADOR', { ...data, withPaymentArea: false });
+
+  // Bottom via: FICHA DE COMPENSAÇÃO (with QR + barcode)
   drawItauVia(parts, ITAU_BOTTOM_VIA_Y, 'FICHA DE COMPENSAÇÃO', { ...data, withPaymentArea: true });
+
   parts.push('Q');
 
   return createRawPdfBuffer(parts.join('\n'), ITAU_PAGE_W, ITAU_PAGE_H);
 }
 
+// ─── Layout constants (legacy renderer) ───────────────────────────────────────
+
 const PAGE_W = 595;
 const PAGE_H = 842;
-const ML = 40;       // margin left
-const MR = 40;       // margin right
-const CW = PAGE_W - ML - MR; // content width = 515
-const GAP = 10;      // gap between cards
+const ML = 40;
+const MR = 40;
+const CW = PAGE_W - ML - MR;
+const GAP = 10;
 
 export async function createBoletoPdfBuffer(input: BoletoPdfInput) {
   if (process.env.PDF_RENDERER_LEGACY === '1') {
     return createLegacyBoletoPdfBuffer(input);
   }
-
   return createItauBoletoPdfBuffer(input);
 }
 
 async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
 
-  // ── Resolve Pix ────────────────────────────────────────────────────────
   const pixPayload = resolveOfficialPixPayload(input.pixPayload, input.pixCopiaCola, input.pixQrCode);
   console.log('PIX PAYLOAD USADO NO PDF', pixPayload);
   const pixCopyLabel = pixPayload ? 'Pix Cópia e Cola' : 'Pix indisponível';
@@ -1136,7 +1163,6 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
   logInvalidPixPayload('pixQrCode', input.pixQrCode);
   if (!pixPayload) console.warn('[billing-pdf] Payload Pix EMV não encontrado. QR não será gerado.');
 
-  // ── Resolve env ────────────────────────────────────────────────────────
   const companyCnpj     = input.companyCnpj     || process.env.SOLARA_CNPJ              || process.env.COMPANY_CNPJ   || null;
   const companyAddress  = input.companyAddress  || process.env.SOLARA_ADDRESS            || process.env.COMPANY_ADDRESS || null;
   const supportEmail    = input.supportEmail    || process.env.BILLING_SUPPORT_EMAIL     || 'financeiro@solaraenergia.com.br';
@@ -1150,15 +1176,14 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
   const installAddr     = clean(input.installationAddress || input.clientAddress);
   const isPago          = status === 'PAGO';
 
-  // ── Palette ────────────────────────────────────────────────────────────
   const yellow   = '0.98 0.80 0.08';
   const orange   = '1 0.68 0.20';
   const green    = '0.06 0.55 0.38';
-  const ink      = '0.008 0.024 0.090'; // #020617
-  const ink800   = '0.12 0.16 0.24';   // slate-800
-  const ink600   = '0.28 0.33 0.41';   // slate-600
-  const ink400   = '0.55 0.60 0.69';   // slate-400
-  const ink100   = '0.94 0.95 0.97';   // slate-100
+  const ink      = '0.008 0.024 0.090';
+  const ink800   = '0.12 0.16 0.24';
+  const ink600   = '0.28 0.33 0.41';
+  const ink400   = '0.55 0.60 0.69';
+  const ink100   = '0.94 0.95 0.97';
   const white    = '1 1 1';
   const border   = '0.88 0.91 0.94';
   const sYellow  = '1 0.97 0.83';
@@ -1168,15 +1193,11 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
 
   const p: string[] = [];
 
-  // ── Layout helpers ─────────────────────────────────────────────────────
-
-  /** Thin ALL-CAPS label with left orange bar */
   function sLabel(x: number, y: number, text: string) {
     p.push(rect(x, y, 2, 10, orange));
     p.push(tx(x + 6, y + 1, text.toUpperCase(), 7, ink400, 'F2'));
   }
 
-  /** Label above + value below */
   function lv(x: number, y: number, label: string, value: string, maxLen = 34) {
     p.push(tx(x, y, label.toUpperCase(), 6.5, ink400, 'F2'));
     wrap(clean(value), maxLen).slice(0, 2).forEach((ln, i) => {
@@ -1184,25 +1205,21 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
     });
   }
 
-  /** Small multiline text */
   function sLines(x: number, y: number, value: string, maxLen: number, size = 8, color = ink600, limit = 3) {
     wrap(clean(value), maxLen).slice(0, limit).forEach((ln, i) => {
       p.push(tx(x, y - i * (size + 3), ln, size, color));
     });
   }
 
-  /** Pill / badge */
   function badge(x: number, y: number, w: number, label: string, fill: string, tc: string) {
     p.push(rrect(x, y, w, 16, 8, fill));
     p.push(tx(x + 7, y + 5, label, 6.5, tc, 'F2'));
   }
 
-  /** Section divider line full content width */
   function divider(y: number) {
     p.push(line(ML, y, ML + CW, y, border, 0.4));
   }
 
-  /** Icon + label row (label to the right of icon) */
   function iconLabel(x: number, y: number, icon: string[][], label: string, value: string, size = 8, maxLen = 38) {
     p.push(...icon.flat());
     p.push(tx(x + 16, y + 8, label.toUpperCase(), 6.5, ink400, 'F2'));
@@ -1211,24 +1228,15 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
     });
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 1. PAGE BACKGROUND
-  // ════════════════════════════════════════════════════════════════════════
   p.push(rect(0, 0, PAGE_W, PAGE_H, white));
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 2. HEADER  y 750–842
-  // ════════════════════════════════════════════════════════════════════════
   const HDR_Y = 750;
   const HDR_H = 92;
   p.push(rect(0, HDR_Y, PAGE_W, HDR_H, ink));
   p.push(rect(0, PAGE_H - 5, PAGE_W, 5, yellow));
   p.push(line(0, HDR_Y, PAGE_W, HDR_Y, '0.12 0.16 0.24', 0.5));
-
-  // Vertical separator
   p.push(line(320, HDR_Y + 10, 320, PAGE_H - 10, '0.18 0.20 0.30', 0.5));
 
-  // Right block
   const RX = 334;
   p.push(tx(RX, 818, 'RESUMO DE FATURAMENTO', 10.5, white, 'F2'));
   p.push(line(RX, 814, PAGE_W - ML, 814, '0.25 0.28 0.38', 0.4));
@@ -1239,127 +1247,84 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
   } else {
     p.push(tx(RX, 781, 'Cobrança mensal de energia solar', 7, '0.52 0.58 0.67'));
   }
-  // status + issue badges in header
   badge(PAGE_W - ML - 76, 786, 76, isPago ? 'PAGO' : 'GERADO', isPago ? sGreen : yellow, isPago ? green : ink);
   badge(PAGE_W - ML - 76, 768, 76, 'EMISSÃO', '0.10 0.14 0.24', white);
-
-  // CNPJ tiny on logo side bottom
   p.push(tx(ML, HDR_Y + 8, companyCnpj ? `CNPJ ${maskCpfCnpj(companyCnpj)}` : '', 7, '0.42 0.48 0.58'));
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 3. HERO VALUE BAND  y 640–742
-  // ════════════════════════════════════════════════════════════════════════
   const HERO_Y = 640;
   const HERO_H = 102;
   p.push(rect(0, HERO_Y, PAGE_W, HERO_H, ink100));
   p.push(line(0, HERO_Y, PAGE_W, HERO_Y, border, 0.5));
   p.push(line(0, HERO_Y + HERO_H, PAGE_W, HERO_Y + HERO_H, border, 0.5));
-  // left accent strip
   p.push(rect(0, HERO_Y, 4, HERO_H, orange));
-
-  // Value
   p.push(tx(ML + 8, HERO_Y + HERO_H - 18, 'VALOR DO FATURAMENTO', 7.5, ink600, 'F2'));
   p.push(tx(ML + 8, HERO_Y + HERO_H - 52, formatCurrencyBRL(input.amount), 32, ink, 'F2'));
   p.push(tx(ML + 8, HERO_Y + 10, description, 8, ink600));
-
-  // vertical divider
   p.push(line(390, HERO_Y + 12, 390, HERO_Y + HERO_H - 12, border, 0.5));
 
-  // Due date block
   const DX = 404;
-  // calendar icon
   p.push(...iconCalendar(DX, HERO_Y + HERO_H - 20, ink600, 0.85));
   p.push(tx(DX + 14, HERO_Y + HERO_H - 14, 'VENCIMENTO', 7, ink600, 'F2'));
   p.push(tx(DX, HERO_Y + HERO_H - 40, dueDate, 19, ink, 'F2'));
   badge(DX, HERO_Y + 28, 72, isPago ? 'PAGO' : 'A VENCER', isPago ? sGreen : sYellow, isPago ? green : '0.60 0.42 0.02');
   p.push(tx(DX, HERO_Y + 13, `Emissão ${issueDate}`, 7, ink400));
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 4. INFO CARDS  y 528–632
-  // ════════════════════════════════════════════════════════════════════════
   const CARD_Y = 516;
   const CARD_H = 108;
   const CARD_W = (CW - GAP) / 2;
 
-  // ── Card: Cliente ──────────────────────────────────────────────────────
   p.push(rrect(ML, CARD_Y, CARD_W, CARD_H, 8, white, border));
-  // green top bar
   p.push(rect(ML, CARD_Y + CARD_H - 4, CARD_W, 4, green));
   sLabel(ML + 14, CARD_Y + CARD_H - 16, 'Dados do cliente');
 
-  // person icon + name
   const nameY = CARD_Y + CARD_H - 38;
   p.push(...iconPerson(ML + 14, nameY - 4, green, 0.8));
   lv(ML + 27, nameY, 'Nome', input.clientName, 36);
 
-  // document icon + cpf/cnpj
   const docY = CARD_Y + CARD_H - 64;
   p.push(...iconReceipt(ML + 14, docY - 4, ink400, 0.8));
   lv(ML + 27, docY, 'CPF / CNPJ', maskCpfCnpj(input.clientDocument), 36);
 
-  // ── Card: Instalação ───────────────────────────────────────────────────
   const C2X = ML + CARD_W + GAP;
   p.push(rrect(C2X, CARD_Y, CARD_W, CARD_H, 8, white, border));
   p.push(rect(C2X, CARD_Y + CARD_H - 4, CARD_W, 4, orange));
   sLabel(C2X + 14, CARD_Y + CARD_H - 16, 'Unidade consumidora');
-
-  // pin icon + address lines
   p.push(...iconPin(C2X + 14, CARD_Y + CARD_H - 46, orange, 0.9));
   sLines(C2X + 28, CARD_Y + CARD_H - 30, installAddr, 38, 8, ink600, 4);
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 5. DETALHAMENTO  y 448–520
-  // ════════════════════════════════════════════════════════════════════════
   const DET_Y = 448;
   const DET_H = 72;
   p.push(rrect(ML, DET_Y, CW, DET_H, 8, white, border));
   p.push(rect(ML, DET_Y + DET_H - 4, CW, 4, ink));
   sLabel(ML + 14, DET_Y + DET_H - 16, 'Detalhamento da cobrança');
-
-  // receipt icon + description
   p.push(...iconReceipt(ML + 14, DET_Y + DET_H - 42, ink, 0.85));
   lv(ML + 28, DET_Y + DET_H - 30, 'Descrição', description, 48);
-
-  // vertical mini-divider
   p.push(line(ML + CW / 2, DET_Y + 10, ML + CW / 2, DET_Y + DET_H - 24, border, 0.4));
-
-  // faturamento id
   p.push(...iconReceipt(ML + CW / 2 + 10, DET_Y + DET_H - 42, ink400, 0.85));
   lv(ML + CW / 2 + 24, DET_Y + DET_H - 30, 'Faturamento ID', clean(input.faturamentoId), 24);
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 6. PAYMENT SECTION  y 148–440
-  // ════════════════════════════════════════════════════════════════════════
   const PAY_Y = 148;
   const PAY_H = 292;
   p.push(rrect(ML, PAY_Y, CW, PAY_H, 10, white, border));
 
-  // dark header band
   const BAND_H = 40;
   const BAND_Y = PAY_Y + PAY_H - BAND_H;
   p.push(rect(ML, BAND_Y, CW, BAND_H, ink));
-  // pix icon in band
   p.push(...iconPix(ML + 14, BAND_Y + 14, yellow, 0.9));
   p.push(tx(ML + 28, BAND_Y + BAND_H - 14, 'PAGUE COM PIX OU BOLETO', 10.5, white, 'F2'));
   badge(ML + CW - 96, BAND_Y + 12, 82, 'INSTANTÂNEO', yellow, ink);
 
-  const INNER_Y = BAND_Y - 8; // baseline below header
-
-  // ── Left column ────────────────────────────────────────────────────────
+  const INNER_Y = BAND_Y - 8;
   const LX = ML + 16;
   const RIGHT_DIVIDER_X = ML + CW - 152;
 
-  // Linha Digitável
   p.push(tx(LX, INNER_Y - 10, 'Linha digitável', 9, ink800, 'F2'));
   sLines(LX, INNER_Y - 26, clean(input.linhaDigitavel), 56, 7.5, ink600, 3);
   p.push(line(LX, INNER_Y - 66, RIGHT_DIVIDER_X - 10, INNER_Y - 66, border, 0.4));
-
-  // Pix copia e cola
   p.push(...iconPix(LX, INNER_Y - 82, green, 0.8));
   p.push(tx(LX + 13, INNER_Y - 76, pixCopyLabel, 9, ink800, 'F2'));
   sLines(LX, INNER_Y - 92, pixCopyText, 54, 7, ink600, 4);
 
-  // ── QR code column ────────────────────────────────────────────────────
   const QR_SIZE = 124;
   const QR_X = ML + CW - QR_SIZE - 14;
   const QR_LABEL_Y = INNER_Y - 10;
@@ -1376,14 +1341,10 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
   } else {
     p.push(...drawUnavailableQr(QR_X, QR_BASE_Y, QR_SIZE));
   }
-
-  // hint below QR
   p.push(tx(QR_X, QR_BASE_Y - 6, 'Abra no app do banco', 6.5, ink400));
 
-  // vertical divider between columns
   p.push(line(RIGHT_DIVIDER_X, INNER_Y - 6, RIGHT_DIVIDER_X, PAY_Y + 58, border, 0.4));
 
-  // ── Barcode ────────────────────────────────────────────────────────────
   const BC_Y = PAY_Y + 8;
   const BC_H = 38;
   p.push(line(LX, BC_Y + BC_H + 10, LX + CW - 30, BC_Y + BC_H + 10, border, 0.4));
@@ -1392,9 +1353,6 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
   p.push(...drawBarcode(input.codigoBarras, LX, BC_Y, CW - 36, BC_H));
   p.push(tx(LX, BC_Y - 8, clean(input.codigoBarras), 6, ink400));
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 7. NOTICE BAR  y 94–140
-  // ════════════════════════════════════════════════════════════════════════
   const NB_Y = 94;
   const NB_H = 44;
   p.push(rrect(ML, NB_Y, CW, NB_H, 8, sYellow, yBorder));
@@ -1402,36 +1360,28 @@ async function createLegacyBoletoPdfBuffer(input: BoletoPdfInput) {
   p.push(tx(ML + 30, NB_Y + 31, 'Observação', 8.5, ink800, 'F2'));
   p.push(tx(ML + 30, NB_Y + 18, 'Após o pagamento, a compensação poderá ocorrer conforme o prazo da instituição financeira.', 7.5, ink600));
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 8. FOOTER  y 0–86
-  // ════════════════════════════════════════════════════════════════════════
   const FTR_H = 86;
   p.push(rect(0, 0, PAGE_W, FTR_H, ink));
   p.push(rect(0, FTR_H - 4, PAGE_W, 4, yellow));
 
-  // Three equal contact columns
- const COL_W = CW / 3;
-const footerCols = [
-  { iconFn: iconEmail,  label: 'Email',     value: supportEmail },
-  { iconFn: iconPhone,  label: 'WhatsApp',  value: supportWhatsapp || 'Atendimento Solara' },
-  { iconFn: iconGlobe,  label: 'Site',      value: siteDisplay },
-];
+  const COL_W = CW / 3;
+  const footerCols = [
+    { iconFn: iconEmail,  label: 'Email',     value: supportEmail },
+    { iconFn: iconPhone,  label: 'WhatsApp',  value: supportWhatsapp || 'Atendimento Solara' },
+    { iconFn: iconGlobe,  label: 'Site',      value: siteDisplay },
+  ];
 
-footerCols.forEach(({ iconFn, label, value }, i) => {
-  const cx = ML + COL_W * i;
-  p.push(...iconFn(cx, 46, yellow, 0.82));
-  p.push(tx(cx + 16, 62, label.toUpperCase(), 7, '0.65 0.70 0.80', 'F2'));
-  p.push(line(cx + 16, 58, cx + COL_W - 4, 58, '0.18 0.22 0.32', 0.4));
-  p.push(tx(cx + 16, 47, value, 7.5, '0.88 0.91 0.96'));
-});
+  footerCols.forEach(({ iconFn, label, value }, i) => {
+    const cx = ML + COL_W * i;
+    p.push(...iconFn(cx, 46, yellow, 0.82));
+    p.push(tx(cx + 16, 62, label.toUpperCase(), 7, '0.65 0.70 0.80', 'F2'));
+    p.push(line(cx + 16, 58, cx + COL_W - 4, 58, '0.18 0.22 0.32', 0.4));
+    p.push(tx(cx + 16, 47, value, 7.5, '0.88 0.91 0.96'));
+  });
 
-  // Tagline + logo watermark
   p.push(line(ML, 32, PAGE_W - MR, 32, '0.14 0.16 0.24', 0.4));
   p.push(tx(ML, 18, 'Solara Energia: transparência, economia e confiança na sua jornada de energia solar.', 7.5, '0.42 0.48 0.58'));
 
-  // ════════════════════════════════════════════════════════════════════════
-  // 9. BUILD PDF BYTES
-  // ════════════════════════════════════════════════════════════════════════
   const content = p.join('\n');
   const objects = [
     '%PDF-1.4\n',
