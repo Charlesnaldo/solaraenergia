@@ -898,12 +898,18 @@ function drawItauVia(
   drawBoletoField(parts, rightX, row1Y, rightW, row, 'Vencimento', data.dueDate,
     { size: 8.2, bold: true, right: true, maxLines: 1 });
 
-  // Row 2: Beneficiário (name + CNPJ on same line) + Agência/Cód. Beneficiário
-  // Name and CNPJ on the label line, address on value line — matching the image layout
-  const beneficiaryLine = `${data.beneficiaryName}    CNPJ: ${data.beneficiaryDocument}`;
-  drawBoletoField(parts, x, row2Y, leftW, row, 'Beneficiário:', beneficiaryLine, { size: 6.3, bold: true, maxLines: 1 });
-  // Address rendered as a second sub-line inside the same cell
-  parts.push(tx(x + 3, row2Y + 4, `Endereço Beneficiário: ${data.beneficiaryAddress}`, 5.5, '0.18 0.18 0.18', 'F1'));
+  // Row 2: Beneficiário — two rows tall to fit name/CNPJ + address
+  // We draw this as a taller cell (row*2 height) so name+address fit without overlap
+  const row2H = row;
+  const beneficiaryLine = `${data.beneficiaryName}      CNPJ: ${data.beneficiaryDocument}`;
+  const beneficiaryAddrLine = `Endereço Beneficiário: ${data.beneficiaryAddress}`;
+  // Draw the cell border and label manually so we can place two value lines
+  parts.push(strokeRect(x, row2Y, leftW, row2H, '0.08 0.08 0.08', 0.35));
+  parts.push(tx(x + 3, row2Y + row2H - 5.2 - 1.5, 'Beneficiário:', 5.2, '0.22 0.22 0.22', 'F1'));
+  // First value line: name + CNPJ (bold)
+  parts.push(tx(x + 3, row2Y + row2H - 14, beneficiaryLine, 6.3, '0.02 0.02 0.02', 'F2'));
+  // Second value line: address (smaller, regular)
+  parts.push(tx(x + 3, row2Y + 3.5, beneficiaryAddrLine, 5.4, '0.18 0.18 0.18', 'F1'));
   drawBoletoField(parts, rightX, row2Y, rightW, row, 'Agência/Código Beneficiário', data.agenciaCodBeneficiario,
     { size: 6.3, right: true, maxLines: 1 });
 
@@ -923,18 +929,26 @@ function drawItauVia(
   drawBoletoField(parts, rightX, row3Y, rightW, row, 'Nosso Número', data.nossoNumero,
     { size: 6.4, font: 'F3', right: true, maxLines: 1 });
 
-  // Row 4: Pagador + (=) Valor do Documento
-  // Pagador: name + CPF/CNPJ on first line, address on second line
-  drawBoletoField(parts, x, row4Y, leftW, 28, 'Pagador',
-    [`${data.payerName}    CPF/CNPJ:${data.payerDocument}`, data.payerAddress],
-    { size: 6.5, maxLines: 2 });
+  // Row 4: Pagador — manual draw for precise 2-line layout in 28pt cell
+  parts.push(strokeRect(x, row4Y, leftW, 28, '0.08 0.08 0.08', 0.35));
+  parts.push(tx(x + 3, row4Y + 28 - 5.2 - 1.5, 'Pagador', 5.2, '0.22 0.22 0.22', 'F1'));
+  // Line 1: name + CPF/CNPJ
+  parts.push(tx(x + 3, row4Y + 14, `${data.payerName}      CPF/CNPJ: ${data.payerDocument}`, 6.5, '0.02 0.02 0.02', 'F2'));
+  // Line 2: address
+  parts.push(tx(x + 3, row4Y + 4, data.payerAddress, 5.8, '0.18 0.18 0.18', 'F1'));
   // Value shown WITHOUT "R$" prefix — just the number (e.g. "123,45")
   drawBoletoField(parts, rightX, row4Y, rightW, 28, '(=) Valor do Documento', data.amount,
     { size: 8.4, bold: true, right: true, maxLines: 1 });
 
-  // Row 5: Instruções + value breakdown fields
-  drawBoletoField(parts, x, row5Y, leftW, 60, 'Instruções de responsabilidade do BENEFICIÁRIO. Qualquer dúvida sobre este boleto Contate o BENEFICIÁRIO',
-    data.instrucoes, { size: 6.05, maxLines: 4 });
+  // Row 5: Instruções — short label header, instruction lines as values
+  // Draw cell manually: label is just "Instruções (BENEFICIÁRIO)" and lines fill the body
+  parts.push(strokeRect(x, row5Y, leftW, 60, '0.08 0.08 0.08', 0.35));
+  parts.push(tx(x + 3, row5Y + 60 - 5.2 - 1.5, 'Instruções de responsabilidade do BENEFICIÁRIO. Qualquer dúvida sobre este boleto Contate o BENEFICIÁRIO', 5.0, '0.22 0.22 0.22', 'F1'));
+  // Instruction lines — drawn top-to-bottom inside the cell body
+  data.instrucoes.slice(0, 4).forEach((instrLine, index) => {
+    const lineY = row5Y + 60 - 16 - index * 9;
+    parts.push(tx(x + 3, lineY, instrLine.trim(), 6.05, '0.02 0.02 0.02', 'F1'));
+  });
 
   // (-) Descontos/Abatimento — empty by default
   if (data.descontoAbatimento) {
@@ -986,13 +1000,14 @@ function drawItauVia(
     parts.push(tx(qrX, qrY - 21 - index * 7, lineText, 5, '0.22 0.22 0.22', 'F3'));
   });
 
-  // "Escolha a forma..." hint text below QR
+  // "Escolha a forma..." hint text — placed below instructions, above barcode
+  // qrY is y+92, barcode is at y+17+45=y+62, so hint sits around y+80..y+90
   const hintLines = [
     'Escolha a forma mais conveniente para realizar o seu pagamento: Codigo de barras ou QR Code basta acessar o',
     'aplicativo da sua instituição financeira e utilizar apenas uma das opções.',
   ];
   hintLines.forEach((hl, i) => {
-    parts.push(tx(x + 6, qrY - 6 - i * 7, hl, 5.2, '0.22 0.22 0.22'));
+    parts.push(tx(x + 6, y + 88 - i * 8, hl, 5.0, '0.22 0.22 0.22'));
   });
 
   // Barcode + FICHA DE COMPENSAÇÃO label
