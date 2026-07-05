@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { m, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, EyeOff, Eye, ArrowRight, Smartphone } from 'lucide-react';
 import { useState } from 'react';
@@ -23,6 +23,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? '';
 
   function getNetworkErrorMessage(err: unknown, fallback: string) {
     const message = err instanceof Error ? err.message : '';
@@ -156,7 +157,14 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
                     </div>
                   </div>
 
-                  {error && <p className="text-sm text-rose-300">{error}</p>}
+                  {error && (
+                    <div className="space-y-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3">
+                      <p className="text-sm text-rose-200">{error}</p>
+                      <p className="break-all font-mono text-[10px] uppercase tracking-wider text-rose-300/80">
+                        URL lida: {supabaseUrl || '(vazia)'}
+                      </p>
+                    </div>
+                  )}
 
                   <button disabled={loading} className="group relative w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3 overflow-hidden active:scale-[0.98] mt-6 shadow-xl shadow-yellow-500/10 disabled:opacity-60">
                     <span className="relative z-10 uppercase tracking-widest text-xs">
@@ -177,7 +185,14 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
                     <input required value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" placeholder="000000" className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-4 text-white text-sm outline-none focus:border-yellow-500/50 focus:bg-white/[0.05] transition-all placeholder:text-slate-600 tracking-[0.4em] text-center" />
                   </div>
 
-                  {error && <p className="text-sm text-rose-300">{error}</p>}
+                  {error && (
+                    <div className="space-y-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3">
+                      <p className="text-sm text-rose-200">{error}</p>
+                      <p className="break-all font-mono text-[10px] uppercase tracking-wider text-rose-300/80">
+                        URL lida: {supabaseUrl || '(vazia)'}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setStep('credentials')} className="flex-1 rounded-2xl border border-white/10 px-4 py-4 text-white font-semibold">Voltar</button>
