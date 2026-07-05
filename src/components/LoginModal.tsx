@@ -24,6 +24,16 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
   const [error, setError] = useState('');
   const router = useRouter();
 
+  function getNetworkErrorMessage(err: unknown, fallback: string) {
+    const message = err instanceof Error ? err.message : '';
+
+    if (/failed to fetch/i.test(message)) {
+      return 'Nao foi possivel conectar ao Supabase. Confira NEXT_PUBLIC_SUPABASE_URL, a rede e se o projeto Supabase esta online.';
+    }
+
+    return message || fallback;
+  }
+
   const startLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -34,7 +44,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
       if (authError) {
-        setError(authError.message);
+        setError(getNetworkErrorMessage(authError, 'Nao foi possivel autenticar.'));
         return;
       }
 
@@ -47,7 +57,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const payload = (await res.json()) as { error?: string; challengeId?: string };
+      const payload = (await res.json().catch(() => ({}))) as { error?: string; challengeId?: string };
       if (!res.ok || !payload.challengeId) {
         throw new Error(payload.error ?? 'Nao foi possivel iniciar o 2FA.');
       }
@@ -56,7 +66,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
       setChallengeId(payload.challengeId);
       setStep('code');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Configuracao do Supabase ou SMS ausente.');
+      setError(getNetworkErrorMessage(err, 'Configuracao do Supabase ou SMS ausente.'));
     } finally {
       setLoading(false);
     }
@@ -80,7 +90,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
         },
         body: JSON.stringify({ challengeId, code }),
       });
-      const payload = (await res.json()) as { error?: string };
+      const payload = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         throw new Error(payload.error ?? 'Codigo invalido.');
       }
@@ -93,7 +103,7 @@ export default function LoginModal({ isOpen, onClose, redirectPath = '/admin' }:
       router.push(redirectPath);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Codigo invalido.');
+      setError(getNetworkErrorMessage(err, 'Codigo invalido.'));
     } finally {
       setLoading(false);
     }
