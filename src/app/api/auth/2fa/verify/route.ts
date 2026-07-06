@@ -10,20 +10,42 @@ function readUserRole(user: { app_metadata?: Record<string, unknown>; user_metad
   const role = user?.app_metadata?.role ?? user?.user_metadata?.role;
   return typeof role === 'string' ? role : null;
 }
+
+function readAdminEmails() {
+  return (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isAllowedAdminUser(user: { email?: string | null; app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null | undefined) {
+  const email = user?.email?.trim().toLowerCase() ?? null;
+  if (email && readAdminEmails().includes(email)) {
+    return true;
+  }
+
+  const role = readUserRole(user);
+  return role === 'admin' || role === 'service_role';
+}
 function hashCode(code: string) {
   return crypto.createHash('sha256').update(code).digest('hex');
 }
 
 function isAdminUser(user: Awaited<ReturnType<typeof getSupabaseUser>>) {
-  const role = readUserRole(user);
-  return role === 'admin' || role === 'service_role';
+  return isAllowedAdminUser(user);
 }
 
 function getRoleError(user: Awaited<ReturnType<typeof getSupabaseUser>>) {
+  const email = user?.email?.trim().toLowerCase() ?? '';
+
+  if (email && readAdminEmails().includes(email)) {
+    return 'User is allowed by ADMIN_EMAILS.';
+  }
+
   const role = readUserRole(user);
 
   if (!role) {
-    return 'User without admin role.';
+    return 'User without admin role. Set ADMIN_EMAILS or add role=admin.';
   }
 
   return `User role "${role}" is not allowed.`;

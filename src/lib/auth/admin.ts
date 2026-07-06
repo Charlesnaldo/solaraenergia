@@ -7,6 +7,23 @@ function readUserRole(user: { app_metadata?: Record<string, unknown>; user_metad
   const role = user?.app_metadata?.role ?? user?.user_metadata?.role;
   return typeof role === 'string' ? role : null;
 }
+
+function readAdminEmails() {
+  return (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isAllowedAdminUser(user: { email?: string | null; app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null | undefined) {
+  const email = user?.email?.trim().toLowerCase() ?? null;
+  if (email && readAdminEmails().includes(email)) {
+    return true;
+  }
+
+  const role = readUserRole(user);
+  return role === 'admin' || role === 'service_role';
+}
 export async function getAuthenticatedAdminUser() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -35,8 +52,7 @@ export async function getAuthenticatedAdminUser() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const role = readUserRole(user);
-  const isAdmin = role === 'admin' || role === 'service_role';
+  const isAdmin = isAllowedAdminUser(user);
   const isTwoFactorValid = await isTwoFactorCookieValid(twoFactorCookie?.value, user?.id);
 
   return isAdmin && isTwoFactorValid ? user : null;

@@ -12,6 +12,23 @@ function readUserRole(user: { app_metadata?: Record<string, unknown>; user_metad
   const role = user?.app_metadata?.role ?? user?.user_metadata?.role;
   return typeof role === 'string' ? role : null;
 }
+
+function readAdminEmails() {
+  return (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isAllowedAdminUser(user: { email?: string | null; app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null | undefined) {
+  const email = user?.email?.trim().toLowerCase() ?? null;
+  if (email && readAdminEmails().includes(email)) {
+    return true;
+  }
+
+  const role = readUserRole(user);
+  return role === 'admin' || role === 'service_role';
+}
 function getBearerToken(request: NextRequest) {
   const authorization = request.headers.get('authorization') ?? '';
   const [scheme, token] = authorization.split(/\s+/);
@@ -58,8 +75,7 @@ export async function authenticateRequest(request: NextRequest): Promise<AuthCon
     return null;
   }
 
-  const role = readUserRole(user);
-  const hasAdminRole = role === 'admin' || role === 'service_role';
+  const hasAdminRole = isAllowedAdminUser(user);
   const hasTwoFactor = await isTwoFactorCookieValid(request.cookies.get('solara_admin_2fa')?.value, user.id);
 
   return {
