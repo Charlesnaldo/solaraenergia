@@ -8,6 +8,10 @@ export interface AuthContext {
   isAdmin: boolean;
 }
 
+function readUserRole(user: { app_metadata?: { role?: string }; user_metadata?: { role?: string } } | null | undefined) {
+  return user?.app_metadata?.role ?? user?.user_metadata?.role ?? null;
+}
+
 function getBearerToken(request: NextRequest) {
   const authorization = request.headers.get('authorization') ?? '';
   const [scheme, token] = authorization.split(/\s+/);
@@ -54,7 +58,7 @@ export async function authenticateRequest(request: NextRequest): Promise<AuthCon
     return null;
   }
 
-  const role = user.app_metadata?.role;
+  const role = readUserRole(user);
   const hasAdminRole = role === 'admin' || role === 'service_role';
   const hasTwoFactor = await isTwoFactorCookieValid(request.cookies.get('solara_admin_2fa')?.value, user.id);
 

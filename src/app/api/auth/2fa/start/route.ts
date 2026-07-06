@@ -6,6 +6,10 @@ import { cookies } from 'next/headers';
 import { createSupabaseServiceClient } from '@/lib/supabase/service';
 import { sendSmsMessage } from '@/lib/notifications/sms';
 
+function readUserRole(user: { app_metadata?: { role?: string }; user_metadata?: { role?: string } } | null | undefined) {
+  return user?.app_metadata?.role ?? user?.user_metadata?.role ?? null;
+}
+
 function hashCode(code: string) {
   return crypto.createHash('sha256').update(code).digest('hex');
 }
@@ -20,8 +24,18 @@ function getTemporaryTestCode() {
 }
 
 function isAdminUser(user: Awaited<ReturnType<typeof getSupabaseUser>>) {
-  const role = user?.app_metadata?.role;
+  const role = readUserRole(user);
   return role === 'admin' || role === 'service_role';
+}
+
+function getRoleError(user: Awaited<ReturnType<typeof getSupabaseUser>>) {
+  const role = readUserRole(user);
+
+  if (!role) {
+    return 'User without admin role.';
+  }
+
+  return `User role "${role}" is not allowed.`;
 }
 
 async function getSupabaseUser(req: Request) {
@@ -65,7 +79,7 @@ export async function POST(req: Request) {
     }
 
     if (!isAdminUser(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: getRoleError(user) }, { status: 403 });
     }
 
     const phone = user.phone || user.user_metadata?.phone || user.app_metadata?.phone;
