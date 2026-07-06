@@ -8,10 +8,10 @@ export interface AuthContext {
   isAdmin: boolean;
 }
 
-function readUserRole(user: { app_metadata?: { role?: string }; user_metadata?: { role?: string } } | null | undefined) {
-  return user?.app_metadata?.role ?? user?.user_metadata?.role ?? null;
+function readUserRole(user: { app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null | undefined) {
+  const role = user?.app_metadata?.role ?? user?.user_metadata?.role;
+  return typeof role === 'string' ? role : null;
 }
-
 function getBearerToken(request: NextRequest) {
   const authorization = request.headers.get('authorization') ?? '';
   const [scheme, token] = authorization.split(/\s+/);
