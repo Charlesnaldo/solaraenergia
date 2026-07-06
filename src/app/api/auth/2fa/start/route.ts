@@ -1,26 +1,12 @@
-import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { createSupabaseServiceClient } from '@/lib/supabase/service';
-import { sendSmsMessage } from '@/lib/notifications/sms';
+import { createTwoFactorCookieValue } from '@/lib/auth/two-factor';
 
 function readUserRole(user: { app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null | undefined) {
   const role = user?.app_metadata?.role ?? user?.user_metadata?.role;
   return typeof role === 'string' ? role : null;
-}
-function hashCode(code: string) {
-  return crypto.createHash('sha256').update(code).digest('hex');
-}
-
-function generateOtpCode() {
-  return crypto.randomInt(100000, 1000000).toString();
-}
-
-function getTemporaryTestCode() {
-  const code = process.env.ADMIN_2FA_TEST_CODE?.trim();
-  return code && /^\d{6}$/.test(code) ? code : null;
 }
 
 function isAdminUser(user: Awaited<ReturnType<typeof getSupabaseUser>>) {
@@ -82,72 +68,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: getRoleError(user) }, { status: 403 });
     }
 
-    const phone = user.phone || user.user_metadata?.phone || user.app_metadata?.phone;
-    if (!phone) {
-      return NextResponse.json({ error: 'User without phone number for SMS.' }, { status: 400 });
-    }
-
-    const temporaryTestCode = getTemporaryTestCode();
-    if (process.env.NODE_ENV === 'production' && process.env.SMS_MOCK === 'true' && !temporaryTestCode) {
-      return NextResponse.json({ error: 'SMS mock cannot be enabled in production.' }, { status: 500 });
-    }
-
-    const code = temporaryTestCode ?? generateOtpCode();
-    const codeHash = hashCode(code);
-    const expireAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
-    const service = createSupabaseServiceClient();
-    const { data: challenge, error } = await service
-      .from('auth_challenges')
-      .insert({
-        user_id: user.id,
-        phone,
-        code_hash: codeHash,
-        expira_em: expireAt,
-        usado: false,
-      })
-      .select('id')
-      .single();
-
-    if (error || !challenge) {
-      console.error('2FA challenge insert failed', {
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code,
-      });
-
-      return NextResponse.json(
-        {
-          error: error?.message ?? 'Error creating 2FA challenge.',
-          details: error?.details ?? null,
-          hint: error?.hint ?? null,
-          code: error?.code ?? null,
-        },
-        { status: 500 },
-      );
-    }
-
-    const smsResult = temporaryTestCode
-      ? { ok: true, mocked: true, reason: 'Temporary ADMIN_2FA_TEST_CODE enabled.' }
-      : await sendSmsMessage({
-          to: phone,
-          message: `Seu codigo Solara Admin e ${code}. Ele expira em 10 minutos.`,
-        });
-
-    return NextResponse.json({
-      challengeId: challenge.id,
-      smsResult,
-      ...(process.env.NODE_ENV !== 'production' && smsResult.mocked ? { devCode: code } : {}),
+    const twoFactorCookieValue = await createTwoFactorCookieValue(user.id);
+    const response = NextResponse.json({ ok: true });
+    response.cookies.set('solara_admin_2fa', twoFactorCookieValue, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 8,
     });
+
+    return response;
   } catch {
     return NextResponse.json({ error: 'Error starting 2FA.' }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
