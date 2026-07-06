@@ -9,9 +9,14 @@ export async function middleware(request: NextRequest) {
   const isAdminApi = request.nextUrl.pathname.startsWith('/api/admin');
 
   if (isAdminPage || isDashboardPage || isAdminApi) {
-    const role = user?.app_metadata?.role;
+    const adminEmails = (process.env.ADMIN_EMAILS ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+    const email = user?.email?.trim().toLowerCase() ?? '';
+    const role = user?.app_metadata?.role ?? user?.user_metadata?.role;
     const hasTwoFactor = await isTwoFactorCookieValid(request.cookies.get('solara_admin_2fa')?.value, user?.id);
-    const isAdmin = (role === 'admin' || role === 'service_role') && hasTwoFactor;
+    const isAdmin = hasTwoFactor && (adminEmails.includes(email) || role === 'admin' || role === 'service_role');
 
     if (!isAdmin) {
       if (isAdminApi) {
